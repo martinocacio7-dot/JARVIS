@@ -27,6 +27,21 @@ test('rejects invalid messages, oversized bodies and foreign origins', async t =
   assert.equal((await app.post({ messages: [{ role: 'user', content: 'a'.repeat(70000) }] })).status, 413);
   assert.equal((await app.post({}, { Origin: 'https://example.org' })).status, 403);
 });
+test('local HTTP chat uses history without external requests and resets with a new conversation', async t => {
+  const app = await run(t, { request: () => { throw new Error('El modo local no debe usar la red'); } });
+  const messages = [];
+  for (const [content, pattern] of [['Me llamo Miguel', /Encantado, Miguel/], ['Quiero aprender programación', /JavaScript/], ['Continúa', /Paso 1:/], ['¿Cómo me llamo?', /Miguel/], ['Continúa', /Paso 2:/], ['Olvida el contexto', /reiniciado/], ['¿De qué hablábamos?', /Todavía no hemos elegido/]]) {
+    messages.push({ role: 'user', content });
+    const response = await app.post({ messages });
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.equal(data.mode, 'local');
+    assert.match(data.reply, pattern);
+    messages.push({ role: 'assistant', content: data.reply });
+  }
+  const fresh = await app.post({ messages: [{ role: 'user', content: '¿Cómo me llamo?' }] });
+  assert.match((await fresh.json()).reply, /Todavía no conozco/);
+});
 test('passes history to the provider and extracts text without returning secrets', async t => {
   const messages = [{ role: 'user', content: 'Hola' }];
   const app = await run(t, { apiKey: 'test-only', request: async (url, options) => {

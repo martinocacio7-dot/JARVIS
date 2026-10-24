@@ -7,3 +7,7 @@ const samples = intents.flatMap(i => i.examples.map(text => ({ text, label: i.id
 const correct = samples.filter(s => predict(model, s.text).intent === s.label).length;
 console.log(`Modelo guardado: ${model.vocabulary.length} entradas, ${intents.length} neuronas de salida, ${model.epochs} épocas.`);
 console.log(`Aciertos sobre entrenamiento: ${correct}/${samples.length}. Esto no mide generalización.`);
+const evaluation = JSON.parse(await readFile(new URL('../neural/evaluation.json', import.meta.url), 'utf8'));
+const passed = evaluation.filter(({ text, intent }) => predict(model, text).intent === intent).length;
+console.log(`Evaluación reservada: ${passed}/${evaluation.length}. Es un conjunto pequeño, no una garantía de comprensión general.`);
+if (passed !== evaluation.length) process.exitCode = 1;

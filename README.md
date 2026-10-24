@@ -1,19 +1,42 @@
 # JARVIS
 
-Primera versión de un asistente personal con interfaz web en español, chat, sugerencias y un historial local. Usa un modelo existente mediante la API de OpenAI; este proyecto no entrena un modelo desde cero.
+Asistente personal con interfaz web en español, una red neuronal propia de clasificación y contexto de conversación. Entrena y funciona localmente con Node.js, sin paquetes externos, Ollama ni una API. Incluye una conexión opcional a OpenAI, desactivada mientras no haya una clave configurada. La red local selecciona respuestas predefinidas; no es un modelo generativo como ChatGPT.
 
 ## Ejecutar
 
 Requiere Node.js 22.9 o superior (recomendado: Node.js 24 LTS). No requiere instalar paquetes externos.
 
 ```sh
-cd /workspace/JARVIS
+# Desde la carpeta donde descargaste o clonaste el proyecto:
+cd JARVIS
 npm start
 ```
 
-El servidor usa el puerto 3000. Sin credenciales se usa una red neuronal local de clasificación de intenciones con respuestas predefinidas. No genera texto libre.
+Abre http://localhost:3000 en el navegador y deja la terminal abierta. En PowerShell puedes usar `npm.cmd start` si la política de ejecución impide usar `npm`. El servidor usa el puerto 3000; en el entorno de desarrollo en la nube la carpeta es `/workspace/JARVIS`.
 
-## Conectar la IA
+## Probar la memoria y los temas
+
+Escribe los mensajes uno por uno en el chat:
+
+```text
+Me llamo Miguel
+¿Cómo me llamo?
+Quiero aprender programación
+Continúa
+Gracias
+¿De qué hablábamos?
+Continúa
+Repite
+Olvida el contexto
+```
+
+Reconoce 13 intenciones y ofrece guías de tres pasos sobre programación, proyectos, organización e inteligencia artificial. «Continúa» avanza dentro del tema activo; «Repite» repite la última respuesta sin avanzar. Al cambiar de tema empieza una guía nueva. Sus explicaciones y ejemplos son predefinidos: no ejecuta código, organiza tu agenda ni resuelve cualquier pregunta.
+
+La memoria usa reglas y se reconstruye únicamente desde los mensajes del usuario incluidos en cada petición. Recuerda el nombre indicado con «Me llamo…», «Mi nombre es…» o «Puedes llamarme…». No modifica los pesos del modelo durante el chat. «Olvida el contexto» reinicia nombre y tema para los siguientes mensajes, pero deja el historial visible; «Nueva conversación» borra el historial local de la aplicación.
+
+El cliente conserva una ventana reciente de hasta 40 mensajes (hasta 38 al enviar). Cuando el mensaje donde diste tu nombre o elegiste un tema sale de esa ventana, ese contexto deja de estar disponible. No hay memoria entre dispositivos ni un almacén compartido en el servidor.
+
+## Conectar un modelo generativo externo (opcional)
 
 Configura `JARVIS_API_KEY` de forma segura en las variables del entorno o copia `.env.example` a `.env` y añade tu clave localmente. Reinicia el servidor después. El modelo predeterminado es `gpt-4.1-mini`; puedes cambiarlo con `JARVIS_MODEL`. La cuenta del proveedor necesita acceso al modelo y saldo; las solicitudes pueden tener coste. La clave permanece en el servidor.
 
@@ -36,8 +59,12 @@ Es una base de desarrollo para uso personal. No incluye cuentas, autenticación,
 
 ## Red neuronal local
 
-`neural/network.js` implementa una red de una capa: 51 características de palabras y 5 neuronas de salida softmax en el conjunto inicial. Aprende pesos y sesgos mediante descenso de gradiente y entropía cruzada durante 600 épocas. No usa dependencias ni servicios externos.
+`neural/network.js` implementa una red de una capa: 170 características de palabras y 13 neuronas de salida softmax en el conjunto incluido. Aprende pesos y sesgos mediante descenso de gradiente y entropía cruzada durante 600 épocas. No usa dependencias ni servicios externos.
 
-El conjunto inicial de 30 frases en `neural/intents.json` cubre saludo, identidad, ayuda, agradecimiento y despedida. Las respuestas están escritas en ese archivo; el modelo aprende a elegir la intención. Si faltan palabras conocidas o confianza suficiente, responde que todavía no sabe. La confianza softmax no es una garantía de corrección. No interpreta el historial ni aprende de los mensajes de usuarios.
+El conjunto de 128 frases en `neural/intents.json` cubre saludo, identidad, ayuda, agradecimiento, despedida, programación, proyecto, organización, aprendizaje de IA, continuación, consulta de tema, consulta de nombre y repetición. Las respuestas están escritas en ese archivo y en las guías de `neural/conversation.js`; el modelo aprende a elegir la intención. La capa de conversación aplica las reglas de contexto y pasos sobre esa predicción.
 
-Para enseñar nuevas intenciones, añade ejemplos variados, un identificador único y una respuesta al conjunto de datos. Ejecuta `npm run train`, después `npm test` y reinicia `npm start`. El entrenamiento guarda los pesos en `neural/model.json`; el servidor carga ese archivo al arrancar. Se incluye el modelo inicial para arrancar sin entrenar. Las pruebas cubren las frases de entrenamiento, algunas combinaciones reservadas y entradas desconocidas; no demuestran capacidad conversacional general.
+Si menos del 60 % de las palabras informativas son conocidas o la puntuación softmax es menor que 0.75, responde que todavía no sabe. Se excluyen palabras comunes al calcular esa cobertura. Son heurísticas: incluso con una puntuación alta puede equivocarse, y no comprenden la semántica de una pregunta arbitraria.
+
+Para enseñar nuevas intenciones, añade ejemplos variados, un identificador único y una respuesta al conjunto de datos. Ejecuta `npm run train`, después `npm test` y reinicia `npm start`. El entrenamiento guarda los pesos en `neural/model.json`; el servidor carga ese archivo al arrancar. Se incluye el modelo entrenado para arrancar sin repetir el entrenamiento. Si deseas un tema con pasos propios, define su guía en `neural/conversation.js` usando el identificador de la intención.
+
+`neural/evaluation.json` contiene 19 frases reservadas, incluidas preguntas fuera del alcance. No se utiliza para ajustar pesos. El entrenamiento informa por separado los aciertos de entrenamiento y los de esta evaluación, y devuelve un error si la evaluación falla. Las pruebas también comprueban nombres, cambios de tema, pasos, reinicio de contexto, aislamiento entre conversaciones y el flujo HTTP completo sin solicitudes externas. Este conjunto pequeño no demuestra capacidad conversacional general.

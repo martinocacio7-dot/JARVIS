@@ -1,6 +1,7 @@
 // Red neuronal de una capa: bolsa de palabras → neuronas softmax.
 // Los pesos se aprenden por descenso de gradiente con entropía cruzada.
 export const tokenize = text => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[a-z0-9]+/g) || [];
+const commonWords = new Set('a al con de del el la las los un una unos unas que como en es mi tu me te se y o por para su lo le quiero puedes favor jarvis'.split(' '));
 function features(text, vocabulary) {
   const words = new Set(tokenize(text));
   return vocabulary.map(word => words.has(word) ? 1 : 0);
@@ -30,10 +31,12 @@ export function train(intents, epochs = 600) {
 }
 export function predict(model, text) {
   const vector = features(text, model.vocabulary);
-  const tokens = tokenize(text);
+  const allTokens = tokenize(text);
+  const contentTokens = allTokens.filter(token => !commonWords.has(token));
+  const tokens = contentTokens.length ? contentTokens : allTokens;
   const coverage = tokens.length ? tokens.filter(t => model.vocabulary.includes(t)).length / tokens.length : 0;
   const scores = probabilities(vector, model.weights);
   const best = scores.indexOf(Math.max(...scores));
-  const recognized = coverage >= 0.5 && scores[best] >= 0.75;
-  return { intent: recognized ? model.intents[best].id : 'desconocido', confidence: scores[best], reply: recognized ? model.intents[best].reply : 'Mi red local todavía no sabe responder a eso. Reconozco intenciones básicas como saludos, ayuda e identidad. Puedes ampliar mis ejemplos de entrenamiento o conectar un modelo de lenguaje.' };
+  const recognized = coverage >= 0.6 && scores[best] >= 0.75;
+  return { intent: recognized ? model.intents[best].id : 'desconocido', confidence: scores[best], reply: recognized ? model.intents[best].reply : 'Todavía no sé responder a eso con mi red local. Puedo guiarte en programación, proyectos, organización o conceptos de inteligencia artificial. Puedes ampliar mis ejemplos y volver a entrenarme.' };
 }

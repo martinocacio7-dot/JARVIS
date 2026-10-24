@@ -1,0 +1,21 @@
+[
+  {"text":"hola buenos dias jarvis","intent":"saludo"},
+  {"text":"jarvis quiero aprender a programar","intent":"programacion"},
+  {"text":"ayudame a organizar mi dia","intent":"organizacion"},
+  {"text":"quiero crear mi primer proyecto","intent":"proyecto"},
+  {"text":"explicame una red neuronal","intent":"aprendizaje_ia"},
+  {"text":"continua por favor","intent":"continuar"},
+  {"text":"recuerdas como me llamo","intent":"consultar_nombre"},
+  {"text":"dime de que hablabamos","intent":"recordar_tema"},
+  {"text":"repite eso por favor","intent":"repetir"},
+  {"text":"gracias jarvis por tu ayuda","intent":"gracias"},
+  {"text":"hasta luego jarvis","intent":"despedida"},
+  {"text":"dime como te llamas jarvis","intent":"identidad"},
+  {"text":"jarvis necesito ayuda","intent":"ayuda"},
+  {"text":"explicame la receta de una tortilla","intent":"desconocido"},
+  {"text":"quiero reservar un vuelo a quito","intent":"desconocido"},
+  {"text":"como reparo el motor de mi coche","intent":"desconocido"},
+  {"text":"que temperatura hace en madrid","intent":"desconocido"},
+  {"text":"explica termodinamica cuantica","intent":"desconocido"},
+  {"text":"hola calcula integrales complejas desconocidas","intent":"desconocido"}
+]

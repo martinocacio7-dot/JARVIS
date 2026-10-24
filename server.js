@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
-import { predict } from './neural/network.js';
+import { respond } from './neural/conversation.js';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -28,7 +28,7 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         try { data = JSON.parse(body); } catch { return json(400, { error: 'JSON inválido.' }); }
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
-        if (!apiKey) return json(200, { mode: 'local', ...predict(localModel, messages.at(-1).content) });
+        if (!apiKey) return json(200, { mode: 'local', ...respond(localModel, messages) });
         const upstream = await request('https://api.openai.com/v1/responses', {
           method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({ model, instructions: instruction, input: messages.map(({ role, content }) => ({ role, content })), max_output_tokens: 1500, store: false }),

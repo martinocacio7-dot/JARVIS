@@ -56,5 +56,5 @@ document.querySelectorAll('[data-prompt]').forEach(button => button.addEventList
 render();
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
   $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : '● Red neuronal local';
-  if (data.mode === 'local') $('#notice').textContent = 'Red local activa: reconoce intenciones básicas con respuestas predefinidas. No genera texto libre.';
+  if (data.mode === 'local') $('#notice').textContent = 'Red local activa. Prueba «Me llamo Miguel» y «Quiero aprender programación»; después, «Continúa». Recuerdo el historial reciente y uso respuestas predefinidas.';
 }).catch(() => { $('#status').textContent = 'Sin conexión'; });
