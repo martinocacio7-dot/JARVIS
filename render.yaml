@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: jarvis-privado
+    runtime: node
+    plan: free
+    buildCommand: npm test
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: JARVIS_USER
+        value: jarvis
+      - key: JARVIS_PASSWORD
+        generateValue: true

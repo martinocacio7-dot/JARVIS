@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from '../server.js';
 
 async function run(t, options = {}) {
-  const server = createServer({ apiKey: '', ...options });
+  const server = createServer({ apiKey: '', auth: { production: false, password: '' }, ...options });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
   const base = `http://127.0.0.1:${server.address().port}`;

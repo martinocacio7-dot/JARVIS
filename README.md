@@ -55,7 +55,25 @@ Las pruebas verifican las rutas HTTP, validación, modo local y contrato con el 
 
 ## Alcance de esta versión
 
-Es una base de desarrollo para uso personal. No incluye cuentas, autenticación, herramientas para controlar dispositivos, voz ni memoria entre dispositivos. Antes de publicarlo en Internet, añade autenticación y límites de uso para proteger el acceso a tu cuenta del proveedor. El indicador «IA configurada» significa que existe una clave, no que su validez o saldo hayan sido verificados.
+Es una base de desarrollo para uso personal. Incluye acceso privado con un usuario y contraseña mediante HTTP Basic, sin registro de cuentas. No incluye herramientas para controlar dispositivos, voz ni memoria entre dispositivos. El indicador «IA configurada» significa que existe una clave, no que su validez o saldo hayan sido verificados.
+
+## Publicar una web privada en Render
+
+El archivo `render.yaml` prepara un servicio web con HTTPS y contraseña obligatoria. La red neuronal se ejecuta en el servidor sin una API de IA. El alojamiento es un servicio externo y requiere una cuenta de Render; las condiciones y límites del plan gratuito dependen de ese proveedor.
+
+1. Abre https://render.com/deploy?repo=https://github.com/martinocacio7-dot/JARVIS e inicia sesión en Render.
+2. Revisa el Blueprint y crea el servicio `jarvis-privado`. No hace falta configurar una clave de OpenAI.
+3. En las variables del servicio, consulta de forma privada el valor generado para `JARVIS_PASSWORD`. El usuario predeterminado es `jarvis`. No copies la contraseña a GitHub ni al chat.
+4. Cuando termine el despliegue, abre la dirección HTTPS que Render asigne al servicio. El navegador solicitará el usuario y la contraseña antes de mostrar la página o permitir llamadas al chat.
+5. Comprueba desde una ventana privada que, sin credenciales, la página pide autenticación y no muestra JARVIS. Después verifica que puedes entrar y enviar «Hola» con tus credenciales.
+
+Render genera una contraseña aleatoria con `generateValue: true`, configura `NODE_ENV=production` y usa el puerto proporcionado por su plataforma. El servidor se niega a arrancar en producción si falta `JARVIS_PASSWORD` o tiene menos de 16 caracteres. La protección abarca la página, los recursos y las rutas API. Tras diez intentos incorrectos se bloquean nuevos intentos hasta finalizar una ventana de un minuto; ese límite es global y se reinicia al reiniciar el proceso.
+
+Comparte únicamente la URL si lo necesitas y conserva la contraseña en privado: cualquiera que obtenga ambas podrá entrar. Usa siempre HTTPS fuera de tu equipo. El navegador puede recordar las credenciales de HTTP Basic; en equipos compartidos usa una ventana privada y cierra todas sus ventanas al terminar. Cambiar la contraseña del servicio y volver a desplegar invalida la anterior.
+
+Este despliegue protege el acceso a la aplicación, pero no cambia la visibilidad del repositorio en GitHub ni impide que los administradores del alojamiento accedan al servidor. El historial permanece en el navegador que uses; no se sincroniza con otros dispositivos. El plan gratuito puede suspender el servicio cuando no hay actividad, así que el primer acceso puede tardar.
+
+Para activar esta misma protección en otro alojamiento, define `NODE_ENV=production`, `JARVIS_USER` y una `JARVIS_PASSWORD` segura de al menos 16 caracteres, y sitúa el servidor detrás de HTTPS. Para desarrollo local puedes dejar la contraseña vacía; nunca publiques ese modo sin protección.
 
 ## Red neuronal local
 
