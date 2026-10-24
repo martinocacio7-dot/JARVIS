@@ -1,3 +1,5 @@
+import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
+
 const $ = selector => document.querySelector(selector);
 let messages = [];
 let busy = false;
@@ -8,12 +10,20 @@ try {
 } catch { storageAvailable = false; }
 function render() {
   $('#welcome').hidden = messages.length > 0;
-  $('#messages').replaceChildren(...messages.map(message => {
+  $('#messages').replaceChildren(...messages.map((message, index) => {
     const article = document.createElement('article');
     article.className = `message ${message.role}`;
     const name = document.createElement('strong');
     name.textContent = message.role === 'user' ? 'TÚ' : 'JARVIS';
     article.append(name, document.createTextNode(message.content));
+    if (message.role === 'assistant' && messages[index - 1]?.role === 'user') {
+      const correction = document.createElement('button');
+      correction.type = 'button';
+      correction.className = 'correct-answer';
+      correction.textContent = 'Enseñar una respuesta mejor';
+      correction.addEventListener('click', () => editCorrection(messages[index - 1].content));
+      article.append(correction);
+    }
     return article;
   }));
   try { localStorage.setItem('jarvis.messages', JSON.stringify(messages)); } catch { storageAvailable = false; }
@@ -31,7 +41,8 @@ async function send(event) {
   render();
   $('#notice').textContent = 'JARVIS está preparando una respuesta…';
   try {
-    const response = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages }), signal: AbortSignal.timeout(55000) });
+    const knowledge = libraryRequest(content);
+    const response = await fetch(knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(knowledge || { messages }), signal: AbortSignal.timeout(55000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
     messages.push({ role: 'assistant', content: data.reply });
@@ -53,6 +64,7 @@ $('#composer').addEventListener('submit', send);
 $('#prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('#composer').requestSubmit(); } });
 $('#new-chat').addEventListener('click', () => { if (busy) return; messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });
 document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => { $('#prompt').value = button.dataset.prompt; $('#prompt').focus(); }));
+initLibrary();
 render();
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
   $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : '● Red neuronal local';

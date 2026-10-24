@@ -1,14 +1,15 @@
 # JARVIS
 
-Asistente personal con interfaz web en español, una red neuronal propia de clasificación y contexto de conversación. Entrena y funciona localmente con Node.js, sin paquetes externos, Ollama ni una API. Incluye una conexión opcional a OpenAI, desactivada mientras no haya una clave configurada. La red local selecciona respuestas predefinidas; no es un modelo generativo como ChatGPT.
+Asistente personal con interfaz web en español, una red neuronal propia de clasificación, contexto de conversación y biblioteca privada en base de datos. La red y la búsqueda de documentos funcionan sin Ollama ni una API de IA. La biblioteca usa SQLite en desarrollo y PostgreSQL en producción, mediante el controlador `pg`. Incluye una conexión opcional a OpenAI, desactivada mientras no haya una clave configurada. La red local selecciona respuestas predefinidas; no es un modelo generativo como ChatGPT.
 
 ## Ejecutar
 
-Requiere Node.js 22.9 o superior (recomendado: Node.js 24 LTS). No requiere instalar paquetes externos.
+Requiere Node.js 24 LTS o superior, que incluye SQLite. Instala las dependencias exactas del archivo de bloqueo:
 
 ```sh
 # Desde la carpeta donde descargaste o clonaste el proyecto:
 cd JARVIS
+npm ci
 npm start
 ```
 
@@ -36,6 +37,37 @@ La memoria usa reglas y se reconstruye únicamente desde los mensajes del usuari
 
 El cliente conserva una ventana reciente de hasta 40 mensajes (hasta 38 al enviar). Cuando el mensaje donde diste tu nombre o elegiste un tema sale de esa ventana, ese contexto deja de estar disponible. No hay memoria entre dispositivos ni un almacén compartido en el servidor.
 
+## Biblioteca y correcciones persistentes
+
+La biblioteca es independiente de la memoria del chat descrita arriba: sus documentos y respuestas enseñadas sí se guardan en una base de datos. La aplicación tiene un único usuario, así que cualquier dispositivo que entre con tus credenciales accede a la misma biblioteca.
+
+1. Abre **Biblioteca privada** y pulsa **Cargar ejemplo**, o carga un archivo de texto UTF-8 `.txt` o `.md`. No admite PDF o Word todavía.
+2. Activa **Consultar biblioteca** y pregunta, por ejemplo, «¿Qué es una variable?».
+3. JARVIS devuelve fragmentos con el nombre del documento y su número de fragmento, o indica que no encontró información suficiente. No envía documentos a OpenAI, Gemini ni Groq, incluso si existe una clave para el chat opcional.
+4. Pulsa **Enseñar una respuesta mejor** debajo de un mensaje, o completa el formulario de la biblioteca. Al volver a preguntar lo mismo, ignorando puntuación, mayúsculas y acentos, se usará la respuesta que enseñaste. Puedes editarla o eliminarla.
+5. Usa **Exportar copia** para descargar un JSON privado. **Restaurar copia** reemplaza la biblioteca actual, con confirmación. «Nueva conversación» borra el chat de ese navegador, pero no elimina la biblioteca.
+
+La búsqueda BM25 de `knowledge/search.js` compara palabras y clasifica fragmentos. No es búsqueda semántica, no sintetiza texto libre y no verifica la verdad de los documentos. Las correcciones se guardan como pares de pregunta y respuesta: no entrenan automáticamente los pesos de la red. No afirmamos que esta función haga razonar al modelo.
+
+Límites iniciales: 10 documentos, 20 000 caracteres por documento, 60 000 en total, y 20 respuestas enseñadas de hasta 500 caracteres de pregunta y 2000 de respuesta. No guardes secretos en los documentos. Las copias exportadas contienen el texto completo y deben conservarse en privado.
+
+### Base de datos local
+
+Sin `DATABASE_URL`, el modo de desarrollo crea `data/jarvis.sqlite`, excluido de Git. Los datos sobreviven al reinicio del proceso mientras conserves ese archivo. Puedes cambiar su ubicación con `JARVIS_DATABASE_PATH`. No uses SQLite en el disco efímero de Render como almacenamiento permanente.
+
+### PostgreSQL para Render
+
+En producción no se usa un archivo temporal: hace falta una conexión PostgreSQL. El chat sigue funcionando si falta, pero la biblioteca muestra que está sin configurar.
+
+1. Crea una base de datos PostgreSQL en tu proveedor. Una opción es un proyecto gratuito en https://neon.tech; comprueba sus límites y condiciones vigentes antes de crearlo. No hace falta contratar un plan de pago para probar esta función.
+2. Copia la cadena PostgreSQL desde el panel del proveedor y guárdala en Render → **jarvis-privado → Environment** con el nombre **DATABASE_URL**. Es un secreto: no la pegues en el chat, GitHub ni `render.yaml`.
+3. Guarda las variables y vuelve a desplegar el servicio. Se crea automáticamente la tabla `jarvis_library`; no cambia ni elimina otras tablas.
+4. Carga un documento, recarga la web y abre el mismo servicio en otro dispositivo con tus credenciales para comprobar que se conserva.
+
+Se usa TLS con verificación de certificados por defecto. Solo para una conexión dentro de una red privada o una base local de pruebas sin TLS se puede indicar `sslmode=disable`. No desactives TLS para conexiones públicas. El controlador mantiene un máximo de tres conexiones. Guarda copias de respaldo antes de cambiar de base: no hay migración automática entre SQLite y PostgreSQL.
+
+`GET /api/library` recupera la biblioteca, `PUT /api/library` la actualiza con una revisión esperada y `POST /api/knowledge` recibe `{ "query": "¿Qué es una variable?" }`. Las tres rutas requieren autenticación cuando está configurada. Una revisión desactualizada devuelve HTTP 409 para evitar perder cambios hechos en otro dispositivo. Recarga antes de reintentar.
+
 ## Conectar un modelo generativo externo (opcional)
 
 Configura `JARVIS_API_KEY` de forma segura en las variables del entorno o copia `.env.example` a `.env` y añade tu clave localmente. Reinicia el servidor después. El modelo predeterminado es `gpt-4.1-mini`; puedes cambiarlo con `JARVIS_MODEL`. La cuenta del proveedor necesita acceso al modelo y saldo; las solicitudes pueden tener coste. La clave permanece en el servidor.
@@ -51,11 +83,13 @@ npm test
 
 Las pruebas verifican las rutas HTTP, validación, modo local y contrato con el proveedor mediante respuestas simuladas. La llamada a IA real requiere una clave y no forma parte de las pruebas automáticas.
 
+También comprueban recuperación con fuentes, correcciones, persistencia real en SQLite y conflictos entre dispositivos. Para probar PostgreSQL, define `JARVIS_TEST_DATABASE_URL` apuntando a una **base exclusiva de pruebas** y ejecuta `npm test`: esa prueba modifica su biblioteca. Si falta esa variable, solo esa prueba se marca como omitida. Nunca uses una base con información real para las pruebas.
+
 `GET /api/status` informa el modo de funcionamiento; `POST /api/chat` acepta `{ "messages": [{ "role": "user", "content": "Hola" }] }`. Se admiten hasta 40 mensajes, 8000 caracteres por mensaje y 64 KiB por petición. El cliente mantiene una ventana reciente de la conversación.
 
 ## Alcance de esta versión
 
-Es una base de desarrollo para uso personal. Incluye acceso privado con un usuario y contraseña mediante HTTP Basic, sin registro de cuentas. No incluye herramientas para controlar dispositivos, voz ni memoria entre dispositivos. El indicador «IA configurada» significa que existe una clave, no que su validez o saldo hayan sido verificados.
+Es una base de desarrollo para uso personal. Incluye acceso privado con un usuario y contraseña mediante HTTP Basic, sin registro de cuentas. No incluye herramientas para controlar dispositivos ni voz. El chat permanece en cada navegador; la biblioteca se comparte entre tus dispositivos mediante la base de datos. El indicador «IA configurada» significa que existe una clave, no que su validez o saldo hayan sido verificados.
 
 ## Publicar una web privada en Render
 
@@ -71,7 +105,7 @@ Render genera una contraseña aleatoria con `generateValue: true`, configura `NO
 
 Comparte únicamente la URL si lo necesitas y conserva la contraseña en privado: cualquiera que obtenga ambas podrá entrar. Usa siempre HTTPS fuera de tu equipo. El navegador puede recordar las credenciales de HTTP Basic; en equipos compartidos usa una ventana privada y cierra todas sus ventanas al terminar. Cambiar la contraseña del servicio y volver a desplegar invalida la anterior.
 
-Este despliegue protege el acceso a la aplicación, pero no cambia la visibilidad del repositorio en GitHub ni impide que los administradores del alojamiento accedan al servidor. El historial permanece en el navegador que uses; no se sincroniza con otros dispositivos. El plan gratuito puede suspender el servicio cuando no hay actividad, así que el primer acceso puede tardar.
+Este despliegue protege el acceso a la aplicación, pero no cambia la visibilidad del repositorio en GitHub ni impide que los administradores del alojamiento o de la base de datos accedan a los datos alojados. El historial permanece en el navegador que uses; la biblioteca se sincroniza mediante PostgreSQL. El plan gratuito puede suspender el servicio cuando no hay actividad, así que el primer acceso puede tardar.
 
 Para activar esta misma protección en otro alojamiento, define `NODE_ENV=production`, `JARVIS_USER` y una `JARVIS_PASSWORD` segura de al menos 16 caracteres, y sitúa el servidor detrás de HTTPS. Para desarrollo local puedes dejar la contraseña vacía; nunca publiques ese modo sin protección.
 

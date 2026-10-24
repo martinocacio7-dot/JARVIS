@@ -4,31 +4,56 @@ import { respond } from './neural/conversation.js';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { createAuth } from './auth.js';
+import { searchLibrary } from './knowledge/search.js';
+import { createLibraryDatabase, RevisionConflict } from './knowledge/database.js';
+import { validateLibrary } from './public/library-data.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
 
-const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'] };
+const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
 const instruction = 'Eres JARVIS, un asistente personal útil, claro y honesto. Responde en español salvo que te pidan otro idioma. Explica tus límites. No afirmes haber realizado acciones que no puedes ejecutar.';
 
-export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = process.env.JARVIS_MODEL || 'gpt-4.1-mini', request = fetch, auth } = {}) {
+export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = process.env.JARVIS_MODEL || 'gpt-4.1-mini', request = fetch, auth, database = createLibraryDatabase() } = {}) {
   const authorize = createAuth(auth);
-  return http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
     const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'");
     if (!authorize(req, res)) return;
     if (req.method === 'GET' && req.url === '/api/status') return json(200, { mode: apiKey ? 'ai' : 'local', model: apiKey ? model : localModel.architecture });
-    if (req.method === 'POST' && req.url === '/api/chat') {
+    if (req.method === 'GET' && req.url === '/api/library') {
+      try { return json(200, await database.read()); }
+      catch { return json(503, { error: database.kind === 'unconfigured' ? 'Configura DATABASE_URL en Render para activar la biblioteca persistente.' : 'No se pudo acceder a la base de datos. Vuelve a intentarlo.' }); }
+    }
+    if ((req.method === 'POST' && ['/api/chat', '/api/knowledge'].includes(req.url)) || (req.method === 'PUT' && req.url === '/api/library')) {
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(403, { error: 'Origen no permitido.' });
       if (!req.headers['content-type']?.startsWith('application/json')) return json(415, { error: 'Se requiere JSON.' });
       try {
         let body = '';
+        let size = 0;
+        const limit = req.url === '/api/library' ? 1048576 : 65536;
+        req.setEncoding('utf8');
         for await (const chunk of req) {
           body += chunk;
-          if (Buffer.byteLength(body) > 65536) return json(413, { error: 'La conversación es demasiado larga. Inicia una nueva.' });
+          size += Buffer.byteLength(chunk);
+          if (size > limit) return json(413, { error: 'La petición es demasiado larga. Reduce los datos enviados.' });
         }
         let data;
         try { data = JSON.parse(body); } catch { return json(400, { error: 'JSON inválido.' }); }
+        if (req.url === '/api/library') {
+          let library;
+          try {
+            library = validateLibrary(data?.library);
+            if (!Number.isSafeInteger(data?.expectedRevision) || data.expectedRevision < 0) throw new Error('La revisión no es válida.');
+          } catch (error) { return json(400, { error: error.message }); }
+          try { return json(200, await database.write(library, data.expectedRevision)); }
+          catch (error) { return json(error instanceof RevisionConflict ? 409 : 503, { error: error instanceof RevisionConflict ? error.message : 'No se pudo guardar en la base de datos. Tus cambios no fueron confirmados.' }); }
+        }
+        if (req.url === '/api/knowledge') {
+          if (typeof data?.query !== 'string' || !data.query.trim() || data.query.length > 8000) return json(400, { error: 'Escribe una pregunta de hasta 8000 caracteres.' });
+          try { return json(200, searchLibrary(data.query, (await database.read()).library)); }
+          catch { return json(503, { error: 'No se pudo consultar la biblioteca en la base de datos.' }); }
+        }
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
         if (!apiKey) return json(200, { mode: 'local', ...respond(localModel, messages) });
@@ -51,6 +76,8 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
     }
     json(404, { error: 'Ruta no encontrada.' });
   });
+  server.on('close', () => { database.close().catch(() => {}); });
+  return server;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

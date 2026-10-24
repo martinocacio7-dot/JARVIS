@@ -3,7 +3,7 @@ services:
     name: jarvis-privado
     runtime: node
     plan: free
-    buildCommand: npm test
+    buildCommand: npm ci && npm test
     startCommand: npm start
     envVars:
       - key: NODE_VERSION
