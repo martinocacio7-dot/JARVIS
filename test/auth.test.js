@@ -21,7 +21,7 @@ async function app(t, extra = {}) {
 
 test('protege página, recursos y API antes de leer mensajes o devolver contenido', async t => {
   const request = await app(t);
-  for (const path of ['/', '/app.js', '/style.css', '/library-ui.js', '/api/status', '/api/chat', '/api/library', '/api/knowledge']) {
+  for (const path of ['/', '/app.js', '/style.css', '/library-ui.js', '/project-ui.js', '/api/status', '/api/chat', '/api/library', '/api/knowledge', '/api/develop']) {
     const response = await request(path);
     assert.equal(response.status, 401, path);
     assert.match(response.headers.get('www-authenticate'), /Basic/);

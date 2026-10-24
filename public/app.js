@@ -1,4 +1,5 @@
 import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
+import { projectView } from './project-ui.js';
 
 const $ = selector => document.querySelector(selector);
 let messages = [];
@@ -16,6 +17,10 @@ function render() {
     const name = document.createElement('strong');
     name.textContent = message.role === 'user' ? 'TÚ' : 'JARVIS';
     article.append(name, document.createTextNode(message.content));
+    if (message.role === 'assistant') {
+      const project = projectView(message.project);
+      if (project) article.append(project);
+    }
     if (message.role === 'assistant' && messages[index - 1]?.role === 'user') {
       const correction = document.createElement('button');
       correction.type = 'button';
@@ -41,11 +46,13 @@ async function send(event) {
   render();
   $('#notice').textContent = 'JARVIS está preparando una respuesta…';
   try {
-    const knowledge = libraryRequest(content);
-    const response = await fetch(knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(knowledge || { messages }), signal: AbortSignal.timeout(55000) });
+    const development = $('#work-mode').value === 'development';
+    const knowledge = development ? null : libraryRequest(content);
+    const payload = development ? { prompt: content } : knowledge || { messages: messages.map(({ role, content }) => ({ role, content })) };
+    const response = await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
-    messages.push({ role: 'assistant', content: data.reply });
+    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
   } catch (error) {
     messages.pop();

@@ -68,6 +68,24 @@ Se usa TLS con verificación de certificados por defecto. Solo para una conexió
 
 `GET /api/library` recupera la biblioteca, `PUT /api/library` la actualiza con una revisión esperada y `POST /api/knowledge` recibe `{ "query": "¿Qué es una variable?" }`. Las tres rutas requieren autenticación cuando está configurada. Una revisión desactualizada devuelve HTTP 409 para evitar perder cambios hechos en otro dispositivo. Recarga antes de reintentar.
 
+## Desarrollar prototipos de código
+
+El modo **Desarrollar código local** crea tres tipos de prototipo mediante un generador propio (`developer/generator.js`), sin consultar otras IA ni necesitar una base de datos:
+
+| Petición de ejemplo | Funciones incluidas |
+| --- | --- |
+| «Desarrolla una lista de tareas» | Añadir, completar, reabrir y eliminar tareas; guardado local. |
+| «Desarrolla un inventario en HTML» | Crear, editar y eliminar productos, cantidades y precios; calcular el valor total; guardado local. |
+| «Hazme una calculadora» | Sumar, restar, multiplicar y dividir; validación y control de división por cero. |
+
+Selecciona ese modo junto al campo de mensaje y describe uno de esos proyectos. También reconoce peticiones explícitas como «Crea un inventario» en el chat normal, siempre que no estés consultando la biblioteca. Para personalizar el título, añade `titulado "Mi proyecto"`.
+
+Cada respuesta permite **Ver código**, **Copiar código** y **Descargar** un único archivo HTML con sus estilos y JavaScript incluidos. Abre el archivo descargado en tu navegador para usarlo. El código se muestra como texto en JARVIS y no se ejecuta dentro de la web privada. Los archivos generados se conservan con el historial de ese navegador; descarga una copia para conservarlos.
+
+Son estructuras de código programadas, no un modelo que haya aprendido a programar o razonar libremente. No generan aplicaciones arbitrarias ni implementan todos los detalles de una petición. No admiten backend, cuentas, pagos, otros lenguajes ni conexión a PostgreSQL. Los datos de los prototipos de tareas e inventario se guardan en el navegador, no en la biblioteca de JARVIS. Son prototipos personales y deben revisarse antes de adaptarlos a un uso real. La biblioteca de JARVIS mantiene su propia base de datos independiente.
+
+`POST /api/develop` acepta `{ "prompt": "Crea una calculadora" }` y devuelve una explicación y, si es compatible, un proyecto con `filename` y `code`. Mantiene la misma protección de acceso que el resto de la aplicación.
+
 ## Conectar un modelo generativo externo (opcional)
 
 Configura `JARVIS_API_KEY` de forma segura en las variables del entorno o copia `.env.example` a `.env` y añade tu clave localmente. Reinicia el servidor después. El modelo predeterminado es `gpt-4.1-mini`; puedes cambiarlo con `JARVIS_MODEL`. La cuenta del proveedor necesita acceso al modelo y saldo; las solicitudes pueden tener coste. La clave permanece en el servidor.

@@ -2436,7 +2436,7 @@
     },
     {
       "id": "ayuda",
-      "reply": "Puedes pedirme «Quiero aprender programación», «Quiero crear un proyecto», «Organiza mi día» o «Explícame la inteligencia artificial». Luego escribe «Continúa» para avanzar. Prueba también «Me llamo Miguel», «¿Cómo me llamo?», «¿De qué hablábamos?» y «Olvida el contexto». Para entrenarme con más ejemplos usa npm run train."
+      "reply": "Puedo guiarte en programación, proyectos, organización e inteligencia artificial. También puedo crear prototipos web con mi generador local: escribe «Crea un inventario», «Crea una lista de tareas» o «Hazme una calculadora». Puedes ver y descargar su código. Para continuar una guía escribe «Continúa». Uso respuestas y estructuras programadas; todavía no desarrollo sistemas arbitrarios. La biblioteca permite consultar tus apuntes y guardar respuestas enseñadas cuando su base de datos está conectada."
     },
     {
       "id": "gracias",
