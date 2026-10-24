@@ -1,0 +1,9 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { train, predict } from '../neural/network.js';
+const intents = JSON.parse(await readFile(new URL('../neural/intents.json', import.meta.url), 'utf8'));
+const model = train(intents);
+await writeFile(new URL('../neural/model.json', import.meta.url), JSON.stringify(model, null, 2) + '\n');
+const samples = intents.flatMap(i => i.examples.map(text => ({ text, label: i.id })));
+const correct = samples.filter(s => predict(model, s.text).intent === s.label).length;
+console.log(`Modelo guardado: ${model.vocabulary.length} entradas, ${intents.length} neuronas de salida, ${model.epochs} épocas.`);
+console.log(`Aciertos sobre entrenamiento: ${correct}/${samples.length}. Esto no mide generalización.`);

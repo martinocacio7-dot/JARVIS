@@ -1,0 +1,7 @@
+[
+  {"id":"saludo","examples":["hola","buenos dias","buenas tardes","hey jarvis","hola amigo","saludos"],"reply":"Hola, soy JARVIS. Mi red local puede reconocer saludos, ayuda, identidad, agradecimientos y despedidas. ¿Qué necesitas?"},
+  {"id":"identidad","examples":["quien eres","como te llamas","que eres","eres una inteligencia artificial","cual es tu nombre","presentate"],"reply":"Soy JARVIS. En modo local uso una pequeña red neuronal entrenada para clasificar intenciones y seleccionar respuestas escritas. Todavía no genero texto libre ni aprendo automáticamente de la conversación."},
+  {"id":"ayuda","examples":["ayudame","que puedes hacer","necesito ayuda","cuales son tus funciones","como funcionas","muestra tus capacidades"],"reply":"Puedo reconocer algunas intenciones básicas con mi red local. Para enseñarme más, añade ejemplos y respuestas en neural/intents.json, ejecuta npm run train y reinicia el servidor. Para preguntas abiertas puedes configurar el proveedor de IA."},
+  {"id":"gracias","examples":["gracias","muchas gracias","te agradezco","muy amable","gracias por tu ayuda","excelente gracias"],"reply":"¡Con gusto! Aquí estoy para ayudarte."},
+  {"id":"despedida","examples":["adios","hasta luego","nos vemos","chao","hasta pronto","me voy"],"reply":"Hasta pronto. Podemos continuar cuando quieras."}
+]
