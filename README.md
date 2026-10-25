@@ -61,12 +61,47 @@ En producción no se usa un archivo temporal: hace falta una conexión PostgreSQ
 
 1. Crea una base de datos PostgreSQL en tu proveedor. Una opción es un proyecto gratuito en https://neon.tech; comprueba sus límites y condiciones vigentes antes de crearlo. No hace falta contratar un plan de pago para probar esta función.
 2. Copia la cadena PostgreSQL desde el panel del proveedor y guárdala en Render → **jarvis-privado → Environment** con el nombre **DATABASE_URL**. Es un secreto: no la pegues en el chat, GitHub ni `render.yaml`.
-3. Guarda las variables y vuelve a desplegar el servicio. Se crea automáticamente la tabla `jarvis_library`; no cambia ni elimina otras tablas.
+3. Guarda las variables y vuelve a desplegar el servicio. Se crean automáticamente las tablas `jarvis_library` y `jarvis_feedback`; no se eliminan documentos o correcciones anteriores ni otras tablas.
 4. Carga un documento, recarga la web y abre el mismo servicio en otro dispositivo con tus credenciales para comprobar que se conserva.
 
 Se usa TLS con verificación de certificados por defecto. Solo para una conexión dentro de una red privada o una base local de pruebas sin TLS se puede indicar `sslmode=disable`. No desactives TLS para conexiones públicas. El controlador mantiene un máximo de tres conexiones. Guarda copias de respaldo antes de cambiar de base: no hay migración automática entre SQLite y PostgreSQL.
 
 `GET /api/library` recupera la biblioteca, `PUT /api/library` la actualiza con una revisión esperada y `POST /api/knowledge` recibe `{ "query": "¿Qué es una variable?" }`. Las tres rutas requieren autenticación cuando está configurada. Una revisión desactualizada devuelve HTTP 409 para evitar perder cambios hechos en otro dispositivo. Recarga antes de reintentar.
+
+## Corregir lo que la red entendió
+
+**Entendiste mal** aparece debajo de las nuevas respuestas del modo local. Es distinto de **Enseñar una respuesta mejor**: este último guarda una respuesta literal para la biblioteca; el nuevo botón guarda qué intención debería reconocer la red para tu frase.
+
+1. Pulsa **Entendiste mal**, revisa la frase y selecciona lo que querías pedir entre las 19 intenciones disponibles. Puedes resumir la frase antes de guardar; el máximo es de 1000 caracteres.
+2. La corrección se guarda en la base de datos como **Pendiente**. En **Mejorar mi comprensión**, comprueba que la etiqueta sea correcta y pulsa **Aprobar** o **Descartar**. También puedes editar o eliminar la corrección; editarla la devuelve a Pendiente.
+3. **Exportar aprobadas para entrenar** descarga solo las aprobadas. Si una misma frase tiene dos etiquetas aprobadas distintas, exige resolver ese conflicto. Se admiten hasta 200 correcciones guardadas.
+
+Requiere la misma base de datos de la biblioteca: SQLite en desarrollo, PostgreSQL mediante `DATABASE_URL` en Render. Si falta la conexión, el chat funciona y el panel indica el requisito. No se capturan conversaciones enteras: guardamos la frase que revisaste, la intención interpretada, la intención que elegiste y el estado de revisión. El acceso usa la misma contraseña de la web.
+
+**Guardar, aprobar o exportar no reentrena la red ni mejora automáticamente la próxima respuesta.** No admite añadir intenciones completamente nuevas desde la web: para eso hay que ampliar el conjunto de datos y sus comportamientos en el código. Las correcciones de comprensión están en una tabla independiente y no se borran al iniciar otro chat o restaurar una copia de la biblioteca. El respaldo JSON de la biblioteca no incluye estas revisiones; utiliza además la exportación de aprobadas y las copias de tu base de datos.
+
+### Preparar un entrenamiento revisado
+
+Guarda el archivo exportado dentro de `data/`, que está excluido de Git, y ejecuta desde la carpeta del proyecto:
+
+```sh
+npm run prepare-training -- data/jarvis-correcciones-revisadas.json
+```
+
+Esto crea `data/reviewed-intents.json`, combinando ejemplos aprobados con los datos originales. Omite duplicados con la misma etiqueta y rechaza conflictos, etiquetas desconocidas, ejemplos sin aprobación y frases pertenecientes a `evaluation.json` o `challenge.json`. No altera los pesos, los datos originales ni archivos existentes. Si ya existe el archivo de salida, elige otro con `--out data/reviewed-intents-2.json`.
+
+Revisa el conjunto resultante antes de entrenar:
+
+```sh
+npm run train -- --data data/reviewed-intents.json
+npm test
+```
+
+En PowerShell puedes sustituir `npm` por `npm.cmd`. El entrenamiento sigue comprobando el ajuste de los ejemplos y la regresión anterior antes de reemplazar los pesos; revisa también los errores y métricas de `neural/report.json`, y conserva el cambio solo si mejora las tareas que necesitas. Reinicia el servidor o despliega el modelo revisado para usarlo. La web no ejecuta estos comandos ni publica los pesos automáticamente. `npm run train` sin `--data` vuelve a usar el conjunto original de `neural/intents.json`.
+
+Los archivos exportados, el conjunto ampliado y los pesos entrenados pueden revelar información de tus ejemplos. No introduzcas contraseñas o información sensible, ni subas datos privados a GitHub. Estos pasos permiten aprendizaje supervisado a partir de correcciones; no equivalen a aprender de cualquier mensaje sin revisión.
+
+`GET /api/feedback` devuelve las correcciones y las intenciones disponibles. `PUT /api/feedback` guarda una lista validada con `expectedRevision`; una revisión desactualizada devuelve HTTP 409. Las rutas están protegidas por la misma autenticación y comprobación de origen que la biblioteca. Las revisiones de biblioteca y correcciones son independientes.
 
 ## Desarrollar prototipos de código
 

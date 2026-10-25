@@ -1,7 +1,10 @@
 import { readFile, writeFile, rename } from 'node:fs/promises';
 import { train, predict } from '../neural/network.js';
+import { resolve } from 'node:path';
 const read = async name => JSON.parse(await readFile(new URL(`../neural/${name}`, import.meta.url), 'utf8'));
-const intents = await read('intents.json');
+const args = process.argv.slice(2);
+if (args.length && (args.length !== 2 || args[0] !== '--data' || !args[1])) throw new Error('Uso: npm run train [-- --data archivo.json]');
+const intents = args.length ? JSON.parse(await readFile(resolve(args[1]), 'utf8')) : await read('intents.json');
 const model = train(intents);
 const samples = intents.flatMap(i => i.examples.map(text => ({ text, intent: i.id })));
 const evaluate = cases => cases.map(({ text, intent }) => ({ text, expected: intent, predicted: predict(model, text).intent }));

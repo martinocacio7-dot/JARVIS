@@ -1,5 +1,6 @@
 import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
 import { projectView } from './project-ui.js';
+import { initFeedback, reportMisunderstanding } from './feedback-ui.js';
 
 const $ = selector => document.querySelector(selector);
 let messages = [];
@@ -40,6 +41,10 @@ function render() {
       correction.textContent = 'Enseñar una respuesta mejor';
       correction.addEventListener('click', () => editCorrection(messages[index - 1].content));
       article.append(correction);
+      if (typeof message.intent === 'string') {
+        const feedback = document.createElement('button'); feedback.type = 'button'; feedback.className = 'correct-answer'; feedback.textContent = 'Entendiste mal';
+        feedback.addEventListener('click', () => reportMisunderstanding(messages[index - 1].content, message.intent)); article.append(feedback);
+      }
     }
     return article;
   }));
@@ -64,7 +69,7 @@ async function send(event) {
     const response = await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
-    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}) });
+    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
   } catch (error) {
     messages.pop();
@@ -84,6 +89,7 @@ $('#prompt').addEventListener('keydown', event => { if (event.key === 'Enter' &&
 $('#new-chat').addEventListener('click', () => { if (busy) return; messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });
 document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => { $('#prompt').value = button.dataset.prompt; $('#prompt').focus(); }));
 initLibrary();
+initFeedback();
 render();
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
   $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : `● Red local v${data.neural.version} · ${data.neural.intents} intenciones`;

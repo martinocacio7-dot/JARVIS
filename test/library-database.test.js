@@ -8,15 +8,20 @@ import { createLibraryDatabase, RevisionConflict } from '../knowledge/database.j
 async function exercise(options) {
   const first = createLibraryDatabase(options);
   const saved = { version: 1, documents: [{ id: 'a', title: 'Privado', content: 'Datos guardados por el usuario.' }], corrections: [{ question: '¿Qué estudio?', answer: 'Informática' }] };
+  const feedback = [{ id: 'db-feedback', text: 'Quiero comenzar a estudiar código', intent: 'programacion', predictedIntent: 'desconocido', status: 'pending' }];
   try {
     const initial = await first.read();
     const written = await first.write(saved, initial.revision);
     assert.equal(written.revision, initial.revision + 1);
     await assert.rejects(first.write({ ...saved, corrections: [] }, initial.revision), RevisionConflict);
+    const previous = await first.readFeedback();
+    await first.writeFeedback(feedback, previous.revision);
+    await assert.rejects(first.writeFeedback([], previous.revision), RevisionConflict);
   } finally { await first.close(); }
   const second = createLibraryDatabase(options);
   try {
     assert.deepEqual((await second.read()).library, saved);
+    assert.deepEqual((await second.readFeedback()).feedback, feedback);
     const revision = (await second.read()).revision;
     const writes = await Promise.allSettled([second.write({ ...saved, corrections: [] }, revision), second.write({ ...saved, documents: [] }, revision)]);
     assert.equal(writes.filter(r => r.status === 'fulfilled').length, 1);
