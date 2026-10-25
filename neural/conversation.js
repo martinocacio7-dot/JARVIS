@@ -28,7 +28,7 @@ const topics = {
   aprendizaje_ia: {
     name: 'inteligencia artificial',
     steps: [
-      'Ejemplo: «hola» activa una entrada de mi red. Cada neurona de salida suma los pesos de las palabras presentes. Softmax transforma esas sumas en puntuaciones relativas para cada intención.',
+      'Ejemplo: «hola» activa características de palabras, pares de palabras y fragmentos de texto. Mi capa oculta combina esas entradas con una función tanh. La capa de salida usa softmax para puntuar las intenciones.',
       'Entrenar consiste en comparar la intención predicha con la etiqueta correcta y ajustar los pesos mediante descenso de gradiente. Aquí usamos ejemplos escritos en neural/intents.json.',
       'Para comprobar el aprendizaje, prueba frases que no estén en los ejemplos. Acertar las frases de entrenamiento no garantiza entender frases nuevas; tampoco equivale a generar lenguaje libre.'
     ]
@@ -59,7 +59,12 @@ export function respond(model, messages) {
       result = { intent: 'guardar_nombre', reply: `Encantado, ${name}. Usaré tu nombre mientras esté en el historial reciente de esta conversación.` };
     } else {
       result = predict(model, text);
-      if (topics[result.intent]) {
+      if (result.intent === 'cancelar') {
+        topic = null;
+        step = 0;
+      } else if (result.intent === 'memoria') {
+        result.reply = `En el historial reciente: ${name ? `tu nombre es ${name}` : 'no tengo un nombre guardado'}; ${topic ? `el tema es ${topics[topic].name}` : 'no hay un tema activo'}. La biblioteca guarda documentos por separado cuando su base de datos está conectada. Conversar no cambia mis pesos.`;
+      } else if (topics[result.intent]) {
         topic = result.intent;
         step = 0;
       } else if (result.intent === 'consultar_nombre' && name) {

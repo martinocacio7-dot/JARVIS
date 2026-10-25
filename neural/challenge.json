@@ -1,0 +1,90 @@
+[
+  {
+    "text": "hola jarvis que tal",
+    "intent": "saludo"
+  },
+  {
+    "text": "graciass por tu ayuda",
+    "intent": "gracias"
+  },
+  {
+    "text": "quiero aprender programasion",
+    "intent": "programacion"
+  },
+  {
+    "text": "quiero organizar mis tareass",
+    "intent": "organizacion"
+  },
+  {
+    "text": "explicame como funciona una red neuronaal",
+    "intent": "aprendizaje_ia"
+  },
+  {
+    "text": "continuaa por favor",
+    "intent": "continuar"
+  },
+  {
+    "text": "repitee eso por favor",
+    "intent": "repetir"
+  },
+  {
+    "text": "recuerdas mi nombree",
+    "intent": "consultar_nombre"
+  },
+  {
+    "text": "que puedo desarrollar contigo",
+    "intent": "desarrollo_codigo"
+  },
+  {
+    "text": "como te puedo entrenar",
+    "intent": "entrenar_red"
+  },
+  {
+    "text": "que recuerdas de esta conversacion",
+    "intent": "memoria"
+  },
+  {
+    "text": "como consulto mis propios apuntes",
+    "intent": "biblioteca"
+  },
+  {
+    "text": "cuales son tus limitaciones actuales",
+    "intent": "limites"
+  },
+  {
+    "text": "quiero aprender programacion desde el comienzo",
+    "intent": "programacion"
+  },
+  {
+    "text": "necesito organizar mejor mi dia",
+    "intent": "organizacion"
+  },
+  {
+    "text": "que son las redes neuronales",
+    "intent": "aprendizaje_ia"
+  },
+  {
+    "text": "explicame una receta de lentejas",
+    "intent": "desconocido"
+  },
+  {
+    "text": "reserva billetes para paris",
+    "intent": "desconocido"
+  },
+  {
+    "text": "diagnostica mi dolor de cabeza",
+    "intent": "desconocido"
+  },
+  {
+    "text": "desarrolla un compilador de rust",
+    "intent": "desconocido"
+  },
+  {
+    "text": "no quiero continuar con eso",
+    "intent": "cancelar"
+  },
+  {
+    "text": "quiero continuar con eso",
+    "intent": "continuar"
+  }
+]

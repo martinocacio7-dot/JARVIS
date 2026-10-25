@@ -20,6 +20,18 @@ function render() {
     if (message.role === 'assistant') {
       const project = projectView(message.project);
       if (project) article.append(project);
+      if (Array.isArray(message.suggestions)) {
+        const choices = document.createElement('div');
+        choices.className = 'suggested-intents';
+        for (const text of message.suggestions.slice(0, 2)) {
+          if (typeof text !== 'string' || text.length > 200) continue;
+          const button = document.createElement('button');
+          button.type = 'button'; button.textContent = text;
+          button.addEventListener('click', () => { $('#prompt').value = text; $('#prompt').focus(); });
+          choices.append(button);
+        }
+        article.append(choices);
+      }
     }
     if (message.role === 'assistant' && messages[index - 1]?.role === 'user') {
       const correction = document.createElement('button');
@@ -52,7 +64,7 @@ async function send(event) {
     const response = await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
-    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}) });
+    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
   } catch (error) {
     messages.pop();
@@ -74,6 +86,6 @@ document.querySelectorAll('[data-prompt]').forEach(button => button.addEventList
 initLibrary();
 render();
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
-  $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : '● Red neuronal local';
-  if (data.mode === 'local') $('#notice').textContent = 'Red local activa. Prueba «Me llamo Miguel» y «Quiero aprender programación»; después, «Continúa». Recuerdo el historial reciente y uso respuestas predefinidas.';
+  $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : `● Red local v${data.neural.version} · ${data.neural.intents} intenciones`;
+  if (data.mode === 'local') $('#notice').textContent = `Red propia: ${data.neural.hiddenSize} neuronas ocultas y ${data.neural.examples} ejemplos. Prueba «Qué recuerdas de mí», «Cómo puedo entrenarte» o «Cuáles son tus límites». Todavía uso respuestas programadas.`;
 }).catch(() => { $('#status').textContent = 'Sin conexión'; });

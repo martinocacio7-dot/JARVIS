@@ -13,7 +13,13 @@
       "hola como estas",
       "buen dia",
       "hola de nuevo",
-      "buenas"
+      "buenas",
+      "hola jarvis como te va",
+      "que tal estas",
+      "buenas jarvis",
+      "hola que tal",
+      "hey como estas",
+      "hola otra vez"
     ],
     "reply": "Hola, soy JARVIS. Puedo guiarte en programación, proyectos, organización y conceptos de IA. También puedes decirme «Me llamo Miguel» para usar tu nombre en esta conversación."
   },
@@ -29,7 +35,13 @@
       "dime quien eres",
       "hablame de ti",
       "cual es tu identidad",
-      "tu eres jarvis"
+      "tu eres jarvis",
+      "quien es jarvis",
+      "dime tu nombre",
+      "hablame de tu identidad",
+      "explica que eres",
+      "como se llama este asistente",
+      "quien me esta respondiendo"
     ],
     "reply": "Soy JARVIS. Mi red neuronal local reconoce intenciones y elige respuestas predefinidas. Uso reglas para recordar tu nombre y continuar un tema dentro del historial reciente. No genero texto libre ni cambio mis pesos mientras conversamos."
   },
@@ -45,7 +57,13 @@
       "dime que sabes hacer",
       "como puedo usarte",
       "dame ayuda",
-      "que sabes hacer jarvis"
+      "que sabes hacer jarvis",
+      "dame una mano",
+      "en que me puedes ayudar",
+      "muestrame las opciones",
+      "que puedo hacer contigo",
+      "necesito orientacion",
+      "por donde empiezo contigo"
     ],
     "reply": "Puedo guiarte en programación, proyectos, organización e inteligencia artificial. También puedo crear prototipos web con mi generador local: escribe «Crea un inventario», «Crea una lista de tareas» o «Hazme una calculadora». Puedes ver y descargar su código. Para continuar una guía escribe «Continúa». Uso respuestas y estructuras programadas; todavía no desarrollo sistemas arbitrarios. La biblioteca permite consultar tus apuntes y guardar respuestas enseñadas cuando su base de datos está conectada."
   },
@@ -61,7 +79,13 @@
       "te doy las gracias",
       "muchisimas gracias",
       "eso me ayuda gracias",
-      "perfecto gracias"
+      "perfecto gracias",
+      "gracias por explicarlo",
+      "te agradezco la explicacion",
+      "muchas gracias jarvis",
+      "estuvo bien gracias",
+      "gracias por responder",
+      "agradezco tu ayuda"
     ],
     "reply": "¡Con gusto! Aquí estoy para ayudarte."
   },
@@ -77,7 +101,13 @@
       "hasta manana",
       "buenas noches me voy",
       "hasta otra",
-      "chau jarvis"
+      "chau jarvis",
+      "nos vemos luego",
+      "adios jarvis",
+      "hasta la proxima",
+      "me despido",
+      "terminamos por hoy",
+      "hablamos manana"
     ],
     "reply": "Hasta pronto. Podemos continuar cuando quieras."
   },
@@ -93,7 +123,13 @@
       "quiero estudiar codigo",
       "explicame programacion desde cero",
       "necesito aprender javascript",
-      "iniciar en programacion"
+      "iniciar en programacion",
+      "quiero comenzar con programacion",
+      "me gustaria aprender a programar",
+      "ensename javascript desde cero",
+      "necesito una guia de programacion",
+      "como puedo aprender a escribir codigo",
+      "deseo estudiar programacion"
     ],
     "reply": "Para empezar a programar, elige un objetivo pequeño: por ejemplo, una lista de tareas. Usaremos JavaScript. Escribe «Continúa» para ver el siguiente paso."
   },
@@ -109,7 +145,13 @@
       "tengo una idea para un proyecto",
       "ayuda con mi proyecto",
       "quiero construir una aplicacion",
-      "iniciar un proyecto"
+      "iniciar un proyecto",
+      "tengo un proyecto en mente",
+      "deseo planificar una aplicacion",
+      "quiero preparar un proyecto",
+      "ayudame a definir mi idea",
+      "necesito desarrollar mi proyecto personal",
+      "como convierto mi idea en un proyecto"
     ],
     "reply": "Empieza por definir una persona y un problema: «Quiero ayudar a estudiantes a organizar tareas». Ese será el objetivo de tu proyecto. Escribe «Continúa» para avanzar."
   },
@@ -125,7 +167,13 @@
       "quiero planificar mi dia",
       "ordena mis tareas",
       "organizar mi agenda",
-      "quiero ser mas organizado"
+      "quiero ser mas organizado",
+      "quiero mejorar mi organizacion",
+      "ayudame a ordenar mi dia",
+      "necesito organizar mis actividades",
+      "ayudame a distribuir mi tiempo",
+      "tengo demasiadas tareas pendientes",
+      "quiero administrar mi tiempo"
     ],
     "reply": "Escribe tus tareas pendientes en una lista y marca cuáles tienen fecha límite. Por ahora puedo darte una guía, no guardar tareas ni crear alarmas. Escribe «Continúa» para seguir."
   },
@@ -141,7 +189,13 @@
       "explica el entrenamiento de una red",
       "ensename sobre redes neuronales",
       "que son los pesos de una neurona",
-      "quiero entender la ia"
+      "quiero entender la ia",
+      "como funcionan las redes neuronales",
+      "explicame que es la inteligencia artificial",
+      "que hace una neurona artificial",
+      "como se ajustan los pesos neuronales",
+      "explica las redes neuronales desde cero",
+      "como se entrena una inteligencia artificial"
     ],
     "reply": "Una neurona artificial combina entradas con pesos y un sesgo. Al entrenar, ajustamos esos valores para reducir errores. En JARVIS, las entradas representan palabras y las salidas representan intenciones. Escribe «Continúa» para ver un ejemplo."
   },
@@ -159,7 +213,13 @@
       "como sigo",
       "avancemos",
       "que sigue",
-      "dime el siguiente paso"
+      "dime el siguiente paso",
+      "quiero continuar",
+      "podemos seguir",
+      "siguiente por favor",
+      "continua explicando",
+      "sigamos con el siguiente paso",
+      "muestrame el proximo paso"
     ],
     "reply": "Dime primero qué tema quieres trabajar: programación, proyectos, organización o inteligencia artificial."
   },
@@ -173,7 +233,13 @@
       "cual era el tema",
       "que estabamos hablando",
       "recuerda nuestro tema",
-      "cual es el tema actual"
+      "cual es el tema actual",
+      "recuerdame de que hablamos",
+      "en que tema estamos",
+      "me recuerdas el tema anterior",
+      "sobre que estabamos conversando",
+      "quiero recuperar el tema",
+      "que tema elegimos"
     ],
     "reply": "Todavía no hemos elegido un tema en el historial reciente."
   },
@@ -187,7 +253,13 @@
       "sabes como me llamo",
       "te acuerdas de mi nombre",
       "que nombre te dije",
-      "recuerda mi nombre"
+      "recuerda mi nombre",
+      "cual nombre recuerdas",
+      "puedes decir mi nombre",
+      "me recuerdas como me llamo",
+      "cual nombre te mencione",
+      "dime como me llamo",
+      "recuerdas como me presente"
     ],
     "reply": "Todavía no conozco tu nombre en esta conversación. Puedes decir «Me llamo Miguel»."
   },
@@ -201,8 +273,122 @@
       "repite lo anterior",
       "otra vez por favor",
       "repiteme eso",
-      "vuelve a decirlo"
+      "vuelve a decirlo",
+      "repite la ultima explicacion",
+      "vuelve a repetirlo",
+      "no entendi repite",
+      "quiero escuchar lo anterior",
+      "repite la respuesta anterior",
+      "dime otra vez lo mismo"
     ],
     "reply": "Todavía no tengo una respuesta anterior para repetir."
+  },
+  {
+    "id": "desarrollo_codigo",
+    "examples": [
+      "que codigo puedes crear",
+      "puedes desarrollar aplicaciones",
+      "que programas puedes generar",
+      "como genero un inventario",
+      "quiero descargar un proyecto",
+      "como creas codigo",
+      "puedes escribir codigo propio",
+      "explicame tu generador de codigo",
+      "que tipos de aplicaciones creas",
+      "como hago una calculadora contigo",
+      "que proyectos de codigo sabes hacer",
+      "como descargo el codigo generado"
+    ],
+    "reply": "Mi generador local crea tres prototipos web: tareas, inventario y calculadora. Prueba «Crea un inventario» en el chat o selecciona «Desarrollar código local». Puedes revisar y descargar el HTML. Son estructuras programadas: todavía no desarrollo aplicaciones arbitrarias ni conecto esos prototipos a PostgreSQL."
+  },
+  {
+    "id": "entrenar_red",
+    "examples": [
+      "como puedo entrenarte",
+      "quiero mejorar tu entrenamiento",
+      "como enseno nuevas intenciones",
+      "como agrego ejemplos a la red",
+      "como entrenar la neurona",
+      "quiero entrenar mi modelo",
+      "como se actualizan tus pesos",
+      "que necesito para entrenarte",
+      "donde estan los datos de entrenamiento",
+      "como aprendes nuevas intenciones",
+      "como reentreno la red neuronal",
+      "quiero ensenarte mas frases"
+    ],
+    "reply": "Para entrenar mi red, añade ejemplos y respuestas revisadas en neural/intents.json. Ejecuta npm run train y npm test, y reinicia el servidor. Los pesos se guardan en neural/model.json. El chat y las respuestas enseñadas de la biblioteca no cambian mis pesos automáticamente."
+  },
+  {
+    "id": "memoria",
+    "examples": [
+      "que recuerdas de mi",
+      "como funciona tu memoria",
+      "que recuerdas ahora",
+      "que sabes de nuestra conversacion",
+      "tienes memoria permanente",
+      "recuerdas lo que te dije",
+      "como guardas el contexto",
+      "que puedes recordar",
+      "recuerdas mis conversaciones",
+      "que datos recuerdas de este chat",
+      "puedes recordar el nombre y el tema",
+      "cuanto dura el contexto"
+    ],
+    "reply": "Puedo usar el nombre y el tema que aparecen en el historial reciente. La biblioteca es independiente y guarda documentos y respuestas enseñadas en una base de datos cuando está configurada. No aprendo los pesos de mi red conversando ni comparto automáticamente el historial entre dispositivos."
+  },
+  {
+    "id": "biblioteca",
+    "examples": [
+      "como cargo mis documentos",
+      "quiero consultar mis apuntes",
+      "como uso la biblioteca",
+      "donde guardo mis documentos",
+      "quiero ensenarte una respuesta",
+      "como corrijo tus respuestas",
+      "como importo apuntes",
+      "puedo cargar archivos de texto",
+      "como guardo una respuesta aprendida",
+      "puedes buscar en mis documentos",
+      "como consulto los archivos que subi",
+      "como exporto mi biblioteca"
+    ],
+    "reply": "Abre «Biblioteca privada», conecta la base de datos si hace falta y carga archivos .txt o .md. Activa «Consultar biblioteca» para recuperar fragmentos con su fuente. Puedes enseñar respuestas, editarlas, borrarlas y exportar copias. La búsqueda es léxica: no verifica la verdad del contenido ni entrena mis pesos."
+  },
+  {
+    "id": "limites",
+    "examples": [
+      "que no puedes hacer",
+      "cuales son tus limites",
+      "cuales son tus limitaciones",
+      "puedes pensar por tu cuenta",
+      "puedes responder cualquier cosa",
+      "eres igual que chatgpt",
+      "que tan inteligente eres",
+      "entiendes todo lo que digo",
+      "puedes buscar en google",
+      "puedes generar cualquier programa",
+      "puedes razonar sobre cualquier tema",
+      "tienes inteligencia general"
+    ],
+    "reply": "Mi red reconoce intenciones aprendidas y usa respuestas y guías programadas. La biblioteca recupera texto y el generador crea tres tipos de prototipo. No tengo inteligencia general, no busco en Google, no verifico automáticamente fuentes y no genero conversaciones o programas arbitrarios. Una red mayor no elimina esos límites."
+  },
+  {
+    "id": "cancelar",
+    "examples": [
+      "no quiero continuar",
+      "no sigas con ese tema",
+      "cancela el tema",
+      "dejemos ese tema",
+      "quiero detener la explicacion",
+      "para de explicar",
+      "ya no quiero aprender programacion",
+      "no quiero seguir con eso",
+      "deten la guia",
+      "cancela la explicacion",
+      "no sigas explicando",
+      "quiero abandonar ese tema"
+    ],
+    "reply": "Dejamos ese tema. Puedes elegir otro cuando quieras."
   }
 ]

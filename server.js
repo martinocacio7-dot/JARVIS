@@ -21,7 +21,7 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'");
     if (!authorize(req, res)) return;
-    if (req.method === 'GET' && req.url === '/api/status') return json(200, { mode: apiKey ? 'ai' : 'local', model: apiKey ? model : localModel.architecture });
+    if (req.method === 'GET' && req.url === '/api/status') return json(200, { mode: apiKey ? 'ai' : 'local', model: apiKey ? model : localModel.architecture, neural: { version: localModel.version, hiddenSize: localModel.hiddenSize, intents: localModel.intents.length, examples: localModel.training.examples } });
     if (req.method === 'GET' && req.url === '/api/library') {
       try { return json(200, await database.read()); }
       catch { return json(503, { error: database.kind === 'unconfigured' ? 'Configura DATABASE_URL en Render para activar la biblioteca persistente.' : 'No se pudo acceder a la base de datos. Vuelve a intentarlo.' }); }

@@ -1,0 +1,106 @@
+{
+  "commit": "fe637303bead69554b82c2a413c02ab5ec3849b7",
+  "architecture": "bag-of-words-softmax",
+  "results": [
+    {
+      "text": "hola jarvis que tal",
+      "intent": "saludo",
+      "before": "saludo"
+    },
+    {
+      "text": "graciass por tu ayuda",
+      "intent": "gracias",
+      "before": "desconocido"
+    },
+    {
+      "text": "quiero aprender programasion",
+      "intent": "programacion",
+      "before": "desconocido"
+    },
+    {
+      "text": "quiero organizar mis tareass",
+      "intent": "organizacion",
+      "before": "organizacion"
+    },
+    {
+      "text": "explicame como funciona una red neuronaal",
+      "intent": "aprendizaje_ia",
+      "before": "aprendizaje_ia"
+    },
+    {
+      "text": "continuaa por favor",
+      "intent": "continuar",
+      "before": "desconocido"
+    },
+    {
+      "text": "repitee eso por favor",
+      "intent": "repetir",
+      "before": "desconocido"
+    },
+    {
+      "text": "recuerdas mi nombree",
+      "intent": "consultar_nombre",
+      "before": "desconocido"
+    },
+    {
+      "text": "que puedo desarrollar contigo",
+      "intent": "desarrollo_codigo",
+      "before": "desconocido"
+    },
+    {
+      "text": "como te puedo entrenar",
+      "intent": "entrenar_red",
+      "before": "desconocido"
+    },
+    {
+      "text": "que recuerdas de esta conversacion",
+      "intent": "memoria",
+      "before": "desconocido"
+    },
+    {
+      "text": "como consulto mis propios apuntes",
+      "intent": "biblioteca",
+      "before": "desconocido"
+    },
+    {
+      "text": "cuales son tus limitaciones actuales",
+      "intent": "limites",
+      "before": "ayuda"
+    },
+    {
+      "text": "quiero aprender programacion desde el comienzo",
+      "intent": "programacion",
+      "before": "programacion"
+    },
+    {
+      "text": "necesito organizar mejor mi dia",
+      "intent": "organizacion",
+      "before": "organizacion"
+    },
+    {
+      "text": "que son las redes neuronales",
+      "intent": "aprendizaje_ia",
+      "before": "desconocido"
+    },
+    {
+      "text": "explicame una receta de lentejas",
+      "intent": "desconocido",
+      "before": "desconocido"
+    },
+    {
+      "text": "reserva billetes para paris",
+      "intent": "desconocido",
+      "before": "desconocido"
+    },
+    {
+      "text": "diagnostica mi dolor de cabeza",
+      "intent": "desconocido",
+      "before": "desconocido"
+    },
+    {
+      "text": "desarrolla un compilador de rust",
+      "intent": "desconocido",
+      "before": "desconocido"
+    }
+  ]
+}

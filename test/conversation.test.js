@@ -32,3 +32,9 @@ test('repetir conserva el paso y olvidar reinicia nombre y tema sin reutilizar r
   assert.match(chat(...previous, 'Olvida el contexto', 'Continúa').reply, /Dime primero/);
   assert.match(chat(...previous, 'Olvida el contexto', 'Repite').reply, /He reiniciado/);
 });
+test('consulta su contexto y cancela una guía sin perder el nombre', () => {
+  assert.match(chat('Me llamo Miguel', 'Quiero aprender programación', 'Qué recuerdas de mí').reply, /Miguel.*programación/);
+  assert.equal(chat('Quiero aprender programación', 'No quiero continuar con eso').intent, 'cancelar');
+  assert.match(chat('Me llamo Miguel', 'Quiero aprender programación', 'No quiero continuar con eso', 'Qué recuerdas de mí').reply, /Miguel.*no hay un tema activo/);
+  assert.match(chat('Quiero aprender programación', 'No quiero continuar con eso', 'Continúa').reply, /Dime primero/);
+});

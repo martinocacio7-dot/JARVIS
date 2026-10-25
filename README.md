@@ -31,7 +31,7 @@ Repite
 Olvida el contexto
 ```
 
-Reconoce 13 intenciones y ofrece guías de tres pasos sobre programación, proyectos, organización e inteligencia artificial. «Continúa» avanza dentro del tema activo; «Repite» repite la última respuesta sin avanzar. Al cambiar de tema empieza una guía nueva. Sus explicaciones y ejemplos son predefinidos: no ejecuta código, organiza tu agenda ni resuelve cualquier pregunta.
+Reconoce 19 intenciones y ofrece guías de tres pasos sobre programación, proyectos, organización e inteligencia artificial. «Continúa» avanza dentro del tema activo; «Repite» repite la última respuesta sin avanzar. Al cambiar de tema empieza una guía nueva. Sus explicaciones y ejemplos son predefinidos: no ejecuta código, organiza tu agenda ni resuelve cualquier pregunta.
 
 La memoria usa reglas y se reconstruye únicamente desde los mensajes del usuario incluidos en cada petición. Recuerda el nombre indicado con «Me llamo…», «Mi nombre es…» o «Puedes llamarme…». No modifica los pesos del modelo durante el chat. «Olvida el contexto» reinicia nombre y tema para los siguientes mensajes, pero deja el historial visible; «Nueva conversación» borra el historial local de la aplicación.
 
@@ -129,12 +129,21 @@ Para activar esta misma protección en otro alojamiento, define `NODE_ENV=produc
 
 ## Red neuronal local
 
-`neural/network.js` implementa una red de una capa: 170 características de palabras y 13 neuronas de salida softmax en el conjunto incluido. Aprende pesos y sesgos mediante descenso de gradiente y entropía cruzada durante 600 épocas. No usa dependencias ni servicios externos.
+`neural/network.js` implementa la versión 2 de la red propia: 1005 características de entrada, una capa oculta de 32 neuronas con activación tanh y 19 salidas softmax. Tiene 32 819 parámetros aprendidos por retropropagación y descenso de gradiente durante 450 épocas. No usa bibliotecas de IA, modelos descargados ni servicios externos para clasificar.
 
-El conjunto de 128 frases en `neural/intents.json` cubre saludo, identidad, ayuda, agradecimiento, despedida, programación, proyecto, organización, aprendizaje de IA, continuación, consulta de tema, consulta de nombre y repetición. Las respuestas están escritas en ese archivo y en las guías de `neural/conversation.js`; el modelo aprende a elegir la intención. La capa de conversación aplica las reglas de contexto y pasos sobre esa predicción.
+Las entradas incluyen palabras, pares consecutivos de palabras y 128 posiciones para trigramas de caracteres. La red puede combinar características mediante la capa oculta, en lugar de usar solo una clasificación lineal. La preparación del texto normaliza acentos e intenta corregir erratas de una letra cuando encuentra una única palabra candidata; esta regla no es aprendizaje neuronal y no corrige cualquier error.
 
-Si menos del 60 % de las palabras informativas son conocidas o la puntuación softmax es menor que 0.75, responde que todavía no sabe. Se excluyen palabras comunes al calcular esa cobertura. Son heurísticas: incluso con una puntuación alta puede equivocarse, y no comprenden la semántica de una pregunta arbitraria.
+El conjunto de 278 frases en `neural/intents.json` cubre 19 intenciones: las anteriores más desarrollo de código, entrenamiento de la red, memoria, biblioteca, límites y cancelación. La consulta de memoria informa el nombre y tema disponibles. Cancelar una guía libera el tema sin borrar el nombre. Las respuestas siguen siendo escritas en el conjunto de datos y en `neural/conversation.js`; la red no genera lenguaje libre ni código arbitrario.
 
-Para enseñar nuevas intenciones, añade ejemplos variados, un identificador único y una respuesta al conjunto de datos. Ejecuta `npm run train`, después `npm test` y reinicia `npm start`. El entrenamiento guarda los pesos en `neural/model.json`; el servidor carga ese archivo al arrancar. Se incluye el modelo entrenado para arrancar sin repetir el entrenamiento. Si deseas un tema con pasos propios, define su guía en `neural/conversation.js` usando el identificador de la intención.
+Si menos del 60 % de las palabras informativas son conocidas, la puntuación máxima es menor que 0.75 o su diferencia con la segunda opción es menor que 0.2, el modelo no acepta la intención. Cuando hay suficiente vocabulario conocido, puede ofrecer dos ejemplos para aclarar la petición mediante botones. Estas puntuaciones no son una medida calibrada de certeza o veracidad.
 
-`neural/evaluation.json` contiene 19 frases reservadas, incluidas preguntas fuera del alcance. No se utiliza para ajustar pesos. El entrenamiento informa por separado los aciertos de entrenamiento y los de esta evaluación, y devuelve un error si la evaluación falla. Las pruebas también comprueban nombres, cambios de tema, pasos, reinicio de contexto, aislamiento entre conversaciones y el flujo HTTP completo sin solicitudes externas. Este conjunto pequeño no demuestra capacidad conversacional general.
+Para enseñar nuevas intenciones, añade ejemplos variados, un identificador único y una respuesta al conjunto de datos. Ejecuta `npm run train`, después `npm test` y reinicia `npm start`. El entrenamiento guarda los pesos en `neural/model.json` y un reporte en `neural/report.json`. No reemplaza los pesos si falla la clasificación de los ejemplos de entrenamiento o la evaluación de regresión. El modelo se incluye ya entrenado para arrancar sin repetir ese trabajo. Usa la semilla fija 20261025 para poder reproducir el entrenamiento.
+
+### Qué se midió y qué sigue fallando
+
+- Entrenamiento: 278/278 frases reconocidas; la pérdida bajó de aproximadamente 2.96 a 0.021. Esto solo muestra ajuste al conjunto de entrenamiento.
+- Evaluación anterior (`neural/evaluation.json`): 19/19, sin usar esas frases para actualizar pesos.
+- Desafío ampliado (`neural/challenge.json`): 18/22. El reporte conserva los cuatro errores, incluidas dos erratas y dos formulaciones de capacidades que todavía no reconoce con suficiente seguridad.
+- Comparación con la versión publicada en el commit `fe63730`: pasó de 9/20 a 16/20 en las mismas 20 frases adicionales. Los resultados previos se conservan en `neural/baseline.json`. Se cambiaron tanto la arquitectura como los datos, así que no atribuimos toda la mejora a añadir neuronas.
+
+Son conjuntos pequeños de regresión y desarrollo, no una prueba independiente de comprensión general. Algunas frases nuevas fallarán incluso si parecen sencillas. Tampoco significa que JARVIS piense como una persona. El entrenamiento sigue siendo ligero para un equipo con 8 GB de RAM, pero el tiempo depende de la CPU y de los datos. Las pruebas entrenan una vez y reutilizan el modelo para evitar trabajo duplicado.

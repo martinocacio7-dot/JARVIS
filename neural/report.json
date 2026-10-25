@@ -1,0 +1,138 @@
+{
+  "version": 2,
+  "parameters": 32819,
+  "training": {
+    "correct": 278,
+    "total": 278,
+    "examples": 278,
+    "initialLoss": 2.9616245836071546,
+    "finalLoss": 0.021075651985754486,
+    "seed": 20261025
+  },
+  "regression": {
+    "correct": 19,
+    "total": 19
+  },
+  "challenge": {
+    "correct": 18,
+    "total": 22,
+    "results": [
+      {
+        "text": "hola jarvis que tal",
+        "expected": "saludo",
+        "predicted": "saludo"
+      },
+      {
+        "text": "graciass por tu ayuda",
+        "expected": "gracias",
+        "predicted": "gracias"
+      },
+      {
+        "text": "quiero aprender programasion",
+        "expected": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "quiero organizar mis tareass",
+        "expected": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "explicame como funciona una red neuronaal",
+        "expected": "aprendizaje_ia",
+        "predicted": "aprendizaje_ia"
+      },
+      {
+        "text": "continuaa por favor",
+        "expected": "continuar",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "repitee eso por favor",
+        "expected": "repetir",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "recuerdas mi nombree",
+        "expected": "consultar_nombre",
+        "predicted": "consultar_nombre"
+      },
+      {
+        "text": "que puedo desarrollar contigo",
+        "expected": "desarrollo_codigo",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "como te puedo entrenar",
+        "expected": "entrenar_red",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "que recuerdas de esta conversacion",
+        "expected": "memoria",
+        "predicted": "memoria"
+      },
+      {
+        "text": "como consulto mis propios apuntes",
+        "expected": "biblioteca",
+        "predicted": "biblioteca"
+      },
+      {
+        "text": "cuales son tus limitaciones actuales",
+        "expected": "limites",
+        "predicted": "limites"
+      },
+      {
+        "text": "quiero aprender programacion desde el comienzo",
+        "expected": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "necesito organizar mejor mi dia",
+        "expected": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "que son las redes neuronales",
+        "expected": "aprendizaje_ia",
+        "predicted": "aprendizaje_ia"
+      },
+      {
+        "text": "explicame una receta de lentejas",
+        "expected": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "reserva billetes para paris",
+        "expected": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "diagnostica mi dolor de cabeza",
+        "expected": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "desarrolla un compilador de rust",
+        "expected": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "no quiero continuar con eso",
+        "expected": "cancelar",
+        "predicted": "cancelar"
+      },
+      {
+        "text": "quiero continuar con eso",
+        "expected": "continuar",
+        "predicted": "continuar"
+      }
+    ]
+  },
+  "comparison": {
+    "baselineCommit": "fe637303bead69554b82c2a413c02ab5ec3849b7",
+    "total": 20,
+    "before": 9,
+    "after": 16
+  }
+}
