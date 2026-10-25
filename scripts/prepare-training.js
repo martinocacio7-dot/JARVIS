@@ -12,6 +12,8 @@ if (!args[0] || (args.length > 1 && (args.length !== 3 || args[1] !== '--out' ||
     const base = JSON.parse(await readFile(new URL('../neural/intents.json', import.meta.url), 'utf8'));
     const reserved = [];
     for (const name of ['evaluation.json', 'challenge.json']) reserved.push(...JSON.parse(await readFile(new URL(`../neural/${name}`, import.meta.url), 'utf8')));
+    const generalization = JSON.parse(await readFile(new URL('../neural/generalization.json', import.meta.url), 'utf8'));
+    reserved.push(...generalization.development, ...generalization.test);
     const result = prepareReviewedData(base, input, reserved);
     const output = resolve(args[2] || 'data/reviewed-intents.json');
     // No sobrescribir archivos existentes ni introducir datos privados en Git.

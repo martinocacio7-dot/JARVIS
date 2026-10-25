@@ -1,0 +1,218 @@
+{
+  "note": "Ensayos con los 300 ejemplos previos, sin usar test para escoger arquitectura. No se conservaron: no mejoraron desarrollo (39/50). Tiempos de pared con procesos concurrentes, no comparables a inferencia o entrenamiento aislado.",
+  "baselineDevelopment": {
+    "correct": 39,
+    "total": 50
+  },
+  "experiments": [
+    {
+      "name": "wide",
+      "options": {
+        "hiddenLayers": [
+          64
+        ],
+        "charBuckets": 512,
+        "dropout": 0
+      },
+      "seconds": 69.43408905800001,
+      "training": {
+        "correct": 300,
+        "total": 300,
+        "errors": []
+      },
+      "regression": {
+        "correct": 19,
+        "total": 19,
+        "errors": []
+      },
+      "challenge": {
+        "correct": 21,
+        "total": 22,
+        "errors": [
+          {
+            "text": "que puedo desarrollar contigo",
+            "intent": "desarrollo_codigo",
+            "predicted": "desconocido"
+          }
+        ]
+      },
+      "development": {
+        "correct": 38,
+        "total": 50,
+        "errors": [
+          {
+            "text": "hola que gusto saludarte",
+            "intent": "saludo",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "no se como empezar a usar jarvis",
+            "intent": "ayuda",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "como organizo el desarrollo de una aplicacion",
+            "intent": "proyecto",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "me explicas como aprenden las neuronas artificiales",
+            "intent": "aprendizaje_ia",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "sigamos por favor con la guia",
+            "intent": "continuar",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "me puedes recordar como me llamo",
+            "intent": "consultar_nombre",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "quisiera que me dijeras mi nombre",
+            "intent": "consultar_nombre",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "puedes volver a decir tu respuesta",
+            "intent": "repetir",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "puedes decirme que aplicaciones generas",
+            "intent": "desarrollo_codigo",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "me explicas como agregar ejemplos al entrenamiento",
+            "intent": "entrenar_red",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "que tareas no sabes realizar todavia",
+            "intent": "limites",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "deja de continuar con este tema",
+            "intent": "cancelar",
+            "predicted": "desconocido"
+          }
+        ]
+      },
+      "loss": {
+        "examples": 300,
+        "initialLoss": 2.9953487246758725,
+        "finalLoss": 0.020884404676522684,
+        "seed": 20261025
+      }
+    },
+    {
+      "name": "deep",
+      "options": {
+        "hiddenLayers": [
+          64,
+          32
+        ],
+        "charBuckets": 512,
+        "dropout": 0.05
+      },
+      "seconds": 83.117384051,
+      "training": {
+        "correct": 300,
+        "total": 300,
+        "errors": []
+      },
+      "regression": {
+        "correct": 19,
+        "total": 19,
+        "errors": []
+      },
+      "challenge": {
+        "correct": 20,
+        "total": 22,
+        "errors": [
+          {
+            "text": "que puedo desarrollar contigo",
+            "intent": "desarrollo_codigo",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "como te puedo entrenar",
+            "intent": "entrenar_red",
+            "predicted": "desconocido"
+          }
+        ]
+      },
+      "development": {
+        "correct": 39,
+        "total": 50,
+        "errors": [
+          {
+            "text": "hola que gusto saludarte",
+            "intent": "saludo",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "no se como empezar a usar jarvis",
+            "intent": "ayuda",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "como organizo el desarrollo de una aplicacion",
+            "intent": "proyecto",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "me explicas como aprenden las neuronas artificiales",
+            "intent": "aprendizaje_ia",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "sigamos por favor con la guia",
+            "intent": "continuar",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "quisiera que me dijeras mi nombre",
+            "intent": "consultar_nombre",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "puedes volver a decir tu respuesta",
+            "intent": "repetir",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "puedes decirme que aplicaciones generas",
+            "intent": "desarrollo_codigo",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "me explicas como agregar ejemplos al entrenamiento",
+            "intent": "entrenar_red",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "que tareas no sabes realizar todavia",
+            "intent": "limites",
+            "predicted": "desconocido"
+          },
+          {
+            "text": "deja de continuar con este tema",
+            "intent": "cancelar",
+            "predicted": "desconocido"
+          }
+        ]
+      },
+      "loss": {
+        "examples": 300,
+        "initialLoss": 3.0109299034472072,
+        "finalLoss": 0.01892057278385727,
+        "seed": 20261025
+      }
+    }
+  ]
+}

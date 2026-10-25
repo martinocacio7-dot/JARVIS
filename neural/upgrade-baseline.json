@@ -1,0 +1,740 @@
+{
+  "commit": "d61d1f06534aacd37330e49142a2dfb426f8614e",
+  "sha256": "cd6179c1f73e65080ad8f4f1e54c11b8e5763bc66c1db4b84667ccbac743a73c",
+  "version": 2,
+  "examples": 300,
+  "intents": 20,
+  "summaries": {
+    "regression": {
+      "correct": 19,
+      "total": 19
+    },
+    "challenge": {
+      "correct": 18,
+      "total": 22
+    },
+    "development": {
+      "correct": 39,
+      "total": 50
+    },
+    "test": {
+      "correct": 37,
+      "total": 50
+    }
+  },
+  "results": {
+    "regression": [
+      {
+        "text": "hola buenos dias jarvis",
+        "intent": "saludo",
+        "predicted": "saludo"
+      },
+      {
+        "text": "jarvis quiero aprender a programar",
+        "intent": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "ayudame a organizar mi dia",
+        "intent": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "quiero crear mi primer proyecto",
+        "intent": "proyecto",
+        "predicted": "proyecto"
+      },
+      {
+        "text": "explicame una red neuronal",
+        "intent": "aprendizaje_ia",
+        "predicted": "aprendizaje_ia"
+      },
+      {
+        "text": "continua por favor",
+        "intent": "continuar",
+        "predicted": "continuar"
+      },
+      {
+        "text": "recuerdas como me llamo",
+        "intent": "consultar_nombre",
+        "predicted": "consultar_nombre"
+      },
+      {
+        "text": "dime de que hablabamos",
+        "intent": "recordar_tema",
+        "predicted": "recordar_tema"
+      },
+      {
+        "text": "repite eso por favor",
+        "intent": "repetir",
+        "predicted": "repetir"
+      },
+      {
+        "text": "gracias jarvis por tu ayuda",
+        "intent": "gracias",
+        "predicted": "gracias"
+      },
+      {
+        "text": "hasta luego jarvis",
+        "intent": "despedida",
+        "predicted": "despedida"
+      },
+      {
+        "text": "dime como te llamas jarvis",
+        "intent": "identidad",
+        "predicted": "identidad"
+      },
+      {
+        "text": "jarvis necesito ayuda",
+        "intent": "ayuda",
+        "predicted": "ayuda"
+      },
+      {
+        "text": "explicame la receta de una tortilla",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "quiero reservar un vuelo a quito",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "como reparo el motor de mi coche",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "que temperatura hace en madrid",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "explica termodinamica cuantica",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "hola calcula integrales complejas desconocidas",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      }
+    ],
+    "challenge": [
+      {
+        "text": "hola jarvis que tal",
+        "intent": "saludo",
+        "predicted": "saludo"
+      },
+      {
+        "text": "graciass por tu ayuda",
+        "intent": "gracias",
+        "predicted": "gracias"
+      },
+      {
+        "text": "quiero aprender programasion",
+        "intent": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "quiero organizar mis tareass",
+        "intent": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "explicame como funciona una red neuronaal",
+        "intent": "aprendizaje_ia",
+        "predicted": "aprendizaje_ia"
+      },
+      {
+        "text": "continuaa por favor",
+        "intent": "continuar",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "repitee eso por favor",
+        "intent": "repetir",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "recuerdas mi nombree",
+        "intent": "consultar_nombre",
+        "predicted": "consultar_nombre"
+      },
+      {
+        "text": "que puedo desarrollar contigo",
+        "intent": "desarrollo_codigo",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "como te puedo entrenar",
+        "intent": "entrenar_red",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "que recuerdas de esta conversacion",
+        "intent": "memoria",
+        "predicted": "memoria"
+      },
+      {
+        "text": "como consulto mis propios apuntes",
+        "intent": "biblioteca",
+        "predicted": "biblioteca"
+      },
+      {
+        "text": "cuales son tus limitaciones actuales",
+        "intent": "limites",
+        "predicted": "limites"
+      },
+      {
+        "text": "quiero aprender programacion desde el comienzo",
+        "intent": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "necesito organizar mejor mi dia",
+        "intent": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "que son las redes neuronales",
+        "intent": "aprendizaje_ia",
+        "predicted": "aprendizaje_ia"
+      },
+      {
+        "text": "explicame una receta de lentejas",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "reserva billetes para paris",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "diagnostica mi dolor de cabeza",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "desarrolla un compilador de rust",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "no quiero continuar con eso",
+        "intent": "cancelar",
+        "predicted": "cancelar"
+      },
+      {
+        "text": "quiero continuar con eso",
+        "intent": "continuar",
+        "predicted": "continuar"
+      }
+    ],
+    "development": [
+      {
+        "text": "muy buenos dias jarvis",
+        "intent": "saludo",
+        "predicted": "saludo"
+      },
+      {
+        "text": "hola que gusto saludarte",
+        "intent": "saludo",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "puedes presentarte por favor",
+        "intent": "identidad",
+        "predicted": "identidad"
+      },
+      {
+        "text": "cual es el nombre de este asistente",
+        "intent": "identidad",
+        "predicted": "identidad"
+      },
+      {
+        "text": "no se como empezar a usar jarvis",
+        "intent": "ayuda",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "que cosas me puedes ayudar a hacer",
+        "intent": "ayuda",
+        "predicted": "ayuda"
+      },
+      {
+        "text": "muchas gracias por explicarmelo",
+        "intent": "gracias",
+        "predicted": "gracias"
+      },
+      {
+        "text": "gracias por todo jarvis",
+        "intent": "gracias",
+        "predicted": "gracias"
+      },
+      {
+        "text": "hasta luego que estes bien",
+        "intent": "despedida",
+        "predicted": "despedida"
+      },
+      {
+        "text": "adios seguimos otro dia",
+        "intent": "despedida",
+        "predicted": "despedida"
+      },
+      {
+        "text": "me interesa comenzar a programar",
+        "intent": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "necesito una introduccion a javascript",
+        "intent": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "quiero transformar una idea en proyecto",
+        "intent": "proyecto",
+        "predicted": "proyecto"
+      },
+      {
+        "text": "como organizo el desarrollo de una aplicacion",
+        "intent": "proyecto",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "me ayudas a ordenar mis pendientes del dia",
+        "intent": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "quiero distribuir mejor mis actividades",
+        "intent": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "necesito entender que hacen las redes neuronales",
+        "intent": "aprendizaje_ia",
+        "predicted": "aprendizaje_ia"
+      },
+      {
+        "text": "me explicas como aprenden las neuronas artificiales",
+        "intent": "aprendizaje_ia",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "sigamos por favor con la guia",
+        "intent": "continuar",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "me muestras el siguiente paso",
+        "intent": "continuar",
+        "predicted": "continuar"
+      },
+      {
+        "text": "me dices de que tema estabamos hablando",
+        "intent": "recordar_tema",
+        "predicted": "recordar_tema"
+      },
+      {
+        "text": "recuerdame en que parte nos quedamos",
+        "intent": "recordar_tema",
+        "predicted": "recordar_tema"
+      },
+      {
+        "text": "me puedes recordar como me llamo",
+        "intent": "consultar_nombre",
+        "predicted": "consultar_nombre"
+      },
+      {
+        "text": "quisiera que me dijeras mi nombre",
+        "intent": "consultar_nombre",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "repite por favor lo que acabas de decir",
+        "intent": "repetir",
+        "predicted": "repetir"
+      },
+      {
+        "text": "puedes volver a decir tu respuesta",
+        "intent": "repetir",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "que clases de codigo sabes crear",
+        "intent": "desarrollo_codigo",
+        "predicted": "desarrollo_codigo"
+      },
+      {
+        "text": "puedes decirme que aplicaciones generas",
+        "intent": "desarrollo_codigo",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "me explicas como agregar ejemplos al entrenamiento",
+        "intent": "entrenar_red",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "como puedo ensenarte nuevas intenciones",
+        "intent": "entrenar_red",
+        "predicted": "entrenar_red"
+      },
+      {
+        "text": "me puedes decir que recuerdas de mi",
+        "intent": "memoria",
+        "predicted": "memoria"
+      },
+      {
+        "text": "quisiera saber que datos recuerdas del chat",
+        "intent": "memoria",
+        "predicted": "memoria"
+      },
+      {
+        "text": "como puedo subir mis apuntes a tu biblioteca",
+        "intent": "biblioteca",
+        "predicted": "biblioteca"
+      },
+      {
+        "text": "dime como consultar mis documentos guardados",
+        "intent": "biblioteca",
+        "predicted": "biblioteca"
+      },
+      {
+        "text": "me explicas cuales son tus limitaciones",
+        "intent": "limites",
+        "predicted": "limites"
+      },
+      {
+        "text": "que tareas no sabes realizar todavia",
+        "intent": "limites",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "ya no quiero seguir con la guia",
+        "intent": "cancelar",
+        "predicted": "cancelar"
+      },
+      {
+        "text": "deja de continuar con este tema",
+        "intent": "cancelar",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "puedes preparar un informe academico en word",
+        "intent": "documentos",
+        "predicted": "documentos"
+      },
+      {
+        "text": "como descargo una hoja de calculo",
+        "intent": "documentos",
+        "predicted": "documentos"
+      },
+      {
+        "text": "cual es el precio del petroleo hoy",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "necesito una receta de arroz con pollo",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "explicame como arreglar el motor de una moto",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "diagnostica este dolor de estomago",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "cual es la temperatura actual de quito",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "resuelve la integral de seno al cuadrado",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "compra dos boletos para el concierto",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "calcula el impuesto de mi empresa",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "busca noticias de ultima hora",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "dime la contrasena de mi correo",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      }
+    ],
+    "test": [
+      {
+        "text": "buenas tardes como estas",
+        "intent": "saludo",
+        "predicted": "saludo"
+      },
+      {
+        "text": "hola asistente buenas noches",
+        "intent": "saludo",
+        "predicted": "saludo"
+      },
+      {
+        "text": "dime quien esta hablando conmigo",
+        "intent": "identidad",
+        "predicted": "identidad"
+      },
+      {
+        "text": "me cuentas que tipo de asistente eres",
+        "intent": "identidad",
+        "predicted": "identidad"
+      },
+      {
+        "text": "quiero conocer tus opciones de ayuda",
+        "intent": "ayuda",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "muestrame por donde puedo comenzar",
+        "intent": "ayuda",
+        "predicted": "ayuda"
+      },
+      {
+        "text": "te agradezco mucho la ayuda",
+        "intent": "gracias",
+        "predicted": "gracias"
+      },
+      {
+        "text": "gracias me sirvio tu explicacion",
+        "intent": "gracias",
+        "predicted": "gracias"
+      },
+      {
+        "text": "por ahora me despido jarvis",
+        "intent": "despedida",
+        "predicted": "despedida"
+      },
+      {
+        "text": "nos vemos en otra ocasion",
+        "intent": "despedida",
+        "predicted": "despedida"
+      },
+      {
+        "text": "quisiera estudiar programacion desde el inicio",
+        "intent": "programacion",
+        "predicted": "programacion"
+      },
+      {
+        "text": "ayudame a comenzar a escribir codigo",
+        "intent": "programacion",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "ayudame a planear mi proyecto de clase",
+        "intent": "proyecto",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "tengo una idea y quiero definir mi proyecto",
+        "intent": "proyecto",
+        "predicted": "proyecto"
+      },
+      {
+        "text": "ayudame a organizar mejor mi tiempo",
+        "intent": "organizacion",
+        "predicted": "organizacion"
+      },
+      {
+        "text": "como puedo ordenar las tareas de hoy",
+        "intent": "organizacion",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "quisiera comprender los pesos de una red neuronal",
+        "intent": "aprendizaje_ia",
+        "predicted": "aprendizaje_ia"
+      },
+      {
+        "text": "que significa entrenar una inteligencia artificial",
+        "intent": "aprendizaje_ia",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "continua con la explicacion por favor",
+        "intent": "continuar",
+        "predicted": "continuar"
+      },
+      {
+        "text": "quiero seguir viendo los pasos",
+        "intent": "continuar",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "cual era el tema que habiamos elegido",
+        "intent": "recordar_tema",
+        "predicted": "recordar_tema"
+      },
+      {
+        "text": "de que se trataba nuestra conversacion",
+        "intent": "recordar_tema",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "te acuerdas del nombre que te dije",
+        "intent": "consultar_nombre",
+        "predicted": "consultar_nombre"
+      },
+      {
+        "text": "dime cual es el nombre que recuerdas de mi",
+        "intent": "consultar_nombre",
+        "predicted": "memoria"
+      },
+      {
+        "text": "quisiera que repitas la ultima explicacion",
+        "intent": "repetir",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "vuelve a explicarlo con la misma respuesta",
+        "intent": "repetir",
+        "predicted": "repetir"
+      },
+      {
+        "text": "me explicas como descargar un prototipo web",
+        "intent": "desarrollo_codigo",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "quiero saber que programas puedes construir",
+        "intent": "desarrollo_codigo",
+        "predicted": "desarrollo_codigo"
+      },
+      {
+        "text": "cuales son los pasos para reentrenar tu red",
+        "intent": "entrenar_red",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "dime como puedo mejorar tus datos de entrenamiento",
+        "intent": "entrenar_red",
+        "predicted": "entrenar_red"
+      },
+      {
+        "text": "explicame cuanto contexto puedes guardar",
+        "intent": "memoria",
+        "predicted": "memoria"
+      },
+      {
+        "text": "que sabes de lo que hemos conversado",
+        "intent": "memoria",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "quisiera saber como corregir una respuesta de la biblioteca",
+        "intent": "biblioteca",
+        "predicted": "biblioteca"
+      },
+      {
+        "text": "como descargo una copia de mis apuntes",
+        "intent": "biblioteca",
+        "predicted": "biblioteca"
+      },
+      {
+        "text": "quiero conocer tus limites actuales",
+        "intent": "limites",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "puedes responder preguntas de cualquier tema",
+        "intent": "limites",
+        "predicted": "limites"
+      },
+      {
+        "text": "quiero cancelar esta explicacion",
+        "intent": "cancelar",
+        "predicted": "cancelar"
+      },
+      {
+        "text": "no sigas con la explicacion por favor",
+        "intent": "cancelar",
+        "predicted": "cancelar"
+      },
+      {
+        "text": "quiero un archivo de presentacion en powerpoint",
+        "intent": "documentos",
+        "predicted": "documentos"
+      },
+      {
+        "text": "me ayudas a crear un documento con formato apa",
+        "intent": "documentos",
+        "predicted": "documentos"
+      },
+      {
+        "text": "quiero reservar un hotel en madrid",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "cuanto cuesta el dolar hoy",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "programa un compilador completo de rust",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "cambia la configuracion de mi router",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "que resultado tuvo el partido de ayer",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "explicame un tratamiento para la gripe",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "como reparo la suspension del auto",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "dame los numeros ganadores de la loteria",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "transfiere dinero desde mi banco",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      },
+      {
+        "text": "genera una demanda judicial completa",
+        "intent": "desconocido",
+        "predicted": "desconocido"
+      }
+    ]
+  }
+}

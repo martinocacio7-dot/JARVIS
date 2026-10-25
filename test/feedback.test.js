@@ -51,7 +51,7 @@ test('API conserva revisión, rechaza etiquetas ajenas y no afecta a la bibliote
   const base = `http://127.0.0.1:${server.address().port}`;
   const put = (feedback, expectedRevision, headers = {}) => fetch(base + '/api/feedback', { method: 'PUT', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify({ feedback, expectedRevision }) });
   const original = await (await fetch(base + '/api/feedback')).json();
-  assert.equal(original.feedback.length, 0); assert.equal(original.intents.length, 20);
+  assert.equal(original.feedback.length, 0); assert.equal(original.intents.length, 21);
   assert.equal((await put([entry], original.revision)).status, 200);
   assert.equal((await put([], original.revision)).status, 409);
   assert.equal((await put([{ ...entry, intent: 'inventada' }], 1)).status, 400);

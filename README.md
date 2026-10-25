@@ -31,7 +31,7 @@ Repite
 Olvida el contexto
 ```
 
-Reconoce 20 intenciones y ofrece guías de tres pasos sobre programación, proyectos, organización e inteligencia artificial. «Continúa» avanza dentro del tema activo; «Repite» repite la última respuesta sin avanzar. Al cambiar de tema empieza una guía nueva. Sus explicaciones y ejemplos son predefinidos: no ejecuta código, organiza tu agenda ni resuelve cualquier pregunta.
+Reconoce 20 intenciones funcionales y una categoría de pregunta no cubierta y ofrece guías de tres pasos sobre programación, proyectos, organización e inteligencia artificial. «Continúa» avanza dentro del tema activo; «Repite» repite la última respuesta sin avanzar. Al cambiar de tema empieza una guía nueva. Sus explicaciones y ejemplos son predefinidos: no ejecuta código, organiza tu agenda ni resuelve cualquier pregunta.
 
 La memoria usa reglas y se reconstruye únicamente desde los mensajes del usuario incluidos en cada petición. Recuerda el nombre indicado con «Me llamo…», «Mi nombre es…» o «Puedes llamarme…». No modifica los pesos del modelo durante el chat. «Olvida el contexto» reinicia nombre y tema para los siguientes mensajes, pero deja el historial visible; «Nueva conversación» borra el historial local de la aplicación.
 
@@ -72,7 +72,7 @@ Se usa TLS con verificación de certificados por defecto. Solo para una conexió
 
 **Entendiste mal** aparece debajo de las nuevas respuestas del modo local. Es distinto de **Enseñar una respuesta mejor**: este último guarda una respuesta literal para la biblioteca; el nuevo botón guarda qué intención debería reconocer la red para tu frase.
 
-1. Pulsa **Entendiste mal**, revisa la frase y selecciona lo que querías pedir entre las 20 intenciones disponibles. Puedes resumir la frase antes de guardar; el máximo es de 1000 caracteres.
+1. Pulsa **Entendiste mal**, revisa la frase y selecciona lo que querías pedir entre las 21 categorías disponibles (incluida una pregunta no cubierta). Puedes resumir la frase antes de guardar; el máximo es de 1000 caracteres.
 2. La corrección se guarda en la base de datos como **Pendiente**. En **Mejorar mi comprensión**, comprueba que la etiqueta sea correcta y pulsa **Aprobar** o **Descartar**. También puedes editar o eliminar la corrección; editarla la devuelve a Pendiente.
 3. **Exportar aprobadas para entrenar** descarga solo las aprobadas. Si una misma frase tiene dos etiquetas aprobadas distintas, exige resolver ese conflicto. Se admiten hasta 200 correcciones guardadas.
 
@@ -218,21 +218,29 @@ Para activar esta misma protección en otro alojamiento, define `NODE_ENV=produc
 
 ## Red neuronal local
 
-`neural/network.js` implementa la versión 2 de la red propia: 1090 características de entrada, una capa oculta de 32 neuronas con activación tanh y 20 salidas softmax. Tiene 35 572 parámetros aprendidos por retropropagación y descenso de gradiente durante 450 épocas. No usa bibliotecas de IA, modelos descargados ni servicios externos para clasificar.
+`neural/network.js` implementa la versión 3 de la red propia: 2133 características de entrada, una capa oculta de 32 neuronas tanh y 21 salidas softmax (20 intenciones funcionales y una categoría `desconocido`). Tiene 68 981 parámetros aprendidos por retropropagación durante 450 épocas, frente a los 35 572 de la versión anterior. No usa bibliotecas de IA, modelos descargados ni servicios externos para clasificar.
 
-Las entradas incluyen palabras, pares consecutivos de palabras y 128 posiciones para trigramas de caracteres. La red puede combinar características mediante la capa oculta, en lugar de usar solo una clasificación lineal. La preparación del texto normaliza acentos e intenta corregir erratas de una letra cuando encuentra una única palabra candidata; esta regla no es aprendizaje neuronal y no corrige cualquier error.
+Las entradas incluyen palabras, pares consecutivos y 128 posiciones de trigramas de caracteres. La preparación de texto normaliza acentos y admite erratas de una letra, letras duplicadas y transposiciones adyacentes cuando hay un candidato inequívoco. Las palabras ya conocidas no se sustituyen. Es una regla de preparación del texto, no razonamiento lingüístico. La versión 2 de los pesos sigue siendo legible y conserva su preparación anterior para permitir comparaciones y recuperación.
 
-El conjunto de 300 frases en `neural/intents.json` cubre 20 intenciones: las anteriores más desarrollo de código, entrenamiento de la red, memoria, biblioteca, límites, cancelación y creación de documentos. La consulta de memoria informa el nombre y tema disponibles. Cancelar una guía libera el tema sin borrar el nombre. Las respuestas siguen siendo escritas en el conjunto de datos y en `neural/conversation.js`; la red no genera lenguaje libre ni código arbitrario.
+El conjunto de 540 frases en `neural/intents.json` contiene 500 ejemplos de peticiones cubiertas y 40 de preguntas o acciones que JARVIS todavía no sabe resolver. Estas últimas enseñan a reconocer límites de capacidad; no son filtros legales ni una garantía de detectar toda pregunta desconocida. Las respuestas siguen siendo programadas y los comandos de pendientes tienen su propio analizador: ampliar esta red no le permite redactar texto libre o desarrollar programas arbitrarios.
 
-Si menos del 60 % de las palabras informativas son conocidas, la puntuación máxima es menor que 0.75 o su diferencia con la segunda opción es menor que 0.2, el modelo no acepta la intención. Cuando hay suficiente vocabulario conocido, puede ofrecer dos ejemplos para aclarar la petición mediante botones. Estas puntuaciones no son una medida calibrada de certeza o veracidad.
+Los umbrales no se rebajaron: cobertura de palabras informativas de al menos 60 %, puntuación softmax de 0.75 y diferencia con la segunda opción de 0.2. Si no acepta una intención, puede ofrecer ejemplos para aclarar la petición. La categoría desconocida no se ofrece como sugerencia de tarea. Las puntuaciones no son probabilidades calibradas de verdad.
 
-Para enseñar nuevas intenciones, añade ejemplos variados, un identificador único y una respuesta al conjunto de datos. Ejecuta `npm run train`, después `npm test` y reinicia `npm start`. El entrenamiento guarda los pesos en `neural/model.json` y un reporte en `neural/report.json`. No reemplaza los pesos si falla la clasificación de los ejemplos de entrenamiento o la evaluación de regresión. El modelo se incluye ya entrenado para arrancar sin repetir ese trabajo. Usa la semilla fija 20261025 para poder reproducir el entrenamiento.
+Para entrenar, añade ejemplos revisados, ejecuta `npm run train`, después `npm test` y reinicia el servidor. La semilla es fija (20261025). El entrenamiento guarda los pesos en `neural/model.json` y los resultados, incluidos los errores, en `neural/report.json`. Antes de entrenar rechaza frases reservadas; tampoco reemplaza los pesos si no ajusta todos los ejemplos, falla la regresión anterior o baja el número de aciertos de cualquiera de los conjuntos evaluados respecto de los pesos guardados. La preparación de correcciones también protege esos conjuntos.
 
-### Qué se midió y qué sigue fallando
+### Qué se comparó
 
-- Entrenamiento: 300/300 frases reconocidas; la pérdida bajó de aproximadamente 3.00 a 0.021. Esto solo muestra ajuste al conjunto de entrenamiento.
-- Evaluación anterior (`neural/evaluation.json`): 19/19, sin usar esas frases para actualizar pesos.
-- Desafío ampliado (`neural/challenge.json`): 18/22. El reporte conserva los cuatro errores, incluidas dos erratas y dos formulaciones de capacidades que todavía no reconoce con suficiente seguridad.
-- Comparación con la versión publicada en el commit `fe63730`: pasó de 9/20 a 16/20 en las mismas 20 frases adicionales. Los resultados previos se conservan en `neural/baseline.json`. Se cambiaron tanto la arquitectura como los datos, así que no atribuimos toda la mejora a añadir neuronas.
+Se escribieron 100 frases nuevas antes de escoger el modelo, separadas en 50 de desarrollo y 50 de prueba. No se incorporan a los datos de entrenamiento. La arquitectura se eligió usando desarrollo; la prueba se evaluó después. Desde entonces estos conjuntos son también controles de regresión, así que no deben confundirse con una evaluación independiente de usuarios reales.
 
-Son conjuntos pequeños de regresión y desarrollo, no una prueba independiente de comprensión general. Algunas frases nuevas fallarán incluso si parecen sencillas. Tampoco significa que JARVIS piense como una persona. El entrenamiento sigue siendo ligero para un equipo con 8 GB de RAM, pero el tiempo depende de la CPU y de los datos. Las pruebas entrenan una vez y reutilizan el modelo para evitar trabajo duplicado.
+| Conjunto | Versión previa | Versión 3 |
+| --- | --- | --- |
+| Regresión original | 19/19 | 19/19 |
+| Desafío de frases y erratas | 18/22 | 21/22 |
+| Desarrollo nuevo | 39/50 | 45/50 |
+| Prueba separada nueva | 37/50 | 40/50 |
+
+El reporte conserva todos los errores: aún falla 1 de las 22 frases del desafío y 10 de las 50 de prueba. También hay una frase de identidad que acertaba antes y ahora rechaza: mejorar el resultado agregado no implica mejorar cada frase. No interpretamos 40/50 como «80 % de inteligencia» ni como precisión general del asistente. Son conjuntos pequeños, manuales y limitados a estas intenciones.
+
+`neural/upgrade-baseline.json` conserva las predicciones anteriores, el commit `d61d1f0` y el hash de sus pesos. `neural/generalization.json` contiene las frases nuevas y sus etiquetas. `neural/experiments.json` registra dos configuraciones exploratorias con más neuronas y los mismos 300 ejemplos anteriores: no mejoraron desarrollo y no se conservaron. Se mantuvo una red ligera y se amplió el conjunto de datos; no atribuimos la mejora únicamente al número de parámetros. Los tiempos de esos experimentos fueron de pared y con procesos concurrentes, no una medida de latencia de JARVIS.
+
+Los pesos se incluyen ya entrenados. Su carga e inferencia no vuelven a entrenar la red en cada mensaje. El entrenamiento y las pruebas siguen siendo adecuados para experimentar con 8 GB de RAM, aunque la duración depende de la CPU. Todavía no es un modelo de lenguaje ni una inteligencia comparable a Alexa o ChatGPT.

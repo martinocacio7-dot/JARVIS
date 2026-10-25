@@ -19,7 +19,17 @@
       "buenas jarvis",
       "hola que tal",
       "hey como estas",
-      "hola otra vez"
+      "hola otra vez",
+      "hola jarvis estoy aqui",
+      "que gusto verte jarvis",
+      "muy buenas que tal",
+      "hola vengo a saludarte",
+      "buen dia como va todo",
+      "saludos asistente jarvis",
+      "te saludo jarvis",
+      "buenas tardes asistente",
+      "hola como ha ido el dia",
+      "saludame por favor"
     ],
     "reply": "Hola, soy JARVIS. Puedo guiarte en programación, proyectos, organización y conceptos de IA. También puedes decirme «Me llamo Miguel» para usar tu nombre en esta conversación."
   },
@@ -41,7 +51,17 @@
       "hablame de tu identidad",
       "explica que eres",
       "como se llama este asistente",
-      "quien me esta respondiendo"
+      "quien me esta respondiendo",
+      "quiero saber quien eres tu",
+      "me puedes decir quien eres",
+      "explica tu identidad",
+      "que clase de asistente eres",
+      "de quien es este asistente",
+      "me dices tu nombre",
+      "quisiera saber quien responde",
+      "presentate y dime tu nombre",
+      "como debo llamarte a ti",
+      "cual es el nombre del asistente"
     ],
     "reply": "Soy JARVIS. Mi red neuronal local reconoce intenciones y elige respuestas predefinidas. Uso reglas para recordar tu nombre y continuar un tema dentro del historial reciente. No genero texto libre ni cambio mis pesos mientras conversamos."
   },
@@ -63,7 +83,17 @@
       "muestrame las opciones",
       "que puedo hacer contigo",
       "necesito orientacion",
-      "por donde empiezo contigo"
+      "por donde empiezo contigo",
+      "como empiezo a utilizar este asistente",
+      "podrias orientarme para usar jarvis",
+      "que puedo pedirte que hagas",
+      "dime tus opciones disponibles",
+      "en que tareas me ayudas",
+      "me ayudas a comenzar",
+      "necesito saber como usar jarvis",
+      "por favor muestrame tus funciones",
+      "quisiera conocer lo que sabes hacer",
+      "estoy perdido con el uso de jarvis"
     ],
     "reply": "Puedo guardar y consultar pendientes en tu base de datos: prueba «Recuérdame entregar el informe mañana a las 9», «Añade leche a mi lista» o «Qué tengo pendiente». También puedo guiarte en programación y proyectos, crear tres prototipos web y preparar Word, PDF, PowerPoint y Excel con tu contenido. Si falta un dato te pediré completarlo. La web no emite alarmas automáticas; puedes exportar recordatorios al calendario."
   },
@@ -85,7 +115,17 @@
       "muchas gracias jarvis",
       "estuvo bien gracias",
       "gracias por responder",
-      "agradezco tu ayuda"
+      "agradezco tu ayuda",
+      "te agradezco que me respondas",
+      "gracias me has ayudado",
+      "muchas gracias por explicarme",
+      "gracias por orientarme",
+      "muy agradecido jarvis",
+      "agradezco mucho tu respuesta",
+      "te lo agradezco de verdad",
+      "perfecto muchas gracias por todo",
+      "muchas gracias por la explicacion",
+      "gracias lo entendi mejor"
     ],
     "reply": "¡Con gusto! Aquí estoy para ayudarte."
   },
@@ -107,7 +147,17 @@
       "hasta la proxima",
       "me despido",
       "terminamos por hoy",
-      "hablamos manana"
+      "hablamos manana",
+      "voy a despedirme por hoy",
+      "nos hablamos en otro momento",
+      "hasta despues jarvis",
+      "ya me voy adios",
+      "hasta una nueva conversacion",
+      "voy saliendo hasta luego",
+      "me retiro nos vemos",
+      "te digo adios por ahora",
+      "terminamos la conversacion por hoy",
+      "me voy a descansar hasta manana"
     ],
     "reply": "Hasta pronto. Podemos continuar cuando quieras."
   },
@@ -129,7 +179,17 @@
       "ensename javascript desde cero",
       "necesito una guia de programacion",
       "como puedo aprender a escribir codigo",
-      "deseo estudiar programacion"
+      "deseo estudiar programacion",
+      "quisiera iniciarme en la programacion",
+      "podrias mostrarme como programar",
+      "me ensenas a escribir programas",
+      "por donde comienzo con javascript",
+      "quiero una introduccion al codigo",
+      "me gustaria comprender la programacion",
+      "quiero estudiar desarrollo de software desde cero",
+      "como aprendo los fundamentos de javascript",
+      "necesito practicar programacion basica",
+      "ayudame con una guia para programar"
     ],
     "reply": "Para empezar a programar, elige un objetivo pequeño: por ejemplo, una lista de tareas. Usaremos JavaScript. Escribe «Continúa» para ver el siguiente paso."
   },
@@ -151,7 +211,17 @@
       "quiero preparar un proyecto",
       "ayudame a definir mi idea",
       "necesito desarrollar mi proyecto personal",
-      "como convierto mi idea en un proyecto"
+      "como convierto mi idea en un proyecto",
+      "quisiera planear un proyecto nuevo",
+      "me ayudas a organizar una idea de proyecto",
+      "necesito definir el objetivo de mi aplicacion",
+      "quiero convertir mi idea en una aplicacion",
+      "como estructuro mi proyecto personal",
+      "podrias guiar el inicio de mi proyecto",
+      "me gustaria planificar una app",
+      "quiero definir una primera version del proyecto",
+      "necesito organizar el desarrollo de mi idea",
+      "como doy forma a una idea para crear algo"
     ],
     "reply": "Empieza por definir una persona y un problema: «Quiero ayudar a estudiantes a organizar tareas». Ese será el objetivo de tu proyecto. Escribe «Continúa» para avanzar."
   },
@@ -173,7 +243,17 @@
       "necesito organizar mis actividades",
       "ayudame a distribuir mi tiempo",
       "tengo demasiadas tareas pendientes",
-      "quiero administrar mi tiempo"
+      "quiero administrar mi tiempo",
+      "podrias ayudarme a organizar el dia",
+      "quiero ordenar mejor mis actividades diarias",
+      "necesito administrar los pendientes de hoy",
+      "como puedo distribuir las tareas del dia",
+      "ayuda para planificar mis actividades",
+      "me gustaria aprovechar mejor mi tiempo",
+      "quiero priorizar mis pendientes",
+      "como organizo un horario para mis tareas",
+      "necesito una rutina de organizacion",
+      "quisiera gestionar mi tiempo diario"
     ],
     "reply": "Escribe tus tareas pendientes en una lista y marca cuáles tienen fecha límite. Por ahora puedo darte una guía, no guardar tareas ni crear alarmas. Escribe «Continúa» para seguir."
   },
@@ -195,7 +275,17 @@
       "que hace una neurona artificial",
       "como se ajustan los pesos neuronales",
       "explica las redes neuronales desde cero",
-      "como se entrena una inteligencia artificial"
+      "como se entrena una inteligencia artificial",
+      "me gustaria saber como aprende una red neuronal",
+      "podrias explicar las neuronas artificiales",
+      "que significa aprender pesos en una red",
+      "como se realiza el entrenamiento neuronal",
+      "quiero conocer los fundamentos de la inteligencia artificial",
+      "por que una red neuronal tiene pesos",
+      "explica las capas de una red neuronal",
+      "necesito comprender el concepto de neurona artificial",
+      "como funciona el aprendizaje de una red",
+      "me interesa estudiar inteligencia artificial basica"
     ],
     "reply": "Una neurona artificial combina entradas con pesos y un sesgo. Al entrenar, ajustamos esos valores para reducir errores. En JARVIS, las entradas representan palabras y las salidas representan intenciones. Escribe «Continúa» para ver un ejemplo."
   },
@@ -219,7 +309,17 @@
       "siguiente por favor",
       "continua explicando",
       "sigamos con el siguiente paso",
-      "muestrame el proximo paso"
+      "muestrame el proximo paso",
+      "continua la guia por favor",
+      "quisiera continuar con la guia",
+      "quiero ver el paso siguiente",
+      "sigamos adelante con la explicacion",
+      "podemos continuar ahora",
+      "sigue explicando el tema actual",
+      "avanza al siguiente paso de la guia",
+      "muestrame otro paso",
+      "dale continua con esto",
+      "explica el paso que sigue"
     ],
     "reply": "Dime primero qué tema quieres trabajar: programación, proyectos, organización o inteligencia artificial."
   },
@@ -239,7 +339,17 @@
       "me recuerdas el tema anterior",
       "sobre que estabamos conversando",
       "quiero recuperar el tema",
-      "que tema elegimos"
+      "que tema elegimos",
+      "podrias recordarme el tema de antes",
+      "quisiera saber en que nos quedamos",
+      "me dices cual era nuestro tema",
+      "recuerda el tema que elegi",
+      "de que hemos estado hablando",
+      "dime cual era nuestra conversacion",
+      "necesito recordar donde dejamos la guia",
+      "que tema teniamos activo",
+      "sobre que estabamos hablando antes",
+      "quiero saber el tema anterior"
     ],
     "reply": "Todavía no hemos elegido un tema en el historial reciente."
   },
@@ -259,7 +369,17 @@
       "me recuerdas como me llamo",
       "cual nombre te mencione",
       "dime como me llamo",
-      "recuerdas como me presente"
+      "recuerdas como me presente",
+      "puedes recordar el nombre que te di",
+      "quisiera recordar que nombre te dije",
+      "dime mi nombre por favor",
+      "que nombre tienes guardado para mi",
+      "me dices como me llamo yo",
+      "podrias decirme como me llamo",
+      "como dijiste que me llamaba",
+      "que nombre recuerdas de mi",
+      "cual fue el nombre que te conte",
+      "me puedes decir mi nombre guardado"
     ],
     "reply": "Todavía no conozco tu nombre en esta conversación. Puedes decir «Me llamo Miguel»."
   },
@@ -279,7 +399,17 @@
       "no entendi repite",
       "quiero escuchar lo anterior",
       "repite la respuesta anterior",
-      "dime otra vez lo mismo"
+      "dime otra vez lo mismo",
+      "podrias repetir tu explicacion",
+      "quisiera oir la respuesta otra vez",
+      "dime de nuevo lo anterior",
+      "necesito que repitas lo que dijiste",
+      "vuelve a decir la explicacion anterior",
+      "repitelo una vez mas por favor",
+      "quiero leer nuevamente tu ultima respuesta",
+      "repite lo que acabas de responder",
+      "dilo de nuevo por favor",
+      "me lo puedes repetir otra vez"
     ],
     "reply": "Todavía no tengo una respuesta anterior para repetir."
   },
@@ -297,7 +427,17 @@
       "que tipos de aplicaciones creas",
       "como hago una calculadora contigo",
       "que proyectos de codigo sabes hacer",
-      "como descargo el codigo generado"
+      "como descargo el codigo generado",
+      "que codigo eres capaz de generar",
+      "me puedes explicar tus proyectos descargables",
+      "quisiera saber que prototipos puedes hacer",
+      "puedes programar alguna aplicacion",
+      "dime que aplicaciones sabes construir",
+      "como puedo conseguir un proyecto generado",
+      "que programas sabes escribir",
+      "me gustaria conocer tu capacidad para desarrollar codigo",
+      "puedo descargar codigo hecho por jarvis",
+      "que opciones tienes para crear aplicaciones"
     ],
     "reply": "Mi generador local crea tres prototipos web: tareas, inventario y calculadora. Prueba «Crea un inventario» en el chat o selecciona «Desarrollar código local». Puedes revisar y descargar el HTML. Son estructuras programadas: todavía no desarrollo aplicaciones arbitrarias ni conecto esos prototipos a PostgreSQL."
   },
@@ -315,7 +455,17 @@
       "donde estan los datos de entrenamiento",
       "como aprendes nuevas intenciones",
       "como reentreno la red neuronal",
-      "quiero ensenarte mas frases"
+      "quiero ensenarte mas frases",
+      "podrias decir como se entrena tu modelo",
+      "quisiera reentrenar las neuronas de jarvis",
+      "necesito agregar ejemplos a tus datos",
+      "como te enseno frases distintas",
+      "dime los pasos de tu entrenamiento",
+      "me gustaria actualizar tu red neuronal",
+      "como puedo mejorar los ejemplos de jarvis",
+      "que comando uso para entrenar tus pesos",
+      "como preparo datos para ensenar intenciones",
+      "explica como puedo entrenar este asistente"
     ],
     "reply": "Para entrenar mi red, añade ejemplos y respuestas revisadas en neural/intents.json. Ejecuta npm run train y npm test, y reinicia el servidor. Los pesos se guardan en neural/model.json. El chat y las respuestas enseñadas de la biblioteca no cambian mis pesos automáticamente."
   },
@@ -333,7 +483,17 @@
       "recuerdas mis conversaciones",
       "que datos recuerdas de este chat",
       "puedes recordar el nombre y el tema",
-      "cuanto dura el contexto"
+      "cuanto dura el contexto",
+      "podrias explicar que recuerdas del usuario",
+      "quisiera conocer la memoria de esta charla",
+      "que guardas de mi contexto",
+      "cuales son los datos que recuerdas",
+      "que puedes recordar de lo que hablamos",
+      "explica como retienes el contexto",
+      "recuerdas la informacion de este chat",
+      "que conoces de mi por nuestra charla",
+      "me dices que informacion mantienes en memoria",
+      "cuanta conversacion puedes recordar"
     ],
     "reply": "Puedo usar el nombre y el tema que aparecen en el historial reciente. La biblioteca es independiente y guarda documentos y respuestas enseñadas en una base de datos cuando está configurada. No aprendo los pesos de mi red conversando ni comparto automáticamente el historial entre dispositivos."
   },
@@ -351,7 +511,17 @@
       "como guardo una respuesta aprendida",
       "puedes buscar en mis documentos",
       "como consulto los archivos que subi",
-      "como exporto mi biblioteca"
+      "como exporto mi biblioteca",
+      "podrias ayudarme a cargar apuntes",
+      "quisiera consultar informacion de mis archivos",
+      "como agrego texto a la biblioteca",
+      "puedo subir mis documentos personales",
+      "como descargo el respaldo de mi biblioteca",
+      "explica como buscar entre mis apuntes",
+      "necesito ensenarte una respuesta en la biblioteca",
+      "quiero modificar una respuesta guardada",
+      "como encuentro informacion en archivos cargados",
+      "ayudame a importar documentos en texto"
     ],
     "reply": "Abre «Biblioteca privada», conecta la base de datos si hace falta y carga archivos .txt o .md. Activa «Consultar biblioteca» para recuperar fragmentos con su fuente. Puedes enseñar respuestas, editarlas, borrarlas y exportar copias. La búsqueda es léxica: no verifica la verdad del contenido ni entrena mis pesos."
   },
@@ -369,7 +539,17 @@
       "puedes buscar en google",
       "puedes generar cualquier programa",
       "puedes razonar sobre cualquier tema",
-      "tienes inteligencia general"
+      "tienes inteligencia general",
+      "podrias explicar lo que no sabes hacer",
+      "quisiera saber hasta donde puedes responder",
+      "que te falta aprender todavia",
+      "me dices cuales son tus restricciones de capacidad",
+      "en que tareas tienes limitaciones",
+      "que cosas no puedes responder por ahora",
+      "puedes entender cualquier pregunta que haga",
+      "dime si tienes inteligencia general",
+      "puedes investigar informacion en internet",
+      "que funciones todavia no tienes"
     ],
     "reply": "Mi red reconoce intenciones aprendidas y usa respuestas y guías programadas. La biblioteca recupera texto y el generador crea tres tipos de prototipo. No tengo inteligencia general, no busco en Google, no verifico automáticamente fuentes y no genero conversaciones o programas arbitrarios. Una red mayor no elimina esos límites."
   },
@@ -387,7 +567,17 @@
       "deten la guia",
       "cancela la explicacion",
       "no sigas explicando",
-      "quiero abandonar ese tema"
+      "quiero abandonar ese tema",
+      "no quiero que sigas explicando",
+      "ya no sigas con esta guia",
+      "quisiera dejar este tema",
+      "por favor cancela la guia actual",
+      "basta de explicar este tema",
+      "detente no quiero seguir",
+      "dejemos la explicacion aqui",
+      "no deseo continuar con el tema",
+      "quiero parar esta guia",
+      "podrias detener la explicacion"
     ],
     "reply": "Dejamos ese tema. Puedes elegir otro cuando quieras."
   },
@@ -415,8 +605,64 @@
       "quiero convertir mi texto a pdf",
       "necesito una hoja de calculo",
       "ayudame con un informe escrito",
-      "prepara mi informe estudiantil"
+      "prepara mi informe estudiantil",
+      "podrias crear un informe de texto",
+      "quisiera descargar un documento en pdf",
+      "me gustaria crear diapositivas en powerpoint",
+      "necesito preparar una tabla en excel",
+      "como obtengo un archivo de word",
+      "quiero un documento academico en apa siete",
+      "puedes convertir mi contenido en un informe",
+      "ayudame a preparar un archivo de presentacion",
+      "como exporto mi texto en un pdf",
+      "necesito crear documentos editables"
     ],
     "reply": "Puedo crear Word, PDF, PowerPoint y Excel con el contenido que proporciones. En informes aplico formato base APA 7 estudiantil, texto negro, doble espacio y márgenes de 2,54 cm. Abre «Crear Word, PDF, PowerPoint y Excel» y completa tus datos, texto y fuentes reales. No invento referencias ni redacto un trabajo completo a partir de un título."
+  },
+  {
+    "id": "desconocido",
+    "examples": [
+      "como se cocina una lasana vegetariana",
+      "dame una receta para preparar sopa",
+      "cuantos gramos de sal lleva una tortilla",
+      "cual es el pronostico meteorologico para guayaquil",
+      "cual es la cotizacion actual del oro",
+      "dime la bolsa de valores en este momento",
+      "que noticias internacionales ocurrieron hoy",
+      "quien gano el torneo anoche",
+      "cuales son los horarios de los vuelos a lima",
+      "reserva un pasaje para viajar el viernes",
+      "compra una entrada para el teatro",
+      "quiero que pagues mi factura de luz",
+      "envia dinero a otra cuenta bancaria",
+      "cambia mi clave bancaria",
+      "diagnostica la causa de mi fiebre",
+      "que medicamento debo tomar para mi enfermedad",
+      "interpreta mis analisis de sangre",
+      "dame una prescripcion medica",
+      "repara el embrague de mi camioneta",
+      "explica como cambio los pistones del motor",
+      "conecta y enciende la luz de mi casa",
+      "cambia la temperatura del aire acondicionado",
+      "abre una aplicacion instalada en mi computadora",
+      "borra archivos del disco de mi ordenador",
+      "consulta el saldo real de mi banco",
+      "resuelve esta ecuacion diferencial parcial",
+      "demuestra un teorema avanzado de topologia",
+      "traduce un libro completo del japones",
+      "redacta una sentencia judicial profesional",
+      "construye un sistema operativo completo en ensamblador",
+      "crea un videojuego tridimensional en rust",
+      "dime cuantos habitantes tiene cada pais del mundo",
+      "quien fue el ganador de las elecciones de ayer",
+      "busca una pagina de internet y verificame las noticias",
+      "dime donde esta mi paquete de compra",
+      "llama por telefono a mi familiar",
+      "envia un mensaje a mi grupo de whatsapp",
+      "lee los correos de mi cuenta personal",
+      "programa una alarma que suene con el navegador cerrado",
+      "activa las camaras de mi casa"
+    ],
+    "reply": "Todavía no tengo una función o conocimiento fiable para responder o ejecutar esa petición. Puedes consultar mis capacidades, elegir una guía o usar la biblioteca con tus documentos. No he realizado ninguna acción."
   }
 ]

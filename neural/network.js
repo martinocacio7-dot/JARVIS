@@ -14,12 +14,13 @@ function softmax(scores) {
   const total = exp.reduce((a, b) => a + b, 0);
   return exp.map(value => value / total);
 }
-function nearWord(a, b) {
+function nearWord(a, b, allowTransposition) {
   if (a.length < 4 || b.length < 4 || Math.abs(a.length - b.length) > 1) return false;
   let i = 0; let j = 0; let edits = 0;
   while (i < a.length && j < b.length) {
     if (a[i] === b[j]) { i++; j++; continue; }
     if (++edits > 1) return false;
+    if (allowTransposition && a.length === b.length && a[i] === b[j + 1] && a[i + 1] === b[j]) { i += 2; j += 2; continue; }
     if (a.length >= b.length) i++;
     if (b.length >= a.length) j++;
   }
@@ -34,8 +35,10 @@ function prepare(model, text) {
   const tokens = tokenize(text).map(token => {
     if (state.vocabulary.has(token)) return token;
     if (state.corrections.has(token)) return state.corrections.get(token);
-    const matches = model.vocabulary.filter(word => nearWord(token, word));
-    const corrected = matches.length === 1 ? matches[0] : token;
+    const repeats = new Set();
+    if (model.normalizationVersion >= 2) for (let i = 1; i < token.length; i++) if (token[i] === token[i - 1]) { const reduced = token.slice(0, i) + token.slice(i + 1); if (state.vocabulary.has(reduced)) repeats.add(reduced); }
+    const matches = model.vocabulary.filter(word => nearWord(token, word, model.normalizationVersion >= 2));
+    const corrected = repeats.size === 1 ? [...repeats][0] : matches.length === 1 ? matches[0] : token;
     if (state.corrections.size < 2000) state.corrections.set(token, corrected);
     return corrected;
   });
@@ -48,7 +51,7 @@ function prepare(model, text) {
     for (let j = 0; j < marked.length - 2; j++) {
       let hash = 0;
       for (let k = j; k < j + 3; k++) hash = (hash * 31 + marked.charCodeAt(k)) >>> 0;
-      add(`c:${hash % 128}`, 0.15);
+      add(`c:${hash % (model.charBuckets || 128)}`, 0.15);
     }
   });
   const contentTokens = tokens.filter(token => !commonWords.has(token));
@@ -69,17 +72,19 @@ function forward(model, active) {
   });
   return { hidden, probabilities: softmax(scores) };
 }
-export function train(intents, epochs = 450) {
+export function train(intents, epochs = 450, options = {}) {
   if (!Number.isInteger(epochs) || epochs < 1 || epochs > 3000) throw new Error('Las épocas deben estar entre 1 y 3000.');
   if (!Array.isArray(intents) || intents.length < 2 || intents.some(i => !i || !i.id || !i.reply || !Array.isArray(i.examples) || !i.examples.length || i.examples.some(e => typeof e !== 'string' || !tokenize(e).length)) || new Set(intents.map(i => i.id)).size !== intents.length) throw new Error('Se requieren intenciones únicas con ejemplos y respuestas.');
   const vocabulary = [...new Set(intents.flatMap(intent => intent.examples.flatMap(tokenize)))].sort();
   const bigrams = [...new Set(intents.flatMap(intent => intent.examples.flatMap(text => { const tokens = tokenize(text); return tokens.slice(1).map((word, i) => `${tokens[i]} ${word}`); })))].sort();
-  const features = [...vocabulary.map(word => `w:${word}`), ...bigrams.map(pair => `b:${pair}`), ...Array.from({ length: 128 }, (_, i) => `c:${i}`)];
+  const hiddenSize = options.hiddenSize ?? 32;
+  const charBuckets = options.charBuckets ?? 128;
+  if (![32, 64].includes(hiddenSize) || ![128, 256].includes(charBuckets)) throw new Error('Configuración de red no válida.');
+  const features = [...vocabulary.map(word => `w:${word}`), ...bigrams.map(pair => `b:${pair}`), ...Array.from({ length: charBuckets }, (_, i) => `c:${i}`)];
   const random = randomSource(20261025);
-  const hiddenSize = 32;
   const weights = (rows, columns) => Array.from({ length: rows }, () => Array.from({ length: columns }, () => (random() * 2 - 1) * Math.sqrt(6 / (rows + columns))));
   const model = {
-    version: 2, architecture: 'word-bigram-char-mlp', epochs, hiddenSize, vocabulary, features,
+    version: 3, normalizationVersion: 2, charBuckets, architecture: 'word-bigram-char-mlp', epochs, hiddenSize, vocabulary, features,
     inputWeights: weights(hiddenSize, features.length), hiddenBias: Array(hiddenSize).fill(0),
     outputWeights: weights(intents.length, hiddenSize), outputBias: Array(intents.length).fill(0),
     intents: intents.map(({ id, reply, examples }) => ({ id, reply, example: examples[0] }))
@@ -108,13 +113,13 @@ export function train(intents, epochs = 450) {
   return model;
 }
 export function predict(model, text) {
-  if (model.version !== 2) throw new Error('Ejecuta npm run train para actualizar el modelo a la versión 2.');
+  if (![2, 3].includes(model.version)) throw new Error('Ejecuta npm run train para actualizar el modelo.');
   const { active, coverage } = prepare(model, text);
   const { probabilities } = forward(model, active);
   const order = probabilities.map((confidence, index) => ({ confidence, index })).sort((a, b) => b.confidence - a.confidence);
   const best = order[0];
   const recognized = coverage >= 0.6 && best.confidence >= 0.75 && best.confidence - order[1].confidence >= 0.2;
-  const suggestions = !recognized && coverage >= 0.6 ? order.slice(0, 2).filter(item => item.confidence >= 0.15).map(item => model.intents[item.index].example) : [];
+  const suggestions = !recognized && coverage >= 0.6 ? order.slice(0, 2).filter(item => item.confidence >= 0.15 && model.intents[item.index].id !== 'desconocido').map(item => model.intents[item.index].example) : [];
   return {
     intent: recognized ? model.intents[best.index].id : 'desconocido', confidence: best.confidence,
     reply: recognized ? model.intents[best.index].reply : suggestions.length ? 'No estoy seguro de lo que necesitas. Puedes elegir una de estas opciones o explicarlo de otra manera.' : unknownReply,
