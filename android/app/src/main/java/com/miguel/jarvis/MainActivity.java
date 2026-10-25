@@ -67,12 +67,11 @@ public final class MainActivity extends Activity {
         web.loadUrl(HOME);
     }
     void permissions(){
-        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Leer mis notificaciones", "Privacidad"},(d,which)->{
+        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Privacidad"},(d,which)->{
             if(which==0)requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},1);
             if(which==1){if(Build.VERSION.SDK_INT>=33)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},2);else startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));}
             if(which==2 && Build.VERSION.SDK_INT>=31)startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,Uri.parse("package:"+getPackageName())));
-            if(which==3)startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-            if(which==4)new AlertDialog.Builder(this).setMessage("La hora y las notificaciones se consultan en el teléfono. Las notificaciones solo se leen cuando preguntas, sin enviarlas al servidor. El reconocimiento de voz depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha se detiene al salir. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
+            if(which==3)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El reconocimiento de voz depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha se detiene al salir. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
         }).show();
     }
     void emit(String type,int id,String text){runOnUiThread(()->{if(web==null||!trusted)return;try{JSONObject event=new JSONObject().put("type",type).put("id",id).put("text",text);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('jarvis:android',{detail:"+event+"}));",null);}catch(Exception ignored){}});}
@@ -97,7 +96,7 @@ public final class MainActivity extends Activity {
         @JavascriptInterface public void startRecognition(int id){runOnUiThread(()->startSpeech(id));}
         @JavascriptInterface public void stopRecognition(int id){runOnUiThread(()->{if(speechId==id&&recognition!=null)recognition.stopListening();});}
         @JavascriptInterface public void abortRecognition(int id){runOnUiThread(()->{if(speechId==id){endSpeech();emit("end",id,"");}});}
-        @JavascriptInterface public String notifications(){return trusted&&foreground?NotificationReader.summary():"Abre JARVIS para consultar notificaciones.";}
+        @JavascriptInterface public String notifications(){return trusted&&foreground?"Esta versión de JARVIS no puede leer notificaciones de otras aplicaciones. Conserva la hora, la voz y los avisos de tus recordatorios.":"Abre JARVIS para consultar notificaciones.";}
         @JavascriptInterface public String syncReminders(String json){if(!trusted||!foreground)return "Abre JARVIS para sincronizar avisos.";try{return Reminders.sync(MainActivity.this,json);}catch(Exception error){return "No se pudieron programar los avisos en Android. Actualiza los pendientes.";}}
         @JavascriptInterface public String voices(){JSONArray result=new JSONArray();try{if(ttsReady&&tts.getVoices()!=null)for(Voice voice:tts.getVoices())if(voice.getLocale().getLanguage().equals("es")&&!voice.isNetworkConnectionRequired())result.put(new JSONObject().put("name",voice.getName()).put("voiceURI",voice.getName()).put("lang",voice.getLocale().toLanguageTag()).put("localService",true));}catch(Exception ignored){}return result.toString();}
         @JavascriptInterface public void speak(String text,String name,int id){runOnUiThread(()->{if(!trusted||!foreground||!ttsReady){emit("tts-error",id,"");return;}if(tts.getVoices()!=null)for(Voice voice:tts.getVoices())if(voice.getName().equals(name)&&!voice.isNetworkConnectionRequired())tts.setVoice(voice);if(tts.speak(text.substring(0,Math.min(4000,text.length())),TextToSpeech.QUEUE_FLUSH,null,String.valueOf(id))==TextToSpeech.ERROR)emit("tts-error",id,"");});}

@@ -149,7 +149,7 @@ Separa párrafos con una línea en blanco y usa `# Encabezado` o `## Encabezado 
 
 ## Aplicación Android (APK)
 
-La aplicación nativa está en [`android/`](android/README.md). Incluye consulta de hora del teléfono, lectura opcional de notificaciones y avisos de recordatorios mediante Android, además del acceso al mismo JARVIS privado. [Descarga el APK de prueba](downloads/JARVIS-Android-prueba.apk) y sigue las instrucciones de permisos. Requiere Android 8.0 o posterior. La escucha por nombre funciona con la aplicación abierta.
+La aplicación nativa está en [`android/`](android/README.md). Incluye consulta de hora del teléfono y avisos de recordatorios mediante Android, además del acceso al mismo JARVIS privado. [Descarga el APK de prueba](downloads/JARVIS-Android-prueba.apk) y sigue las instrucciones de permisos. Requiere Android 8.0 o posterior. La escucha por nombre funciona con la aplicación abierta.
 
 ## Versión móvil instalable
 
