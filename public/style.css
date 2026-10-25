@@ -24,3 +24,5 @@
 #microphone{font:inherit;border:1px solid #4c6588;border-radius:9px;background:#243951;color:#e7efff;min-width:40px;height:40px;cursor:pointer}#microphone[aria-pressed=true]{background:#843e43;border-color:#ff9ba5}#voice-notice{font-size:11px;color:#95a8c4;line-height:1.6}
 
 .voice-options{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#a9bddb;font-size:11px;margin-top:10px}.voice-options label{display:flex;gap:7px;align-items:center}.voice-options button{font:inherit;background:#1a2a41;color:#dce8ff;border:1px solid #3d5477;border-radius:7px;padding:6px 9px;cursor:pointer}
+
+#task-form{display:grid;gap:9px}#task-form input,#task-form select{font:inherit;padding:10px;border:1px solid #3b4b63;border-radius:7px;background:#111923;color:#e9edf5;width:100%;min-width:0}#task-form button{justify-self:start}#task-schedule{display:grid;gap:9px}#task-count{font-size:11px;color:#91a5c2;margin-left:8px}#task-list span{flex-basis:100%;overflow-wrap:anywhere}#task-notice{color:#c3d7f4}#task-refresh{margin:8px 0}

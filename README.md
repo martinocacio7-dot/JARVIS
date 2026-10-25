@@ -61,7 +61,7 @@ En producción no se usa un archivo temporal: hace falta una conexión PostgreSQ
 
 1. Crea una base de datos PostgreSQL en tu proveedor. Una opción es un proyecto gratuito en https://neon.tech; comprueba sus límites y condiciones vigentes antes de crearlo. No hace falta contratar un plan de pago para probar esta función.
 2. Copia la cadena PostgreSQL desde el panel del proveedor y guárdala en Render → **jarvis-privado → Environment** con el nombre **DATABASE_URL**. Es un secreto: no la pegues en el chat, GitHub ni `render.yaml`.
-3. Guarda las variables y vuelve a desplegar el servicio. Se crean automáticamente las tablas `jarvis_library` y `jarvis_feedback`; no se eliminan documentos o correcciones anteriores ni otras tablas.
+3. Guarda las variables y vuelve a desplegar el servicio. Se crean automáticamente las tablas `jarvis_library`, `jarvis_feedback` y `jarvis_tasks`; no se eliminan documentos o correcciones anteriores ni otras tablas.
 4. Carga un documento, recarga la web y abre el mismo servicio en otro dispositivo con tus credenciales para comprobar que se conserva.
 
 Se usa TLS con verificación de certificados por defecto. Solo para una conexión dentro de una red privada o una base local de pruebas sin TLS se puede indicar `sslmode=disable`. No desactives TLS para conexiones públicas. El controlador mantiene un máximo de tres conexiones. Guarda copias de respaldo antes de cambiar de base: no hay migración automática entre SQLite y PostgreSQL.
@@ -102,6 +102,35 @@ En PowerShell puedes sustituir `npm` por `npm.cmd`. El entrenamiento sigue compr
 Los archivos exportados, el conjunto ampliado y los pesos entrenados pueden revelar información de tus ejemplos. No introduzcas contraseñas o información sensible, ni subas datos privados a GitHub. Estos pasos permiten aprendizaje supervisado a partir de correcciones; no equivalen a aprender de cualquier mensaje sin revisión.
 
 `GET /api/feedback` devuelve las correcciones y las intenciones disponibles. `PUT /api/feedback` guarda una lista validada con `expectedRevision`; una revisión desactualizada devuelve HTTP 409. Las rutas están protegidas por la misma autenticación y comprobación de origen que la biblioteca. Las revisiones de biblioteca y correcciones son independientes.
+
+## Pendientes, listas y agenda por voz o chat
+
+En modo **Conversación**, con **Consultar biblioteca** desactivado, puedes escribir o dictar:
+
+```text
+Recuérdame entregar el informe mañana a las 9
+Añade leche a mi lista
+Qué tengo pendiente
+Qué tengo mañana
+Qué hay en mi lista
+Cambia entregar el informe para pasado mañana a las 10
+Marca entregar el informe como hecho
+Elimina leche de mi lista
+```
+
+Estas peticiones activan acciones propias de JARVIS sobre la base de datos, sin llamar a otras IA. Solo se interpreta el último mensaje del usuario; no se vuelven a ejecutar órdenes anteriores al enviar el historial. Las acciones usan reglas explícitas, no significan que el modelo tenga comprensión o autonomía general.
+
+Horarios de **America/Guayaquil (UTC−5)**: «mañana» y «pasado mañana» se calculan desde ese huso, aunque el servidor esté en UTC. Se admiten «hoy», «mañana», «pasado mañana» y fechas `AAAA-MM-DD`, seguidas de «a las H» o «a las HH:MM», en formato de 24 horas; también `am` y `pm` cuando se indican. No se programa una repetición diaria o semanal: se pide una fecha única.
+
+Si falta la fecha o la hora, es inválida o ya pasó, JARVIS devuelve un borrador sin guardarlo. Pulsa **Completar pendiente** y revisa sus datos. No inventa una hora. Las descripciones admiten hasta 300 caracteres y puedes guardar hasta 200 pendientes. Repetir la misma creación activa no añade un duplicado.
+
+En **Mis pendientes y agenda** puedes crear, editar, completar, reabrir o eliminar entradas. Los cambios por chat requieren un nombre exacto y un único elemento coincidente; si hay ambigüedad, pide elegirlo en el panel y no modifica nada. El chat muestra hasta diez resultados, con el número total; el panel muestra todos, incluidos completados y vencidos. Usa **Actualizar pendientes** para recuperar cambios de otro dispositivo.
+
+Los datos están en `jarvis_tasks`: SQLite local o PostgreSQL mediante `DATABASE_URL` en Render. Son independientes de la biblioteca, las correcciones de intención y el historial del navegador. No desaparecen al crear otra conversación. Si falta la conexión, no se confirma que algo haya sido guardado. Las ediciones incluyen una revisión para impedir que un dispositivo sobrescriba cambios de otro.
+
+**Esta versión no emite alarmas automáticas, con la web abierta ni cerrada.** Para obtener avisos, **Exportar agenda para calendario (.ics)** descarga los recordatorios no completados. Importa el archivo en un calendario compatible y comprueba sus avisos y permisos. Los eventos se exportan en UTC con un aviso al inicio, pero su ejecución depende del calendario. No hay sincronización posterior: los cambios en JARVIS no actualizan automáticamente lo importado; revisa posibles duplicados al importar de nuevo. El archivo contiene tus descripciones y debe guardarse en privado.
+
+`GET /api/tasks` devuelve `{ items, revision }`; `PUT /api/tasks` acepta `{ items, expectedRevision }` y devuelve HTTP 409 si la revisión cambió. Los elementos tienen `id`, `kind` (`reminder` o `list`), `text`, `dueAt` (ISO UTC o `null` para lista) y `completed`. Las fechas históricas se conservan como vencidas; el formulario y las órdenes de creación solicitan una fecha futura. Las rutas están protegidas por la autenticación de JARVIS y la comprobación de origen en escrituras. Son reutilizables por una futura aplicación móvil; esa aplicación aún no se ha construido.
 
 ## Documentos de Word, PDF, PowerPoint y Excel
 

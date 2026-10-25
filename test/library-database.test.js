@@ -9,6 +9,7 @@ async function exercise(options) {
   const first = createLibraryDatabase(options);
   const saved = { version: 1, documents: [{ id: 'a', title: 'Privado', content: 'Datos guardados por el usuario.' }], corrections: [{ question: '¿Qué estudio?', answer: 'Informática' }] };
   const feedback = [{ id: 'db-feedback', text: 'Quiero comenzar a estudiar código', intent: 'programacion', predictedIntent: 'desconocido', status: 'pending' }];
+  const tasks = [{ id: 'db-task', text: 'Pendiente persistente', kind: 'list', dueAt: null, completed: false }];
   try {
     const initial = await first.read();
     const written = await first.write(saved, initial.revision);
@@ -17,11 +18,14 @@ async function exercise(options) {
     const previous = await first.readFeedback();
     await first.writeFeedback(feedback, previous.revision);
     await assert.rejects(first.writeFeedback([], previous.revision), RevisionConflict);
+    const beforeTasks = await first.readTasks(); await first.writeTasks(tasks, beforeTasks.revision);
+    await assert.rejects(first.writeTasks([], beforeTasks.revision), RevisionConflict);
   } finally { await first.close(); }
   const second = createLibraryDatabase(options);
   try {
     assert.deepEqual((await second.read()).library, saved);
     assert.deepEqual((await second.readFeedback()).feedback, feedback);
+    assert.deepEqual((await second.readTasks()).items, tasks);
     const revision = (await second.read()).revision;
     const writes = await Promise.allSettled([second.write({ ...saved, corrections: [] }, revision), second.write({ ...saved, documents: [] }, revision)]);
     assert.equal(writes.filter(r => r.status === 'fulfilled').length, 1);

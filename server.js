@@ -10,19 +10,25 @@ import { validateLibrary } from './public/library-data.js';
 import { develop, isDevelopmentRequest } from './developer/generator.js';
 import { validateFeedback } from './public/feedback-data.js';
 import { validateDocument, isDocumentRequest } from './public/document-data.js';
+import { validateTasks } from './public/task-data.js';
+import { parseTaskCommand, executeTaskCommand } from './assistant/commands.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
 
-const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
+const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/task-data.js': ['task-data.js', 'text/javascript'], '/task-ui.js': ['task-ui.js', 'text/javascript'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
 const instruction = 'Eres JARVIS, un asistente personal útil, claro y honesto. Responde en español salvo que te pidan otro idioma. Explica tus límites. No afirmes haber realizado acciones que no puedes ejecutar.';
 
-export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = process.env.JARVIS_MODEL || 'gpt-4.1-mini', request = fetch, auth, database = createLibraryDatabase() } = {}) {
+export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = process.env.JARVIS_MODEL || 'gpt-4.1-mini', request = fetch, auth, database = createLibraryDatabase(), now = () => new Date() } = {}) {
   const authorize = createAuth(auth);
   const server = http.createServer(async (req, res) => {
     const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'");
     if (!authorize(req, res)) return;
+    if (req.method === 'GET' && req.url === '/api/tasks') {
+      try { return json(200, await database.readTasks()); }
+      catch { return json(503, { error: 'Configura o revisa DATABASE_URL en Render para guardar tus pendientes.' }); }
+    }
     if (req.method === 'GET' && req.url === '/api/feedback') {
       try { return json(200, { ...await database.readFeedback(), intents: localModel.intents.map(({ id, example }) => ({ id, example })) }); }
       catch { return json(503, { error: 'Configura o revisa DATABASE_URL en Render para guardar correcciones en PostgreSQL.' }); }
@@ -32,13 +38,13 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
       try { return json(200, await database.read()); }
       catch { return json(503, { error: database.kind === 'unconfigured' ? 'Configura DATABASE_URL en Render para activar la biblioteca persistente.' : 'No se pudo acceder a la base de datos. Vuelve a intentarlo.' }); }
     }
-    if ((req.method === 'POST' && ['/api/chat', '/api/knowledge', '/api/develop', '/api/documents'].includes(req.url)) || (req.method === 'PUT' && ['/api/library', '/api/feedback'].includes(req.url))) {
+    if ((req.method === 'POST' && ['/api/chat', '/api/knowledge', '/api/develop', '/api/documents'].includes(req.url)) || (req.method === 'PUT' && ['/api/library', '/api/feedback', '/api/tasks'].includes(req.url))) {
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(403, { error: 'Origen no permitido.' });
       if (!req.headers['content-type']?.startsWith('application/json')) return json(415, { error: 'Se requiere JSON.' });
       try {
         let body = '';
         let size = 0;
-        const limit = ['/api/library', '/api/feedback'].includes(req.url) ? 1048576 : req.url === '/api/documents' ? 131072 : 65536;
+        const limit = ['/api/library', '/api/feedback', '/api/tasks'].includes(req.url) ? 1048576 : req.url === '/api/documents' ? 131072 : 65536;
         req.setEncoding('utf8');
         for await (const chunk of req) {
           body += chunk;
@@ -47,6 +53,13 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         let data;
         try { data = JSON.parse(body); } catch { return json(400, { error: 'JSON inválido.' }); }
+        if (req.url === '/api/tasks') {
+          let items;
+          try { items = validateTasks(data?.items); if (!Number.isSafeInteger(data.expectedRevision) || data.expectedRevision < 0) throw new Error('Revisión inválida.'); }
+          catch (error) { return json(400, { error: error.message }); }
+          try { return json(200, await database.writeTasks(items, data.expectedRevision)); }
+          catch (error) { return json(error instanceof RevisionConflict ? 409 : 503, { error: error instanceof RevisionConflict ? error.message : 'No se pudieron guardar tus pendientes.' }); }
+        }
         if (req.url === '/api/documents') {
           let validated;
           try { validated = validateDocument(data); } catch (error) { return json(400, { error: error.message }); }
@@ -86,6 +99,11 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
+        const command = parseTaskCommand(messages.at(-1).content, now());
+        if (command) {
+          try { return json(200, await executeTaskCommand(command, database, now())); }
+          catch (error) { return json(error instanceof RevisionConflict ? 409 : 503, { error: error instanceof RevisionConflict ? error.message : 'No pude guardar o consultar el pendiente. Revisa la conexión a la base de datos y el límite de 200 pendientes; no asumas que quedó guardado.' }); }
+        }
         if (isDocumentRequest(messages.at(-1).content)) return json(200, { mode: 'local', intent: 'documentos', documentDraft: true, reply: 'Puedo preparar Word, PDF, PowerPoint y Excel con el contenido que proporciones. Para informes uso formato base APA 7 estudiantil y texto negro. Abre «Preparar mi documento» y completa título, autor, texto y fuentes reales. No investigo ni redacto un informe completo a partir de un título.' });
         if (isDevelopmentRequest(messages.at(-1).content)) return json(200, develop(messages.at(-1).content));
         if (!apiKey) {

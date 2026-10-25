@@ -16,6 +16,16 @@
         <ul id="correction-list" aria-label="Respuestas enseñadas"></ul>
       </fieldset><p id="library-notice" role="status"></p>
     </details>
+    <details id="task-panel" class="library"><summary>Mis pendientes y agenda <span id="task-count"></span></summary>
+      <p>Guarda recordatorios y elementos de lista en tu base de datos. Horarios de <strong>America/Guayaquil (UTC−5)</strong>, en formato de 24 horas. Esta web no emite alarmas automáticas; puedes exportar la agenda e importarla en un calendario que admita avisos.</p>
+      <p>Prueba en el chat: «Recuérdame entregar el informe mañana a las 9», «Añade leche a mi lista» o «Qué tengo pendiente». Si falta la fecha o la hora, se pedirá completar el formulario.</p>
+      <button id="task-refresh" type="button">Actualizar pendientes</button><fieldset id="task-controls" disabled><legend>Guardar o editar un pendiente</legend><form id="task-form">
+        <label for="task-kind">Tipo</label><select id="task-kind"><option value="reminder">Recordatorio con fecha</option><option value="list">Elemento de mi lista</option></select>
+        <label for="task-text">Descripción</label><input id="task-text" maxlength="300" required>
+        <div id="task-schedule"><label for="task-date">Fecha en Guayaquil</label><input id="task-date" type="date"><label for="task-time">Hora en Guayaquil</label><input id="task-time" type="time"></div>
+        <button type="submit">Guardar pendiente</button><button id="task-reset" type="button">Limpiar formulario</button>
+      </form><ul id="task-list" aria-label="Pendientes guardados"></ul><button id="task-export" type="button">Exportar agenda para calendario (.ics)</button><p class="library-hint">Hasta 200 pendientes. Se comparten entre los dispositivos que entren con tus credenciales. La agenda exportada no se sincroniza después: revisa los avisos y las importaciones duplicadas en tu calendario.</p></fieldset><p id="task-notice" role="status"></p>
+    </details>
     <details id="document-panel" class="library"><summary>Crear Word, PDF, PowerPoint y Excel</summary>
       <p>Usa tus textos y datos. Los informes Word y PDF se preparan con formato base APA 7 estudiantil: letra negra de 12 puntos, doble espacio, márgenes de 2,54 cm, portada y numeración. Revisa siempre las fuentes y los requisitos de tu institución. El formato no reemplaza la revisión de citas ni la autoría del contenido.</p>
       <form id="document-form"><fieldset id="document-controls"><legend>Preparar un archivo descargable</legend>

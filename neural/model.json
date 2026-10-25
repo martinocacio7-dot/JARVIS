@@ -37140,7 +37140,7 @@
     },
     {
       "id": "ayuda",
-      "reply": "Puedo guiarte en programación, proyectos, organización e inteligencia artificial. También puedo crear prototipos web con mi generador local: escribe «Crea un inventario», «Crea una lista de tareas» o «Hazme una calculadora». Puedes ver y descargar su código. Para continuar una guía escribe «Continúa». Uso respuestas y estructuras programadas; todavía no desarrollo sistemas arbitrarios. La biblioteca permite consultar tus apuntes y guardar respuestas enseñadas cuando su base de datos está conectada.",
+      "reply": "Puedo guardar y consultar pendientes en tu base de datos: prueba «Recuérdame entregar el informe mañana a las 9», «Añade leche a mi lista» o «Qué tengo pendiente». También puedo guiarte en programación y proyectos, crear tres prototipos web y preparar Word, PDF, PowerPoint y Excel con tu contenido. Si falta un dato te pediré completarlo. La web no emite alarmas automáticas; puedes exportar recordatorios al calendario.",
       "example": "ayudame"
     },
     {

@@ -3,6 +3,7 @@ import { projectView } from './project-ui.js';
 import { initFeedback, reportMisunderstanding } from './feedback-ui.js';
 import { initDocuments, openDocuments } from './document-ui.js';
 import { initVoice, isDictating, speakReply, stopSpeaking } from './voice.js';
+import { initTasks, refreshTasks, openTaskEditor } from './task-ui.js';
 
 const $ = selector => document.querySelector(selector);
 let messages = [];
@@ -21,6 +22,10 @@ function render() {
     name.textContent = message.role === 'user' ? 'TÚ' : 'JARVIS';
     article.append(name, document.createTextNode(message.content));
     if (message.role === 'assistant') {
+      if (message.openTasks) {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'correct-answer'; button.textContent = message.taskDraft ? 'Completar pendiente' : 'Abrir mis pendientes';
+        button.addEventListener('click', () => openTaskEditor(message.taskDraft)); article.append(button);
+      }
       if (message.documentDraft) {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'correct-answer'; button.textContent = 'Preparar mi documento';
         button.addEventListener('click', () => openDocuments(messages[index - 1]?.content || '')); article.append(button);
@@ -75,7 +80,8 @@ async function send(event) {
     const response = await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
-    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
+    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
+    if (data.openTasks) refreshTasks();
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
     speakReply(data.reply);
   } catch (error) {
@@ -99,6 +105,7 @@ initLibrary();
 initFeedback();
 initDocuments();
 initVoice();
+initTasks();
 render();
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
   $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : `● Red local v${data.neural.version} · ${data.neural.intents} intenciones`;
