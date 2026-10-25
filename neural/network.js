@@ -79,7 +79,7 @@ export function train(intents, epochs = 450, options = {}) {
   const bigrams = [...new Set(intents.flatMap(intent => intent.examples.flatMap(text => { const tokens = tokenize(text); return tokens.slice(1).map((word, i) => `${tokens[i]} ${word}`); })))].sort();
   const hiddenSize = options.hiddenSize ?? 32;
   const charBuckets = options.charBuckets ?? 128;
-  if (![32, 64].includes(hiddenSize) || ![128, 256].includes(charBuckets)) throw new Error('Configuración de red no válida.');
+  if (![32, 64, 128].includes(hiddenSize) || ![128, 256].includes(charBuckets)) throw new Error('Configuración de red no válida.');
   const features = [...vocabulary.map(word => `w:${word}`), ...bigrams.map(pair => `b:${pair}`), ...Array.from({ length: charBuckets }, (_, i) => `c:${i}`)];
   const random = randomSource(20261025);
   const weights = (rows, columns) => Array.from({ length: rows }, () => Array.from({ length: columns }, () => (random() * 2 - 1) * Math.sqrt(6 / (rows + columns))));

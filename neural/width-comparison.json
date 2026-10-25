@@ -1,0 +1,117 @@
+{
+  "note": "Architecture selected using development, training and regression only. Existing test withheld until after selection. These are small, previously used project benchmarks, not a fresh independent measure of intelligence.",
+  "baseline": {
+    "hiddenSize": 32,
+    "scores": {
+      "training": {
+        "correct": 594,
+        "total": 623
+      },
+      "regression": {
+        "correct": 19,
+        "total": 19
+      },
+      "challenge": {
+        "correct": 21,
+        "total": 22
+      },
+      "development": {
+        "correct": 45,
+        "total": 50
+      }
+    }
+  },
+  "candidates": [
+    {
+      "hiddenSize": 32,
+      "epochs": 450,
+      "seconds": 9.462698963000001,
+      "eligible": true,
+      "scores": {
+        "training": {
+          "correct": 623,
+          "total": 623
+        },
+        "regression": {
+          "correct": 19,
+          "total": 19
+        },
+        "challenge": {
+          "correct": 21,
+          "total": 22
+        },
+        "development": {
+          "correct": 45,
+          "total": 50
+        }
+      }
+    },
+    {
+      "hiddenSize": 64,
+      "epochs": 450,
+      "seconds": 18.243687845,
+      "eligible": true,
+      "scores": {
+        "training": {
+          "correct": 623,
+          "total": 623
+        },
+        "regression": {
+          "correct": 19,
+          "total": 19
+        },
+        "challenge": {
+          "correct": 21,
+          "total": 22
+        },
+        "development": {
+          "correct": 45,
+          "total": 50
+        }
+      }
+    },
+    {
+      "hiddenSize": 128,
+      "epochs": 450,
+      "seconds": 39.69502597700001,
+      "eligible": true,
+      "scores": {
+        "training": {
+          "correct": 623,
+          "total": 623
+        },
+        "regression": {
+          "correct": 19,
+          "total": 19
+        },
+        "challenge": {
+          "correct": 21,
+          "total": 22
+        },
+        "development": {
+          "correct": 45,
+          "total": 50
+        }
+      }
+    }
+  ],
+  "selection": {
+    "hiddenSize": 64,
+    "score": 45
+  },
+  "selectionRule": "For the requested width expansion: choose the eligible 64/128 model with best development score, ties prefer smaller width; it must not score below either the saved baseline or the retrained 32-neuron control. Test is not used for this selection.",
+  "baselineCommit": "55126a8",
+  "promotion": {
+    "accepted": false,
+    "hiddenSize": 64,
+    "reason": "Final test score decreased; model.json and report.json were not replaced. No alternative architecture was selected using this test result.",
+    "previousTest": {
+      "correct": 40,
+      "total": 50
+    },
+    "candidateTest": {
+      "correct": 39,
+      "total": 50
+    }
+  }
+}

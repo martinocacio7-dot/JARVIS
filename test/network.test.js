@@ -61,3 +61,16 @@ test('corrige duplicaciones y transposiciones sin sustituir palabras válidas', 
   assert.equal(predict(model, 'quiero continuar con eso').intent, 'continuar');
   assert.equal(predict(model, 'no quiero continuar con eso').intent, 'cancelar');
 });
+
+test('admite redes de 64 y 128 neuronas y conserva pesos reproducibles', () => {
+  const small = [{ id: 'hola', reply: 'hola', examples: ['hola amigo'] }, { id: 'adios', reply: 'adios', examples: ['hasta luego'] }];
+  for (const hiddenSize of [64, 128]) {
+    const model = train(small, 10, { hiddenSize });
+    assert.equal(model.hiddenBias.length, hiddenSize);
+    assert.equal(model.inputWeights.length, hiddenSize);
+    assert.ok(model.outputWeights.every(row => row.length === hiddenSize));
+    assert.ok(model.training.finalLoss < model.training.initialLoss);
+    assert.deepEqual(model, train(small, 10, { hiddenSize }));
+  }
+  assert.throws(() => train(small, 10, { hiddenSize: 127 }), /Configuración/);
+});

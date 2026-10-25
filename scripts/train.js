@@ -4,15 +4,20 @@ import { normalize } from '../public/library-data.js';
 import { resolve } from 'node:path';
 const read = async name => JSON.parse(await readFile(new URL(`../neural/${name}`, import.meta.url), 'utf8'));
 const args = process.argv.slice(2);
-if (args.length && (args.length !== 2 || args[0] !== '--data' || !args[1])) throw new Error('Uso: npm run train [-- --data archivo.json]');
-const intents = args.length ? JSON.parse(await readFile(resolve(args[1]), 'utf8')) : await read('intents.json');
+const options = {};
+for (let i = 0; i < args.length; i += 2) {
+  if (!['--data', '--hidden-size'].includes(args[i]) || !args[i + 1] || options[args[i]] !== undefined) throw new Error('Uso: npm run train [-- --data archivo.json] [--hidden-size 32|64|128]');
+  options[args[i]] = args[i + 1];
+}
+if (options['--hidden-size'] !== undefined && !['32', '64', '128'].includes(options['--hidden-size'])) throw new Error('El tamaño oculto debe ser 32, 64 o 128.');
+const intents = options['--data'] ? JSON.parse(await readFile(resolve(options['--data']), 'utf8')) : await read('intents.json');
 const generalizationData = await read('generalization.json');
 const reserved = [...await read('evaluation.json'), ...await read('challenge.json'), ...generalizationData.development, ...generalizationData.test];
 const forbidden = new Set(reserved.map(item => normalize(item.text)));
 if (intents.some(intent => intent.examples.some(text => forbidden.has(normalize(text))))) throw new Error('Los datos incluyen una frase de evaluación reservada. No se entrenó ni reemplazó el modelo.');
 let previousModel;
 try { previousModel = await read('model.json'); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-const model = train(intents);
+const model = train(intents, 450, { hiddenSize: Number(options['--hidden-size'] ?? previousModel?.hiddenSize ?? 32) });
 const samples = intents.flatMap(i => i.examples.map(text => ({ text, intent: i.id })));
 const evaluate = (cases, selected = model) => cases.map(({ text, intent }) => ({ text, expected: intent, predicted: predict(selected, text).intent }));
 const count = results => results.filter(row => row.expected === row.predicted).length;
