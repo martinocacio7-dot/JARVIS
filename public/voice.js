@@ -1,4 +1,4 @@
-import { sendAndroidVoiceCommand } from './android-device.js';
+import { sendAndroidVoiceCommand, beginAndroidPlayback, endAndroidPlayback } from './android-device.js';
 import { initVoiceProfile, preferredVoice, stopGreeting, usePersonalVoice } from './voice-profile.js';
 
 export const activationReply = 'Sí, dígame, señor.';
@@ -34,8 +34,15 @@ function disarm(message) {
   if (message) sayStatus(message);
 }
 async function speak(text, localOnly = false) {
+  stopRecognition(); stopSpeaking();
+  const lease = beginAndroidPlayback();
+  if (lease === false) { sayStatus('Voz pausada: otro proceso está usando el audio. La respuesta permanece en pantalla.'); return false; }
+  try { return await speakOutput(text, localOnly); }
+  finally { endAndroidPlayback(lease); }
+}
+async function speakOutput(text, localOnly = false) {
   if (!localOnly && usePersonalVoice()) {
-    stopRecognition(); stopSpeaking(); speaking = true;
+    speaking = true;
     const controller = new AbortController(); externalAbort = controller;
     try {
       const response = await fetch('/api/voice/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 4000) }), signal: controller.signal });
@@ -55,7 +62,7 @@ async function speak(text, localOnly = false) {
   }
   const voice = preferredVoice();
   if (!voice || !window.speechSynthesis || !window.SpeechSynthesisUtterance) { sayStatus('No hay una voz local en español disponible. La respuesta está en pantalla; puedes elegir una voz instalada en «Voz y muestras».'); return false; }
-  stopRecognition(); stopSpeaking(); speaking = true;
+  speaking = true;
   return new Promise(resolve => {
     const utterance = new SpeechSynthesisUtterance(text.slice(0, 4000)); utterance.voice = voice; utterance.lang = voice.lang;
     let finished = false;
@@ -120,7 +127,7 @@ function startRecognition(mode) {
   recognition.onerror = event => {
     if (session !== recognition) return;
     if (event.error === 'no-speech' && mode === 'wake') return;
-    const error = ({ 'not-allowed': 'No se permitió el micrófono. Revisa los permisos del sitio.', 'service-not-allowed': 'Este navegador no habilita el servicio de voz. Prueba Chrome/Edge.', 'audio-capture': 'No se encontró un micrófono disponible.', 'no-speech': 'No se detectó voz. Puedes intentarlo de nuevo.', network: 'El servicio de voz del navegador no pudo conectarse.', aborted: 'Dictado detenido.' })[event.error] || 'No se pudo completar el dictado.';
+    const error = ({ 'not-allowed': 'No se permitió el micrófono. Revisa los permisos del sitio.', 'service-not-allowed': 'Este navegador no habilita el servicio de voz. Prueba Chrome/Edge.', 'audio-busy': 'Otro proceso está usando el micrófono o el audio. JARVIS se ha detenido; vuelve a activarlo cuando termines.', 'audio-capture': 'No se encontró un micrófono disponible.', 'no-speech': 'No se detectó voz. Puedes intentarlo de nuevo.', network: 'El servicio de voz del navegador no pudo conectarse.', aborted: 'Dictado detenido.' })[event.error] || 'No se pudo completar el dictado.';
     disarm(error);
   };
   recognition.onend = () => {
@@ -141,6 +148,7 @@ export function initVoice() {
   document.addEventListener('jarvis:new-chat', () => { token++; stopRecognition(); stopSpeaking(); resumeWake(); });
   document.addEventListener('jarvis:request-start', () => { busy = true; token++; stopRecognition(); stopSpeaking(); });
   document.addEventListener('jarvis:request-end', () => { busy = false; resumeWake(); });
+  document.addEventListener('jarvis:android-audio-interrupted', event => disarm(event.detail.text));
   document.addEventListener('jarvis:android-pause', () => disarm('Escucha detenida al salir de la aplicación.'));
   document.addEventListener('visibilitychange', () => { if (document.hidden) disarm('Escucha detenida al salir de la aplicación. Actívala de nuevo al volver.'); });
   window.addEventListener('pagehide', () => disarm()); window.addEventListener('offline', () => disarm('Sin conexión. La escucha se ha detenido.'));

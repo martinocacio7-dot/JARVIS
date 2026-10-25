@@ -5,6 +5,7 @@ import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.*;
 import android.net.Uri;
 import android.os.*;
 import android.provider.Settings;
@@ -20,7 +21,13 @@ import java.io.*;
 public final class MainActivity extends Activity {
     static final String HOME="https://jarvis-privado-rmkm.onrender.com";
     WebView web; SpeechRecognizer recognition; TextToSpeech tts;
-    volatile boolean trusted=false, foreground=false, ttsReady=false;
+    volatile boolean trusted=false, foreground=false, windowFocused=false, ttsReady=false;
+    AudioManager audio;
+    AudioFocusRequest audioFocus;
+    volatile int audioLease=0;
+    int nextAudioLease=0;
+    volatile long speechStoppedAt=0;
+    AudioManager.AudioRecordingCallback recordings;
     int speechId=-1, pendingSpeech=-1; ValueCallback<Uri[]> files;
     byte[] download; String downloadName; TextView status;
     boolean allowed(String url) {
@@ -63,23 +70,54 @@ public final class MainActivity extends Activity {
             }
             @Override public void onPermissionRequest(PermissionRequest request){request.deny();} // Native speech bridge handles microphone permission.
         });
-        tts=new TextToSpeech(this,result->{ttsReady=result==TextToSpeech.SUCCESS;if(ttsReady){tts.setLanguage(new Locale("es","EC"));tts.setOnUtteranceProgressListener(new UtteranceProgressListener(){public void onStart(String id){}public void onDone(String id){emit("tts-end",Integer.parseInt(id),"");}public void onError(String id){emit("tts-error",Integer.parseInt(id),"");}});emit("voices",0,"");}});
+        tts=new TextToSpeech(this,result->{ttsReady=result==TextToSpeech.SUCCESS;if(ttsReady){tts.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());tts.setLanguage(new Locale("es","EC"));tts.setOnUtteranceProgressListener(new UtteranceProgressListener(){public void onStart(String id){}public void onDone(String id){emit("tts-end",Integer.parseInt(id),"");}public void onError(String id){emit("tts-error",Integer.parseInt(id),"");}});emit("voices",0,"");}});
+        audio=getSystemService(AudioManager.class);
+        AudioAttributes attributes=new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
+        audioFocus=new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attributes).setOnAudioFocusChangeListener(change->{if(change<0)pauseAudio("JARVIS se ha detenido porque otra aplicación necesita el audio.");},new Handler(getMainLooper())).build();
+        recordings=new AudioManager.AudioRecordingCallback(){@Override public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configurations){
+            if(!foreground || (recognition==null && audioLease==0))return;
+            for(AudioRecordingConfiguration config:configurations) {
+                // Recognition providers normally use VOICE_RECOGNITION. Treat other sources conservatively.
+                if(config.getClientAudioSource()!=MediaRecorder.AudioSource.VOICE_RECOGNITION){pauseAudio("JARVIS se ha detenido al detectar una grabación. Vuelve a activarlo cuando termines.");return;}
+            }
+        }};
+        audio.registerAudioRecordingCallback(recordings,new Handler(getMainLooper()));
         web.loadUrl(HOME);
     }
     void permissions(){
-        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Privacidad"},(d,which)->{
+        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Instalar o configurar voz en español", "Privacidad"},(d,which)->{
             if(which==0)requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},1);
             if(which==1){if(Build.VERSION.SDK_INT>=33)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},2);else startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));}
             if(which==2 && Build.VERSION.SDK_INT>=31)startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,Uri.parse("package:"+getPackageName())));
-            if(which==3)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El reconocimiento de voz depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha se detiene al salir. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
+            if(which==3){try{startActivity(new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA));}catch(Exception error){new AlertDialog.Builder(this).setMessage("Abre Ajustes → Idioma y entrada → Síntesis de voz e instala una voz en español.").setPositiveButton("Entendido",null).show();}}
+            if(which==4)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El reconocimiento de voz depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha se detiene al salir. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
         }).show();
     }
     void emit(String type,int id,String text){runOnUiThread(()->{if(web==null||!trusted)return;try{JSONObject event=new JSONObject().put("type",type).put("id",id).put("text",text);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('jarvis:android',{detail:"+event+"}));",null);}catch(Exception ignored){}});}
-    void endSpeech(){if(recognition!=null){recognition.destroy();recognition=null;}speechId=-1;}
+    void endSpeech(){if(recognition!=null){recognition.destroy();recognition=null;speechStoppedAt=android.os.SystemClock.elapsedRealtime();}speechId=-1;}
+    boolean audioBusy(boolean forSpeech){
+        if(audio==null)return true;
+        if(audio.getMode()==AudioManager.MODE_IN_CALL || audio.getMode()==AudioManager.MODE_IN_COMMUNICATION)return true;
+        for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations()) {
+            if(!forSpeech && config.getClientAudioSource()==MediaRecorder.AudioSource.VOICE_RECOGNITION && android.os.SystemClock.elapsedRealtime()-speechStoppedAt<700)continue;
+            return true;
+        }
+        return false;
+    }
+    synchronized int beginAudio(){
+        if(!trusted || !foreground || !windowFocused || audioBusy(false))return -1;
+        if(audio.requestAudioFocus(audioFocus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED)return -1;
+        audioLease=++nextAudioLease;return audioLease;
+    }
+    synchronized void finishAudio(int lease){if(lease==audioLease && audioLease!=0){audioLease=0;audio.abandonAudioFocusRequest(audioFocus);}}
+    void pauseAudio(String message){
+        endSpeech();if(tts!=null)tts.stop();finishAudio(audioLease);emit("audio-interrupted",0,message);
+    }
     void startSpeech(int id){
-        if(!foreground||!trusted)return;
+        if(!foreground||!trusted||!windowFocused){emit("error",id,"audio-busy");return;}
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pendingSpeech=id;requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},1);return;}
         if(!SpeechRecognizer.isRecognitionAvailable(this)){emit("error",id,"service-not-allowed");return;}
+        if(audioBusy(true)){emit("error",id,"audio-busy");return;}
         endSpeech();speechId=id;recognition=SpeechRecognizer.createSpeechRecognizer(this);
         recognition.setRecognitionListener(new RecognitionListener(){
             boolean ended=false;
@@ -93,6 +131,8 @@ public final class MainActivity extends Activity {
         recognition.startListening(intent);
     }
     final class Device {
+        @JavascriptInterface public int beginPlayback(){return beginAudio();}
+        @JavascriptInterface public void endPlayback(int lease){finishAudio(lease);}
         @JavascriptInterface public void startRecognition(int id){runOnUiThread(()->startSpeech(id));}
         @JavascriptInterface public void stopRecognition(int id){runOnUiThread(()->{if(speechId==id&&recognition!=null)recognition.stopListening();});}
         @JavascriptInterface public void abortRecognition(int id){runOnUiThread(()->{if(speechId==id){endSpeech();emit("end",id,"");}});}
@@ -105,8 +145,15 @@ public final class MainActivity extends Activity {
     }
     @Override public void onRequestPermissionsResult(int request,String[] names,int[] grants){super.onRequestPermissionsResult(request,names,grants);if(request==1&&pendingSpeech!=-1){int id=pendingSpeech;pendingSpeech=-1;if(grants.length>0&&grants[0]==PackageManager.PERMISSION_GRANTED)startSpeech(id);else emit("error",id,"not-allowed");}if(request==2)Reminders.restore(this);}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==3&&files!=null){Uri[] chosen=null;if(result==RESULT_OK&&data!=null){if(data.getClipData()!=null){chosen=new Uri[data.getClipData().getItemCount()];for(int i=0;i<chosen.length;i++)chosen[i]=data.getClipData().getItemAt(i).getUri();}else if(data.getData()!=null)chosen=new Uri[]{data.getData()};}files.onReceiveValue(chosen);files=null;}if(request==4){if(result==RESULT_OK&&data!=null&&download!=null)try(OutputStream out=getContentResolver().openOutputStream(data.getData())){out.write(download);Toast.makeText(this,"Archivo guardado",Toast.LENGTH_SHORT).show();}catch(Exception error){Toast.makeText(this,"No se pudo guardar el archivo",Toast.LENGTH_SHORT).show();}download=null;}}
+    @Override public void onWindowFocusChanged(boolean hasFocus){
+        super.onWindowFocusChanged(hasFocus);windowFocused=hasFocus;
+        if(!hasFocus && (recognition!=null || audioLease!=0 || pendingSpeech!=-1)) {
+            pendingSpeech=-1;
+            pauseAudio("JARVIS se ha detenido al cambiar de ventana para liberar el micrófono. Vuelve a activarlo cuando termines.");
+        }
+    }
     @Override protected void onResume(){super.onResume();foreground=true;Reminders.restore(this);}
-    @Override protected void onPause(){foreground=false;pendingSpeech=-1;endSpeech();if(tts!=null)tts.stop();if(web!=null)web.evaluateJavascript("document.dispatchEvent(new Event('jarvis:android-pause'));",null);super.onPause();}
-    @Override protected void onDestroy(){endSpeech();if(tts!=null)tts.shutdown();if(files!=null)files.onReceiveValue(null);if(web!=null){web.removeJavascriptInterface("JarvisAndroid");web.destroy();web=null;}super.onDestroy();}
+    @Override protected void onPause(){foreground=false;pendingSpeech=-1;endSpeech();if(tts!=null)tts.stop();finishAudio(audioLease);if(web!=null)web.evaluateJavascript("document.dispatchEvent(new Event('jarvis:android-pause'));",null);super.onPause();}
+    @Override protected void onDestroy(){if(audio!=null&&recordings!=null)audio.unregisterAudioRecordingCallback(recordings);finishAudio(audioLease);endSpeech();if(tts!=null)tts.shutdown();if(files!=null)files.onReceiveValue(null);if(web!=null){web.removeJavascriptInterface("JarvisAndroid");web.destroy();web=null;}super.onDestroy();}
     @Override public void onBackPressed(){if(web.canGoBack())web.goBack();else super.onBackPressed();}
 }

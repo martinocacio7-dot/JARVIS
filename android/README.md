@@ -8,12 +8,12 @@ Descarga [JARVIS-Android-prueba.apk](../downloads/JARVIS-Android-prueba.apk) en 
 
 Si el navegador no descarga el APK directamente, descarga el [ZIP con el mismo APK](../downloads/JARVIS-Android-prueba.zip), extráelo en el teléfono y abre el archivo `.apk`.
 
-Abre JARVIS y entra. En **Permisos** puedes habilitar:
+Abre JARVIS y entra. En Android, **Leer respuestas en voz alta** viene activado; puedes desactivarlo y se recuerda tu elección. Si no hay voz española instalada, usa **Permisos → Instalar o configurar voz en español**. En **Permisos** puedes habilitar:
 
 - **Micrófono** para dictado y activación «JARVIS» con la aplicación abierta.
 - **Permitir avisos de recordatorios** para que Android muestre los recordatorios.
 - **Alarmas y recordatorios a la hora exacta** para avisos puntuales. Si no lo permites, Android programa avisos aproximados y JARVIS lo indica.
-La versión 1.0.1 no declara el servicio de acceso a notificaciones de otras aplicaciones ni ofrece activar ese permiso. La versión anterior fue bloqueada por Play Protect con un aviso de acceso sensible. El aviso no identifica una causa exacta: reducir permisos no garantiza que Google acepte un APK distribuido fuera de Play. Si vuelve a bloquearlo, utiliza la versión web instalable mientras se tramita una revisión por los canales oficiales de Google; no es necesario desactivar Play Protect.
+Desde la versión 1.0.1 no se declara el servicio de acceso a notificaciones de otras aplicaciones ni ofrece activar ese permiso. La versión anterior fue bloqueada por Play Protect con un aviso de acceso sensible. El aviso no identifica una causa exacta: reducir permisos no garantiza que Google acepte un APK distribuido fuera de Play. Si vuelve a bloquearlo, utiliza la versión web instalable mientras se tramita una revisión por los canales oficiales de Google; no es necesario desactivar Play Protect.
 
 Pulsa **Activar «JARVIS»** y prueba:
 
@@ -21,7 +21,7 @@ Pulsa **Activar «JARVIS»** y prueba:
 - «JARVIS, qué notificaciones tengo»: informa de que esta versión no tiene acceso.
 - «JARVIS, hazme un recordatorio mañana a las 9 sobre tomar agua»: guarda el pendiente en tu base de datos y sincroniza su aviso en el teléfono.
 
-En Android las peticiones de ese modo de voz se envían al terminar de hablar; el dictado manual con 🎤 permite revisar antes de enviar. Se requiere activar la escucha cada vez que vuelvas a la aplicación. No escucha con la pantalla bloqueada o en segundo plano. Android puede interrumpir la escucha si su servicio no está disponible. Instala una voz española en los ajustes de síntesis de voz si no hay ninguna voz local disponible.
+En Android las peticiones de ese modo de voz se envían al terminar de hablar; el dictado manual con 🎤 permite revisar antes de enviar. Se requiere activar la escucha cada vez que vuelvas a la aplicación. No escucha con la pantalla bloqueada o en segundo plano. Al salir de JARVIS o perder el foco de la ventana se destruye su reconocedor de voz. También se detiene cuando Android informa de otra grabación o retira el foco de audio, y no se reactiva automáticamente; vuelve a pulsar Activar «JARVIS» al terminar. Si Android informa de audio ocupado, la respuesta queda en pantalla. Escuchar una palabra desde otra aplicación exigiría mantener el micrófono activo y podría entrar en conflicto con una cámara o grabadora. Esta versión prioriza liberar el micrófono, por lo que no incorpora escucha permanente en segundo plano. La detección de grabaciones depende de lo que Android y el proveedor de reconocimiento expongan: no garantiza compatibilidad con todas las cámaras, grabadoras o equipos. Antes de grabar, sal de JARVIS y comprueba un vídeo corto con sonido. Android puede interrumpir la escucha si su servicio no está disponible. Instala una voz española en los ajustes de síntesis de voz si no hay ninguna voz local disponible.
 
 Las horas de los recordatorios se interpretan en **America/Guayaquil (UTC−5)** y se muestran al confirmar. Cuando solo indicas una hora se elige su próxima ocurrencia; si faltan datos se abre el formulario. No admite recordatorios recurrentes.
 

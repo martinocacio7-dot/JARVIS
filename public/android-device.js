@@ -3,6 +3,10 @@ let initialized = false;
 export function initAndroidDevice() {
   if (!native() || initialized) return;
   initialized = true;
+  const readAloud = document.querySelector('#read-aloud');
+  try { readAloud.checked = localStorage.getItem('jarvis.android.read-aloud') !== 'false'; } catch { readAloud.checked = true; }
+  readAloud.addEventListener('change', () => { try { localStorage.setItem('jarvis.android.read-aloud', String(readAloud.checked)); } catch {} });
+  document.addEventListener('jarvis:android-pause', () => { recognition = null; });
   const taskHelp = document.querySelector('#task-panel > p');
   if (taskHelp) taskHelp.textContent = taskHelp.textContent.replace('Esta web no emite alarmas automáticas; puedes exportar la agenda e importarla en un calendario que admita avisos.', 'Android programa los avisos al sincronizar tus pendientes. Activa las notificaciones y las alarmas exactas en Permisos.');
   let serial = 0, recognition = null, utterance = null, utteranceId = 0;
@@ -19,6 +23,7 @@ export function initAndroidDevice() {
   Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: synthesis });
   Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: class { constructor(text) { this.text = text; } } });
   window.addEventListener('jarvis:android', ({ detail }) => {
+    if (detail.type === 'audio-interrupted') { document.dispatchEvent(new CustomEvent('jarvis:android-audio-interrupted', { detail: { text: detail.text } })); return; }
     if (detail.type === 'voices') { synthesis.dispatchEvent(new Event('voiceschanged')); return; }
     if (detail.type.startsWith('tts-')) { if (detail.id === utteranceId) { const value = utterance; utterance = null; (detail.type === 'tts-end' ? value?.onend : value?.onerror)?.(); } return; }
     const current = recognition; if (!current || current.id !== detail.id) return;
@@ -56,4 +61,13 @@ export function sendAndroidVoiceCommand() {
   if (!native()) return false;
   setTimeout(() => document.querySelector('#composer').requestSubmit(), 0);
   return true;
+}
+
+export function beginAndroidPlayback() {
+  try { const lease = native()?.beginPlayback?.(); return typeof lease === 'number' && lease < 0 ? false : lease; }
+  catch { return false; }
+}
+export function endAndroidPlayback(lease) {
+  if (typeof lease !== 'number' || lease < 0) return;
+  try { native()?.endPlayback?.(lease); } catch { /* Audio is also released by Android lifecycle cleanup. */ }
 }
