@@ -24,4 +24,27 @@ public class WakeConversationTest {
         assertFalse(flow.greeted());assertFalse(flow.command("hola",0));flow.quiet();assertEquals(WakeConversation.State.PAUSED,flow.state());
         flow.start();flow.keyword();flow.greeted();flow.ready(100);flow.stop();assertFalse(flow.command("hola",101));assertFalse(flow.answer());flow.quiet();assertEquals(WakeConversation.State.STOPPED,flow.state());
     }
+    @Test public void silenceWhileWaitingForNameNeverRequestsAndroidDictation() {
+        WakeConversation flow=new WakeConversation();
+        assertEquals(WakeConversation.Input.NONE,flow.input());
+        flow.start();
+        for(long now=0;now<120000;now+=1000){
+            assertFalse(flow.silenceExpired(now));
+            assertEquals(WakeConversation.Input.KEYWORD,flow.input());
+        }
+        assertTrue(flow.keyword());assertEquals(WakeConversation.Input.NONE,flow.input());
+        assertTrue(flow.greeted());assertEquals(WakeConversation.Input.COMMAND,flow.input());
+        flow.ready(1000);assertTrue(flow.silenceExpired(5000));
+        flow.quiet();assertEquals(WakeConversation.Input.KEYWORD,flow.input());
+        flow.pause();assertEquals(WakeConversation.Input.NONE,flow.input());
+        assertFalse(flow.keyword());
+    }
+    @Test public void dictationAndWakeCaptureAreOffDuringThinkingReplyAndStop() {
+        WakeConversation flow=new WakeConversation();flow.start();flow.keyword();flow.greeted();flow.ready(0);
+        assertTrue(flow.command("que hora es",100));
+        assertEquals(WakeConversation.Input.NONE,flow.input());
+        assertTrue(flow.answer());assertEquals(WakeConversation.Input.NONE,flow.input());
+        flow.quiet();assertEquals(WakeConversation.Input.KEYWORD,flow.input());
+        flow.stop();assertEquals(WakeConversation.Input.NONE,flow.input());
+    }
 }

@@ -14,6 +14,8 @@ import android.speech.tts.*;
 import android.webkit.*;
 import android.widget.*;
 import android.view.ViewGroup;
+import android.view.View;
+import android.view.WindowManager;
 import org.json.*;
 import java.util.*;
 import java.io.*;
@@ -106,7 +108,7 @@ public final class MainActivity extends Activity {
     void backgroundMode(){
         if(WakeService.running||activation.requested()||"PREPARANDO".equals(WakeService.status)){activation.cancel();activationRequest=0;stopService(new Intent(this,WakeService.class));WakeService.report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS cuando quieras usarla.");return;}
         if(activationDialog)return;activationDialog=true;
-        new AlertDialog.Builder(this).setTitle("Activar JARVIS por voz").setMessage("Al activarlo una vez podrás decir JARVIS desde otra aplicación. Mantendrá el micrófono activo y una notificación para pausarlo o apagarlo. Android puede enviar audio al proveedor de reconocimiento incluso antes del nombre. Pausa la escucha antes de grabar vídeos. El acceso privado se guarda cifrado con Android Keystore solo para consultar tu servidor en este modo.").setNegativeButton("Cancelar",(d,w)->activationDialog=false).setOnCancelListener(d->activationDialog=false).setPositiveButton("Activar",(d,w)->{activationDialog=false;activation.begin();WakeService.report("PREPARANDO","Comprobando permisos y acceso privado…");new Handler(getMainLooper()).postDelayed(()->continueActivation(),250);}).show();
+        new AlertDialog.Builder(this).setTitle("Activar JARVIS por voz").setMessage("Al activarlo una vez podrás decir JARVIS desde otra aplicación. Mantendrá el micrófono activo y una notificación para pausarlo o apagarlo. El nombre se detecta localmente con Porcupine. Necesita una AccessKey de Picovoice y puede validar la licencia por Internet. Después del saludo, Android puede enviar tu petición al proveedor de reconocimiento. Pausa la escucha antes de grabar vídeos. El acceso privado se guarda cifrado con Android Keystore solo para consultar tu servidor en este modo.").setNegativeButton("Cancelar",(d,w)->activationDialog=false).setOnCancelListener(d->activationDialog=false).setPositiveButton("Activar",(d,w)->{activationDialog=false;activation.begin();WakeService.report("PREPARANDO","Comprobando permisos y acceso privado…");new Handler(getMainLooper()).postDelayed(()->continueActivation(),250);}).show();
     }
     void continueActivation(){
         if(!activation.requested()||activationDialog||activationRequest!=0)return;
@@ -120,7 +122,10 @@ public final class MainActivity extends Activity {
             case APP_NOTIFICATIONS:activationRequest=7;WakeService.report("PERMISO PENDIENTE","Activa las notificaciones de JARVIS en Ajustes y vuelve a la app.");startActivityForResult(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()),7);break;
             case CHANNEL:activationRequest=8;WakeService.report("PERMISO PENDIENTE","Activa la notificación de escucha en Ajustes y vuelve a la app.");startActivityForResult(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()).putExtra(Settings.EXTRA_CHANNEL_ID,"jarvis_listening"),8);break;
             case LOGIN:backgroundLogin();break;
-            case START:launchBackgroundService();break;
+            case START:
+                boolean configured=false;try{configured=!WakeAccessKey.load(this).isEmpty();}catch(Exception ignored){}
+                if(configured)launchBackgroundService();else wakeKeyDialog();
+                break;
             default:break;
         }
     }
@@ -149,13 +154,37 @@ public final class MainActivity extends Activity {
             catch(Exception error){activationFailed("No se pudo guardar el acceso cifrado en este teléfono.");}
         }).show();
     }
+    void wakeKeyDialog(){
+        if(activationDialog)return;
+        activationDialog=true;
+        stopService(new Intent(this,WakeService.class));
+        EditText keyInput=new EditText(this);keyInput.setHint("AccessKey de Picovoice");
+        keyInput.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        keyInput.setSaveEnabled(false);keyInput.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Detector local de JARVIS")
+            .setMessage("Obtén tu AccessKey en console.picovoice.ai. Se guarda cifrada solo en este teléfono; no va a GitHub ni al servidor de JARVIS. Picovoice puede validar la licencia por Internet y aplica sus condiciones. La detección del nombre procesa el audio en el dispositivo. No pegues la clave en el chat.")
+            .setView(keyInput).setNegativeButton("Cancelar",(d,w)->{activation.cancel();WakeService.report("INACTIVO","Detector sin configurar. Puedes usar el micrófono manual.");})
+            .setNeutralButton("Borrar clave",(d,w)->{WakeAccessKey.clear(this);activation.cancel();WakeService.report("INACTIVO","Clave del detector eliminada. Micrófono manual disponible.");})
+            .setPositiveButton("Guardar",null).create();
+        dialog.setOnCancelListener(d->{activation.cancel();WakeService.report("INACTIVO","Activación cancelada.");});
+        dialog.setOnDismissListener(d->{activationDialog=false;keyInput.setText("");});
+        dialog.show();dialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
+            String value=keyInput.getText().toString().trim();
+            if(value.isEmpty()){keyInput.setError("Introduce tu AccessKey");return;}
+            try{WakeAccessKey.save(this,value);dialog.dismiss();WakeService.report("INACTIVO","Clave guardada. Activa JARVIS para iniciar el detector.");
+                if(activation.requested())new Handler(getMainLooper()).postDelayed(()->continueActivation(),250);
+            }catch(Exception ignored){keyInput.setError("No se pudo guardar de forma segura");}
+        });
+    }
     void permissions(){
-        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Instalar o configurar voz en español", "Privacidad", "Olvidar acceso del modo Fuera de app"},(d,which)->{
+        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Instalar o configurar voz en español", "Privacidad", "Olvidar acceso del modo Fuera de app", "Detector local · clave de Picovoice"},(d,which)->{
             if(which==0)requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},1);
             if(which==1){if(Build.VERSION.SDK_INT>=33)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},2);else startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));}
             if(which==2 && Build.VERSION.SDK_INT>=31)startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,Uri.parse("package:"+getPackageName())));
             if(which==3){try{startActivity(new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA));}catch(Exception error){new AlertDialog.Builder(this).setMessage("Abre Ajustes → Idioma y entrada → Síntesis de voz e instala una voz en español.").setPositiveButton("Entendido",null).show();}}
-            if(which==4)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El reconocimiento de voz depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha de la pantalla se detiene al salir. El modo Fuera de app solo funciona si lo activas; mantiene una notificación para pausarlo y apagarlo. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
+            if(which==4)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El detector local del nombre utiliza Porcupine con tu AccessKey. Puede validar la licencia por Internet. Después del saludo, el dictado depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha de la pantalla se detiene al salir. El modo Fuera de app solo funciona si lo activas; mantiene una notificación para pausarlo y apagarlo. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
+            if(which==6)wakeKeyDialog();
             if(which==5){activation.cancel();activationRequest=0;WakeService.report("INACTIVO","Acceso cifrado eliminado. Escucha apagada.");stopService(new Intent(this,WakeService.class));PrivateLogin.clear(this);sessionUser=null;sessionPassword=null;Toast.makeText(this,"Acceso cifrado del modo Fuera de app eliminado",Toast.LENGTH_LONG).show();}
         }).show();
     }
@@ -199,7 +228,7 @@ public final class MainActivity extends Activity {
     }
     final class Device {
         @JavascriptInterface public void activateWake(){runOnUiThread(()->{if(!trusted||!foreground)return;if(WakeService.running){if("PAUSADO".equals(WakeService.status))startService(new Intent(MainActivity.this,WakeService.class).setAction(WakeService.RESUME));}else backgroundMode();});}
-        @JavascriptInterface public int appVersion(){return 6;}
+        @JavascriptInterface public int appVersion(){return 7;}
         @JavascriptInterface public boolean backgroundMode(){return WakeService.running;}
         @JavascriptInterface public int beginPlayback(){return beginAudio();}
         @JavascriptInterface public void endPlayback(int lease){finishAudio(lease);}

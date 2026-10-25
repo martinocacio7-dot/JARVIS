@@ -1,6 +1,7 @@
 package com.miguel.jarvis;
 
 import android.Manifest;
+import ai.picovoice.porcupine.*;
 import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
@@ -30,6 +31,9 @@ public final class WakeService extends Service {
     final WakeConversation flow=new WakeConversation();
     final Handler main=new Handler(Looper.getMainLooper());
     final ExecutorService worker=Executors.newSingleThreadExecutor();
+    PorcupineManager wakeDetector;
+    boolean wakeListening=false,wakePreparing=false;
+    long detectorSession=0;
     SpeechRecognizer recognizer; TextToSpeech tts; AudioManager audio; AudioFocusRequest focus;
     AudioManager.AudioRecordingCallback recordings;
     boolean ready=false, initialized=false, speaking=false, pendingStart=false, focused=false, startupFatal=false, recordingMonitorRegistered=false;
@@ -98,7 +102,7 @@ public final class WakeService extends Service {
     void notice(String text){if(running)getSystemService(NotificationManager.class).notify(NOTICE,notification(text));}
     void destroyRecognizer(){SpeechRecognizer old=recognizer;recognizer=null;if(old!=null)old.destroy();}
     void releaseFocus(){if(focused){focused=false;audio.abandonAudioFocusRequest(focus);}}
-    void resetAudio(){voiceSequence++;afterSpeech=null;speaking=false;destroyRecognizer();if(tts!=null)tts.stop();releaseFocus();}
+    void resetAudio(){stopWakeDetector();wakePreparing=false;voiceSequence++;afterSpeech=null;speaking=false;destroyRecognizer();if(tts!=null)tts.stop();releaseFocus();}
     boolean occupied(){
         if(audio.getMode()==AudioManager.MODE_IN_CALL||audio.getMode()==AudioManager.MODE_IN_COMMUNICATION)return true;
         return !audio.getActiveRecordingConfigurations().isEmpty();
@@ -107,7 +111,7 @@ public final class WakeService extends Service {
         if(!running||!ready)return;
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pause("Falta permitir el micrófono. Abre JARVIS → Permisos.");return;}
         if(!SpeechRecognizer.isRecognitionAvailable(this)){pause("Este teléfono no tiene un servicio de reconocimiento de voz disponible.");return;}
-        generation++;resetAudio();flow.start();report("PREPARANDO","Iniciando reconocimiento de voz…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
+        generation++;resetAudio();deleteWakeDetector();flow.start();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
     }
     void pause(String message){
         pendingStart=false;generation++;flow.pause();report("PAUSADO",message);resetAudio();HttpsURLConnection current=connection;if(current!=null)current.disconnect();notice(message);
@@ -119,7 +123,9 @@ public final class WakeService extends Service {
     }
     void listen(){
         WakeConversation.State state=flow.state();
-        if(!running||!ready||speaking||recognizer!=null||(state!=WakeConversation.State.WAKE&&state!=WakeConversation.State.COMMAND))return;
+        if(!running||!ready||speaking||recognizer!=null||wakeListening||wakePreparing)return;
+        if(flow.input()==WakeConversation.Input.KEYWORD){startWakeDetector();return;}
+        if(flow.input()!=WakeConversation.Input.COMMAND)return;
         if(flow.silenceExpired(SystemClock.elapsedRealtime())){returnToWake();return;}
         if(occupied()){pause("El micrófono está ocupado. Retoma la escucha cuando termines de grabar.");return;}
         final SpeechRecognizer current=SpeechRecognizer.createSpeechRecognizer(this);recognizer=current;
@@ -136,25 +142,68 @@ public final class WakeService extends Service {
             public void onRmsChanged(float value){}public void onBufferReceived(byte[] value){}public void onEndOfSpeech(){}public void onPartialResults(Bundle value){}public void onEvent(int type,Bundle value){}
             public void onResults(Bundle data){
                 if(!valid())return;ArrayList<String> values=data.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);String text=values==null||values.isEmpty()?"":values.get(0).trim();destroyRecognizer();
-                if(flow.state()==WakeConversation.State.WAKE){
-                    final String trailing=WakeConversation.afterName(text);if(trailing==null){returnToWake();return;}
-                    if(!flow.keyword())return;
-                    say("Sí, dígame, señor.",()->{
-                        if(!flow.greeted())return;
-                        if(!trailing.isEmpty()){flow.ready(SystemClock.elapsedRealtime());if(flow.command(trailing,SystemClock.elapsedRealtime()))answer(trailing);}
-                        else{notice("Dígame: espero hasta cuatro segundos por tu petición.");main.postDelayed(()->listen(),450);}
-                    });
-                }else if(flow.command(text,SystemClock.elapsedRealtime()))answer(text);else returnToWake();
+                if(flow.command(text,SystemClock.elapsedRealtime()))answer(text);else returnToWake();
             }
             public void onError(int error){
                 if(!valid())return;destroyRecognizer();
                 if(error==SpeechRecognizer.ERROR_NO_MATCH||error==SpeechRecognizer.ERROR_SPEECH_TIMEOUT){
-                    if(flow.state()==WakeConversation.State.COMMAND&&!flow.silenceExpired(SystemClock.elapsedRealtime())&&!begun){int expected=generation;main.postDelayed(()->{if(expected==generation)listen();},300);}else returnToWake();
+                    returnToWake(); // One dictation attempt per wake; never restart ASR in a silent loop.
                 }else pause("El reconocimiento se detuvo. Revisa Internet y permisos; toca Retomar para intentar de nuevo.");
             }
         });
         Intent request=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE,"es-EC").putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1);
         try{current.startListening(request);}catch(Exception error){pause("No se pudo iniciar el micrófono. Abre JARVIS para revisar permisos.");}
+    }
+    void stopWakeDetector(){
+        wakeListening=false;
+        if(wakeDetector!=null)try{wakeDetector.stop();}catch(PorcupineException ignored){}
+    }
+    void deleteWakeDetector(){
+        detectorSession++;
+        stopWakeDetector();
+        if(wakeDetector!=null){wakeDetector.delete();wakeDetector=null;}
+    }
+    void startWakeDetector(){
+        if(occupied()){pause("El micrófono está ocupado. Retoma cuando termines de grabar.");return;}
+        if(wakeDetector!=null){startLocalCapture();return;}
+        final String key;
+        try{key=WakeAccessKey.load(this);}catch(Exception error){pause("No se pudo leer la clave cifrada. Configura el detector desde Permisos.");return;}
+        if(key.isEmpty()){pause("Configura Detector local · clave de Picovoice desde Permisos. El micrófono manual sigue disponible.");return;}
+        wakePreparing=true;
+        final int expected=generation;final long session=++detectorSession;
+        worker.execute(()->{
+            PorcupineManager prepared=null;
+            try{
+                prepared=new PorcupineManager.Builder().setAccessKey(key).setKeyword(Porcupine.BuiltInKeyword.JARVIS).setSensitivity(.65f)
+                    .setErrorCallback(error->main.post(()->{if(session==detectorSession&&wakeListening)pause("El detector local se detuvo. Revisa micrófono y clave desde Permisos.");}))
+                    .build(this,index->main.post(()->{
+                        if(session!=detectorSession||!running||!wakeListening||flow.state()!=WakeConversation.State.WAKE)return;
+                        stopWakeDetector();
+                        if(!flow.keyword())return;
+                        say("Sí, dígame, señor.",()->{
+                            if(!flow.greeted())return;
+                            notice("Dígame: espero hasta cuatro segundos por tu petición.");
+                            int turn=generation;main.postDelayed(()->{if(turn==generation)listen();},450);
+                        });
+                    }));
+                final PorcupineManager built=prepared;
+                main.post(()->{
+                    if(expected!=generation||!running||flow.state()!=WakeConversation.State.WAKE){built.delete();return;}
+                    wakePreparing=false;wakeDetector=built;startLocalCapture();
+                });
+            }catch(Exception | LinkageError error){
+                if(prepared!=null)prepared.delete();
+                main.post(()->{if(expected==generation){wakePreparing=false;pause("No se pudo iniciar el detector. Comprueba la AccessKey de Picovoice, su licencia y la conexión. No se reintentará automáticamente.");}});
+            }
+        });
+    }
+    void startLocalCapture(){
+        if(occupied()){pause("El micrófono está ocupado. Retoma cuando termines de grabar.");return;}
+        try{
+            wakeDetector.start();wakeListening=true;listeningConfirmed=true;
+            report("ESCUCHANDO","Detector local activo. Di JARVIS y espera el saludo antes de tu petición.");
+            notice("Di JARVIS. Pausa antes de grabar vídeos.");
+        }catch(Exception error){pause("No se pudo abrir el micrófono del detector local. Revisa los permisos.");}
     }
     void scheduleSilenceCheck(int expected){
         main.postDelayed(()->{
@@ -164,7 +213,7 @@ public final class WakeService extends Service {
         },100);
     }
     void say(String text,Runnable done){
-        destroyRecognizer();releaseFocus();
+        stopWakeDetector();destroyRecognizer();releaseFocus();
         if(!running||!ready||flow.state()==WakeConversation.State.PAUSED||flow.state()==WakeConversation.State.STOPPED)return;
         // A recently stopped recognition provider may release its VOICE_RECOGNITION session asynchronously.
         for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations())if(RecordingPolicy.interrupts(config.getClientAudioSource(), Build.VERSION.SDK_INT>=29 && config.isClientSilenced())){pause("Grabación detectada. Voz y escucha pausadas.");return;}
@@ -214,7 +263,7 @@ public final class WakeService extends Service {
         }finally{if(connection==current)connection=null;current.disconnect();}
     }
     @Override public void onDestroy(){
-        running=false;if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");MainActivity.backgroundModeChanged(false);generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();HttpsURLConnection current=connection;if(current!=null)current.disconnect();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
+        running=false;if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");MainActivity.backgroundModeChanged(false);generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();deleteWakeDetector();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();HttpsURLConnection current=connection;if(current!=null)current.disconnect();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
 }

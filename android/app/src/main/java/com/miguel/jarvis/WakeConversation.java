@@ -10,6 +10,8 @@ public final class WakeConversation {
         return match.find() ? text.substring(match.end()).replaceFirst("^[\\s,.:;!?¡¿-]+", "").trim() : null;
     }
     public enum State { STOPPED, WAKE, GREETING, COMMAND, THINKING, REPLY, PAUSED }
+    public enum Input { NONE, KEYWORD, COMMAND }
+    public Input input() { return state == State.WAKE ? Input.KEYWORD : state == State.COMMAND ? Input.COMMAND : Input.NONE; }
     private State state = State.STOPPED;
     private long deadline;
     private boolean speech;
