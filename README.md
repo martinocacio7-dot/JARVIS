@@ -130,7 +130,7 @@ Los datos están en `jarvis_tasks`: SQLite local o PostgreSQL mediante `DATABASE
 
 **Esta versión no emite alarmas automáticas, con la web abierta ni cerrada.** Para obtener avisos, **Exportar agenda para calendario (.ics)** descarga los recordatorios no completados. Importa el archivo en un calendario compatible y comprueba sus avisos y permisos. Los eventos se exportan en UTC con un aviso al inicio, pero su ejecución depende del calendario. No hay sincronización posterior: los cambios en JARVIS no actualizan automáticamente lo importado; revisa posibles duplicados al importar de nuevo. El archivo contiene tus descripciones y debe guardarse en privado.
 
-`GET /api/tasks` devuelve `{ items, revision }`; `PUT /api/tasks` acepta `{ items, expectedRevision }` y devuelve HTTP 409 si la revisión cambió. Los elementos tienen `id`, `kind` (`reminder` o `list`), `text`, `dueAt` (ISO UTC o `null` para lista) y `completed`. Las fechas históricas se conservan como vencidas; el formulario y las órdenes de creación solicitan una fecha futura. Las rutas están protegidas por la autenticación de JARVIS y la comprobación de origen en escrituras. Son reutilizables por una futura aplicación móvil; esa aplicación aún no se ha construido.
+`GET /api/tasks` devuelve `{ items, revision }`; `PUT /api/tasks` acepta `{ items, expectedRevision }` y devuelve HTTP 409 si la revisión cambió. Los elementos tienen `id`, `kind` (`reminder` o `list`), `text`, `dueAt` (ISO UTC o `null` para lista) y `completed`. Las fechas históricas se conservan como vencidas; el formulario y las órdenes de creación solicitan una fecha futura. Las rutas están protegidas por la autenticación de JARVIS y la comprobación de origen en escrituras. También se utilizan desde la versión web móvil instalable.
 
 ## Documentos de Word, PDF, PowerPoint y Excel
 
@@ -147,15 +147,31 @@ Separa párrafos con una línea en blanco y usa `# Encabezado` o `## Encabezado 
 
 `POST /api/documents` recibe el formato, título, metadatos, contenido y referencias o tabla, y devuelve el archivo binario con su tipo de contenido y nombre de descarga. Usa la misma contraseña y comprobación de origen de la aplicación. No necesita `DATABASE_URL` para generar archivos.
 
+## Versión móvil instalable
+
+Abre la dirección privada de JARVIS en tu teléfono y entra con tu usuario y contraseña. En Android/Chrome usa **Instalar JARVIS** o el menú **Instalar aplicación**. En iPhone/Safari usa **Compartir → Añadir a pantalla de inicio**. Es una aplicación web instalable (PWA), no un APK. El botón **Funciones** abre biblioteca, documentos, pendientes y ajustes de voz; el chat se adapta al ancho del teléfono.
+
+Necesita conexión. El service worker no guarda páginas privadas ni respuestas de API en caché: sin red muestra una pantalla genérica. El manifiesto, el service worker y los iconos son públicos para permitir instalar; la aplicación y las API conservan su contraseña. El historial sigue en cada navegador; biblioteca, pendientes y configuración de la voz se comparten mediante la base de datos.
+
 ## Micrófono y respuestas habladas
 
-Pulsa **🎤** para dictar un mensaje en español. El navegador solicitará permiso de micrófono; el sitio debe usar HTTPS o ejecutarse en localhost. Puedes detenerlo con el mismo botón. El texto queda visible para revisarlo y no se envía automáticamente. El micrófono no permanece escuchando, y no hay activación por palabra clave como «Alexa».
+Pulsa **🎤** para dictar en español. Necesita HTTPS y permiso del navegador. El texto queda visible para revisarlo; pulsa **Enviar** para solicitar una respuesta.
 
-El dictado usa Web Speech API (`SpeechRecognition` o `webkitSpeechRecognition`). Depende del navegador y puede enviar el audio a su proveedor de reconocimiento; no es un modelo de voz propio ni una garantía de procesamiento local. Si tu navegador, sus permisos o su servicio no lo admiten, puedes escribir o probar Chrome/Edge. El servidor de Render no necesita un micrófono.
+Para activar por nombre, pulsa **Activar «JARVIS»**. Al oír «JARVIS» responde **«Sí, dígame, señor.»** y escucha tu petición. También admite «JARVIS, añade leche a mi lista» en una frase. La petición queda preparada para revisar y enviar. Este modo habilita la lectura de respuestas y pausa la escucha mientras habla. Se detiene al ocultar la aplicación, bloquear el teléfono o perder conexión; debes reactivarlo al volver. No es escucha permanente en segundo plano.
 
-**Leer respuestas con voz local** es opcional y está desactivado al abrir la página. Solo se utiliza una voz en español que el navegador marque como `localService`; si no hay una, se indica que falta y no se recurre a una voz remota. El texto completo queda en pantalla; las respuestas largas leen como máximo 4000 caracteres. **Detener voz** interrumpe la lectura. Al iniciar dictado, se detiene la voz para reducir que se transcriba la propia respuesta.
+El dictado y la detección del nombre usan Web Speech API (`SpeechRecognition` o `webkitSpeechRecognition`). El navegador puede enviar audio a su proveedor mientras escucha, incluso antes del nombre. La compatibilidad depende del equipo; prueba Chrome/Edge si no funciona. Render no necesita un micrófono físico.
 
-La voz es una interfaz sobre la red existente: no la convierte en un modelo comparable al de Alexa. Las pruebas de interfaz simulan el reconocimiento y la síntesis; el audio real y los permisos del equipo deben comprobarse en tu navegador. La página informa de denegaciones, ausencia de micrófono y errores de servicio sin perder el texto.
+**Leer respuestas en voz alta** permite oír hasta 4000 caracteres de cada respuesta. **Detener voz** interrumpe la reproducción. Puedes elegir una voz española instalada que el navegador identifique como local, o configurar ElevenLabs para usar una misma voz personalizada en el saludo y las respuestas nuevas. La síntesis cambia la voz, no la inteligencia del modelo.
+
+### Usar tus muestras para la misma voz en todas las respuestas
+
+1. En Render → servicio JARVIS → **Environment → Edit**, añade `ELEVENLABS_API_KEY` con una clave de tu cuenta ElevenLabs que permita crear voces y sintetizar audio. Guarda y vuelve a desplegar. No publiques la clave en GitHub ni en el chat. Las claves de Gemini/Groq no sirven para este servicio; el plan del proveedor puede requerir pago.
+2. Descomprime `vos.zip`. En **Funciones → Voz y muestras personales**, carga hasta cuatro audios de la misma voz (.ogg, .mp3, .wav o .m4a, máximo 500 KB cada uno). Puedes escucharlos antes; se conservan en IndexedDB del dispositivo. Cargar archivos no clona una voz ni los envía al proveedor.
+3. Pulsa **Crear voz en ElevenLabs y enviar muestras**. Esta acción envía las muestras al proveedor y guarda el identificador de la voz creada en PostgreSQL/SQLite. Después selecciona **Voz personalizada · ElevenLabs** y activa la lectura. Los textos leídos se envían a ElevenLabs para producir audio nuevo con esa voz.
+
+Si ya tienes una voz creada, puedes configurar `ELEVENLABS_VOICE_ID` en Render junto a la clave. Una voz creada desde JARVIS y guardada en la base de datos tiene prioridad. Si el proveedor crea la voz pero falla el guardado, se muestra su identificador para configurarlo manualmente sin crear otra. Las grabaciones originales y la clave no se guardan en la base de datos de JARVIS; el proveedor conserva los datos según sus condiciones. Borrar las muestras del dispositivo no elimina la voz en ElevenLabs.
+
+Las pruebas automáticas verifican contratos de API, autenticación, persistencia, interfaz móvil y activación mediante voz simulada. La clonación real y el micrófono físico requieren probar con tu cuenta y dispositivo. La calidad depende de las muestras y del servicio; no se garantiza una reproducción idéntica.
 
 ## Desarrollar prototipos de código
 
@@ -196,7 +212,7 @@ También comprueban recuperación con fuentes, correcciones, persistencia real e
 
 ## Alcance de esta versión
 
-Es una base de desarrollo para uso personal. Incluye acceso privado con un usuario y contraseña mediante HTTP Basic, sin registro de cuentas. No incluye herramientas para controlar dispositivos ni voz. El chat permanece en cada navegador; la biblioteca se comparte entre tus dispositivos mediante la base de datos. El indicador «IA configurada» significa que existe una clave, no que su validez o saldo hayan sido verificados.
+Es una base de desarrollo para uso personal. Incluye acceso privado con un usuario y contraseña mediante HTTP Basic, sin registro de cuentas. No incluye herramientas para controlar dispositivos. La voz funciona según la compatibilidad del navegador y la configuración elegida. El chat permanece en cada navegador; la biblioteca se comparte entre tus dispositivos mediante la base de datos. El indicador «IA configurada» significa que existe una clave, no que su validez o saldo hayan sido verificados.
 
 ## Publicar una web privada en Render
 

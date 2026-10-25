@@ -3,6 +3,7 @@ import { dirname } from 'node:path';
 import { validateLibrary } from '../public/library-data.js';
 import { validateFeedback } from '../public/feedback-data.js';
 import { validateTasks } from '../public/task-data.js';
+import { validateVoice } from '../voice/elevenlabs.js';
 
 const empty = () => ({ version: 1, documents: [], corrections: [] });
 export class RevisionConflict extends Error {}
@@ -32,6 +33,8 @@ export function createLibraryDatabase({ url = process.env.DATABASE_URL, path = p
           await pool.query("INSERT INTO jarvis_feedback (id, payload, revision) VALUES (1, '[]'::jsonb, 0) ON CONFLICT (id) DO NOTHING");
           await pool.query('CREATE TABLE IF NOT EXISTS jarvis_tasks (id INTEGER PRIMARY KEY CHECK (id = 1), payload JSONB NOT NULL, revision INTEGER NOT NULL DEFAULT 0)');
           await pool.query("INSERT INTO jarvis_tasks (id, payload, revision) VALUES (1, '[]'::jsonb, 0) ON CONFLICT (id) DO NOTHING");
+          await pool.query('CREATE TABLE IF NOT EXISTS jarvis_voice (id INTEGER PRIMARY KEY CHECK (id = 1), payload JSONB NOT NULL, revision INTEGER NOT NULL DEFAULT 0)');
+          await pool.query('INSERT INTO jarvis_voice (id, payload, revision) VALUES (1, $1::jsonb, 0) ON CONFLICT (id) DO NOTHING', [JSON.stringify({ voiceId: null, name: '' })]);
           return connection = { kind, pool };
         } catch (error) { await pool.end(); throw error; }
       }
@@ -43,6 +46,8 @@ export function createLibraryDatabase({ url = process.env.DATABASE_URL, path = p
         db.prepare('INSERT OR IGNORE INTO jarvis_library (id, payload, revision) VALUES (1, ?, 0)').run(JSON.stringify(empty()));
         db.exec("CREATE TABLE IF NOT EXISTS jarvis_feedback (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0); INSERT OR IGNORE INTO jarvis_feedback (id, payload, revision) VALUES (1, '[]', 0)");
         db.exec("CREATE TABLE IF NOT EXISTS jarvis_tasks (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0); INSERT OR IGNORE INTO jarvis_tasks (id, payload, revision) VALUES (1, '[]', 0)");
+        db.exec('CREATE TABLE IF NOT EXISTS jarvis_voice (id INTEGER PRIMARY KEY CHECK (id = 1), payload TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)');
+        db.prepare('INSERT OR IGNORE INTO jarvis_voice (id, payload, revision) VALUES (1, ?, 0)').run(JSON.stringify({ voiceId: null, name: '' }));
         return connection = { kind, db };
       } catch (error) { db.close(); throw error; }
     })();
@@ -103,6 +108,18 @@ export function createLibraryDatabase({ url = process.env.DATABASE_URL, path = p
         : store.db.prepare('UPDATE jarvis_tasks SET payload = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision').get(data, expectedRevision);
       if (!row) throw new RevisionConflict('Los pendientes cambiaron en otro dispositivo. Recarga antes de guardar.');
       return { items, revision: row.revision };
+    },
+    async readVoice() {
+      const store = await initialize();
+      const row = store.kind === 'postgresql' ? (await store.pool.query('SELECT payload, revision FROM jarvis_voice WHERE id = 1')).rows[0] : store.db.prepare('SELECT payload, revision FROM jarvis_voice WHERE id = 1').get();
+      return { voice: validateVoice(typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload), revision: row.revision };
+    },
+    async writeVoice(value, expectedRevision) {
+      const voice = validateVoice(value); if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw new TypeError('Revisión de voz inválida.');
+      const store = await initialize(); const json = JSON.stringify(voice);
+      const row = store.kind === 'postgresql' ? (await store.pool.query('UPDATE jarvis_voice SET payload = $1::jsonb, revision = revision + 1 WHERE id = 1 AND revision = $2 RETURNING revision', [json, expectedRevision])).rows[0] : store.db.prepare('UPDATE jarvis_voice SET payload = ?, revision = revision + 1 WHERE id = 1 AND revision = ? RETURNING revision').get(json, expectedRevision);
+      if (!row) throw new RevisionConflict('La configuración de voz cambió. Revisa tu cuenta antes de crear otra voz.');
+      return { voice, revision: row.revision };
     },
     async close() {
       if (initializing) { try { await initializing; } catch { /* Sin conexión que cerrar. */ } }

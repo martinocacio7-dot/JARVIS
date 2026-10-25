@@ -34,6 +34,7 @@ async function save(candidate, message) {
   finally { $('#feedback-controls').disabled = false; }
 }
 function openEditor(text, predicted, target = '', id = null) {
+  document.dispatchEvent(new Event('jarvis:show-tools'));
   $('#feedback-panel').open = true;
   if (!available) { report('Necesitas conectar la base de datos con DATABASE_URL en Render y recargar para guardar correcciones. El chat sigue funcionando.'); return; }
   editing = id; predictedIntent = predicted;

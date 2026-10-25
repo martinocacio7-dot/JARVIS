@@ -9,6 +9,7 @@ function update() {
   $('#document-prose').hidden = format === 'xlsx'; $('#document-grid').hidden = format !== 'xlsx';
 }
 export function openDocuments(prompt = '') {
+  document.dispatchEvent(new Event('jarvis:show-tools'));
   $('#document-panel').open = true;
   if (prompt) report(`Petición: ${prompt}. Completa el título y el contenido real que debe aparecer. El generador no investiga ni redacta por sí solo.`);
   $('#document-title').focus(); $('#document-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });

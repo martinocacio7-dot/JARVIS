@@ -4,6 +4,7 @@ import { initFeedback, reportMisunderstanding } from './feedback-ui.js';
 import { initDocuments, openDocuments } from './document-ui.js';
 import { initVoice, isDictating, speakReply, stopSpeaking } from './voice.js';
 import { initTasks, refreshTasks, openTaskEditor } from './task-ui.js';
+import { initMobile } from './mobile.js';
 
 const $ = selector => document.querySelector(selector);
 let messages = [];
@@ -45,7 +46,7 @@ function render() {
         article.append(choices);
       }
     }
-    if (message.role === 'assistant' && messages[index - 1]?.role === 'user') {
+    if (message.role === 'assistant' && !message.activation && messages[index - 1]?.role === 'user') {
       const correction = document.createElement('button');
       correction.type = 'button';
       correction.className = 'correct-answer';
@@ -66,6 +67,7 @@ async function send(event) {
   const content = $('#prompt').value.trim();
   if (!content || busy || isDictating()) return;
   busy = true;
+  document.dispatchEvent(new Event('jarvis:request-start'));
   $('#send').disabled = true;
   $('#new-chat').disabled = true;
   messages.push({ role: 'user', content });
@@ -90,6 +92,7 @@ async function send(event) {
     $('#notice').textContent = error.name === 'TimeoutError' ? 'La solicitud tardó demasiado. Vuelve a intentarlo.' : error.message;
   } finally {
     busy = false;
+    document.dispatchEvent(new Event('jarvis:request-end'));
     $('#send').disabled = false;
     $('#new-chat').disabled = false;
     render();
@@ -98,14 +101,16 @@ async function send(event) {
   }
 }
 $('#composer').addEventListener('submit', send);
+document.addEventListener('jarvis:awake', event => { messages.push({ role: 'assistant', content: event.detail.text, activation: true }); messages = messages.slice(-40); render(); });
 $('#prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('#composer').requestSubmit(); } });
-$('#new-chat').addEventListener('click', () => { if (busy || isDictating()) return; stopSpeaking(); messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });
+$('#new-chat').addEventListener('click', () => { if (busy || isDictating()) return; stopSpeaking(); document.dispatchEvent(new Event('jarvis:new-chat')); messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });
 document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => { $('#prompt').value = button.dataset.prompt; $('#prompt').focus(); }));
 initLibrary();
 initFeedback();
 initDocuments();
 initVoice();
 initTasks();
+initMobile();
 render();
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
   $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : `● Red local v${data.neural.version} · ${data.neural.intents} intenciones`;

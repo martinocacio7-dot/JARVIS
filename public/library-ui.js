@@ -40,6 +40,7 @@ async function modify(action, message) {
 
 export function editCorrection(question, answer = '') {
   if (!store) return;
+  document.dispatchEvent(new Event('jarvis:show-tools'));
   $('#library-panel').open = true;
   $('#teach-question').value = question.slice(0, 500);
   $('#teach-answer').value = answer.slice(0, 2000);
@@ -57,7 +58,8 @@ export async function initLibrary() {
     store = createLibraryStore();
     await store.load();
   } catch (error) {
-    $('#library-panel').open = true;
+    document.dispatchEvent(new Event('jarvis:show-tools'));
+  $('#library-panel').open = true;
     report(`No se pudo cargar la biblioteca: ${error.message}. El chat local sigue funcionando. Configura la conexión a PostgreSQL en Render y recarga esta página.`);
     $('#library-controls').disabled = true;
     $('#use-library').disabled = true;

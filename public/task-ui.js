@@ -41,6 +41,7 @@ export async function refreshTasks() {
   } catch (error) { report(error.message); available = false; $('#task-controls').disabled = true; $('#task-count').textContent = 'Necesita conexión a la base de datos'; }
 }
 export async function openTaskEditor(draft) {
+  document.dispatchEvent(new Event('jarvis:show-tools'));
   $('#task-panel').open = true;
   await refreshTasks();
   if (!available) return;
