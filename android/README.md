@@ -1,6 +1,6 @@
 # JARVIS para Android
 
-Aplicación para Android 8.0 o posterior, conectada a `https://jarvis-privado-rmkm.onrender.com`. La versión 1.1.1 corrige la activación después de conceder permisos y muestra el estado del servicio. Incorpora un modo opcional para oír «JARVIS» desde otras aplicaciones, mediante un servicio de micrófono en primer plano de Android. No accede a las notificaciones de otras aplicaciones.
+Aplicación para Android 8.0 o posterior, conectada a `https://jarvis-privado-rmkm.onrender.com`. La versión 1.1.2 corrige la pausa causada por servicios de reconocimiento que usan la fuente MIC e incorpora una pantalla de voz con esfera de partículas y botón para retomar. Incorpora un modo opcional para oír «JARVIS» desde otras aplicaciones, mediante un servicio de micrófono en primer plano de Android. No accede a las notificaciones de otras aplicaciones.
 
 ## Instalar
 
@@ -61,3 +61,9 @@ cd android
 En Windows usa `gradlew.bat`. El archivo entregable sale en `app/build/outputs/apk/release/app-release.apk`. El tipo `release` usa la clave de prueba local (`signingConfigs.debug`) para conservar la firma de las entregas de este entorno, pero `debuggable` está desactivado. Conserva esa clave privada fuera de Git para futuras actualizaciones y configura una firma de lanzamiento propia para distribuir formalmente. GitHub Actions → **Android APK** compila y publica un artefacto descargable.
 
 Las siete pruebas JVM verifican nombre obligatorio, espera de cuatro segundos, inicio de voz dentro del plazo, rechazo de eventos tras pausa/apagado y continuación de la activación tras micrófono/notificaciones/acceso, sin arranques duplicados ni bucles tras denegar permisos. Además se ejecutan Android Lint y pruebas web con puente Android simulado. Compilar y simular no verifica permisos, micrófono, voz, grabación simultánea ni continuidad del servicio en un teléfono real.
+
+## Detección de grabación (1.1.2)
+
+La fuente MIC por sí sola no identifica otra app: también puede ser el proveedor de reconocimiento. La escucha activa se pausa ante CAMCORDER, VOICE_COMMUNICATION, pérdida de foco o captura silenciada por Android. Antes de iniciar la captura se comprueba si hay grabaciones activas. Android puede ocultar o anonimizar la identidad de otros clientes; no se garantiza detectar todas las cámaras o grabadoras. Pausa JARVIS desde la notificación antes de grabar vídeos. La pausa no se reanuda automáticamente.
+
+La nueva esfera refleja el estado real del servicio (incluido PAUSADO); el botón «Retomar escucha» usa el mismo servicio sin crear otro reconocedor. En navegador activa la escucha con la página abierta. La animación respeta la preferencia de movimiento reducido y no carga recursos externos.

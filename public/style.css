@@ -31,3 +31,30 @@
 @media(max-width:800px){aside{display:none}main{margin-left:0;width:100%;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}header{gap:12px;padding:18px 16px}header>span:first-child{font-size:0}header>span:first-child::before{content:'◈ JARVIS';font-size:17px;color:#b8d2ff;letter-spacing:2px}#status{font-size:10px;text-align:right}.mobile-bar{padding:0 16px;gap:8px;margin-top:12px}.mobile-bar button{flex:1;padding:10px 8px;font-size:12px}#mobile-new-chat,#mobile-tools{display:block}#install-notice{padding:0 16px;font-size:11px}#tools-panels{display:none}body.tools-open #tools-panels{display:block}.composer-wrap{padding-bottom:max(18px,env(safe-area-inset-bottom))}textarea,select,input{font-size:16px!important}.library li button{min-height:40px}.voice-options button{min-height:40px}#welcome{padding-top:28px}.suggestions{margin-top:24px}.orb{width:66px;height:66px;font-size:40px;margin-bottom:18px}}
 
 #wake-mode{font:inherit;width:100%;margin-top:14px;background:#203959;color:#e4eeff;border:1px solid #526e95;border-radius:10px;padding:12px;cursor:pointer;min-height:44px}#wake-mode[aria-pressed=true]{background:#224f43;border-color:#85d8ba}.wake-help{font-size:11px;color:#95a8c4;line-height:1.6}#voice-profile-panel label{display:block;margin:12px 0 6px}#voice-profile-panel select,#voice-profile-panel input{font:inherit;max-width:100%;width:100%;min-width:0;padding:10px;background:#111923;color:#e9edf5;border:1px solid #3b4b63;border-radius:7px}#voice-profile-panel button{margin:12px 8px 0 0;min-height:44px}#voice-engine-notice,#voice-profile-notice{color:#c3d7f4;font-size:12px;overflow-wrap:anywhere}
+
+/* Voice-first home: lightweight SVG particles, no remote fonts or assets. */
+:root{background:#0b0912;color:#eeeaf7}
+body{background:radial-gradient(ellipse at 65% 12%,#30203f44,transparent 48%),#0b0912}
+aside{background:#100d18;border-color:#282134}.brand{color:#c1a5ff}
+header{border-color:#282134}main{isolation:isolate}
+.voice-home{text-align:center;padding:38px 20px 24px;position:relative}
+.voice-kicker{font-size:9px;letter-spacing:4px;color:#b7a1d1}
+#voice-orb{display:block;position:relative;margin:12px auto;width:250px;height:250px;border:0;padding:0;border-radius:50%;background:radial-gradient(circle,#ab75ff12,transparent 70%);color:#eee1ff}
+#particle-sphere{width:100%;height:100%;fill:currentColor;filter:drop-shadow(0 0 5px #bb86ff);animation:orb-breathe 6s ease-in-out infinite}
+.voice-home h2{font:500 clamp(27px,4vw,38px) Georgia,serif;letter-spacing:-.6px;margin:4px 0 10px}
+#orb-status{color:#b5a7c5;font-size:13px;min-height:20px}
+#voice-start{margin:12px auto 0;border:1px solid #9273bf;border-radius:24px;padding:13px 24px;background:linear-gradient(125deg,#8b5fc3,#54327c);color:white;font:inherit;font-size:13px;box-shadow:0 8px 28px #9b67ce20}
+#voice-start span{margin-left:20px}.orb-hint{font-size:10px;color:#84758f;margin-top:18px}
+.voice-home[data-state="ESCUCHANDO"] #particle-sphere{color:#bdabff;animation-duration:2s}
+.voice-home[data-state="RESPONDIENDO"] #particle-sphere{color:#b1f0e1;animation-duration:1s}
+.voice-home[data-state="PAUSADO"] #particle-sphere{opacity:.45;animation:none}
+#welcome{padding-top:8px;margin:0 auto}#welcome h1,#welcome .subtitle{display:none}
+.suggestions{margin-top:18px}.suggestions button{background:#17111f;border-color:#35283e;border-radius:16px}
+#composer{background:#181220;border-color:#45334f;border-radius:24px}#send{background:#c5a6f5;color:#2b153e;border-radius:50%}
+#microphone{background:#30203f;border-color:#655079;border-radius:50%}
+.mobile-bar button{background:#1b1425;border-color:#3d2e4d;border-radius:18px}
+.library summary{background:#181220;border-color:#3d2e4d;border-radius:14px}
+.message.user{background:#1b1426;border:1px solid #382944;border-radius:18px}.message{border-color:#2c2237}
+@keyframes orb-breathe{0%,100%{transform:scale(.96) rotate(-5deg);opacity:.8}50%{transform:scale(1.04) rotate(5deg);opacity:1}}
+@media(max-width:800px){.voice-home{padding-top:22px}#voice-orb{width:224px;height:224px}.suggestions{grid-template-columns:1fr}.suggestions button{padding:13px 16px}.suggestions small{display:none}.composer-wrap{margin-top:18px}#composer textarea{min-height:42px;max-height:120px}.mode-picker span{display:none}header{padding:16px}.voice-options{justify-content:center}}
+@media(prefers-reduced-motion:reduce){#particle-sphere{animation:none!important}}

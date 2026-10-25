@@ -11,7 +11,8 @@ async function run(t, options = {}) {
 }
 test('serves the app and reports local neural mode', async t => {
   const app = await run(t);
-  assert.match(await (await app.get('/')).text(), /Hola, soy/);
+  assert.match(await (await app.get('/')).text(), /Hola, señor/);
+  assert.equal((await app.get('/voice-home.js')).status, 200);
   const status = await (await app.get('/api/status')).json();
   assert.equal(status.mode, 'local');
   assert.equal(status.neural.version, 3);

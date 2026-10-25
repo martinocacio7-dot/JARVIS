@@ -46,7 +46,7 @@ public final class WakeService extends Service {
         recordings=new AudioManager.AudioRecordingCallback(){@Override public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs){
             if(flow.state()==WakeConversation.State.PAUSED || flow.state()==WakeConversation.State.STOPPED)return;
             for(AudioRecordingConfiguration config:configs) {
-                if(config.getClientAudioSource()!=MediaRecorder.AudioSource.VOICE_RECOGNITION || (Build.VERSION.SDK_INT>=29 && config.isClientSilenced())) {pause("Grabación detectada. Micrófono liberado; toca Retomar al terminar.");return;}
+                if(RecordingPolicy.interrupts(config.getClientAudioSource(), Build.VERSION.SDK_INT>=29 && config.isClientSilenced())) {pause("Grabación detectada. Micrófono liberado; toca Retomar al terminar.");return;}
             }
         }};
         audio.registerAudioRecordingCallback(recordings,main);recordingMonitorRegistered=true;
@@ -167,7 +167,7 @@ public final class WakeService extends Service {
         destroyRecognizer();releaseFocus();
         if(!running||!ready||flow.state()==WakeConversation.State.PAUSED||flow.state()==WakeConversation.State.STOPPED)return;
         // A recently stopped recognition provider may release its VOICE_RECOGNITION session asynchronously.
-        for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations())if(config.getClientAudioSource()!=MediaRecorder.AudioSource.VOICE_RECOGNITION){pause("Grabación detectada. Voz y escucha pausadas.");return;}
+        for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations())if(RecordingPolicy.interrupts(config.getClientAudioSource(), Build.VERSION.SDK_INT>=29 && config.isClientSilenced())){pause("Grabación detectada. Voz y escucha pausadas.");return;}
         if(audio.requestAudioFocus(focus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){pause("Otra aplicación necesita el audio. Escucha pausada.");return;}
         report("RESPONDIENDO","JARVIS está hablando; después volverá a escuchar.");focused=true;speaking=true;afterSpeech=done;int sequence=++voiceSequence;
         if(tts.speak(text.substring(0,Math.min(4000,text.length())),TextToSpeech.QUEUE_FLUSH,null,String.valueOf(sequence))==TextToSpeech.ERROR){pause("No se pudo reproducir la voz.");return;}
