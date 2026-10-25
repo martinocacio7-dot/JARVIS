@@ -22,14 +22,17 @@ import java.util.concurrent.*;
 /** Explicitly enabled microphone foreground service. No notification-reading access. */
 public final class WakeService extends Service {
     static final String STOP="com.miguel.jarvis.STOP_WAKE", PAUSE="com.miguel.jarvis.PAUSE_WAKE", RESUME="com.miguel.jarvis.RESUME_WAKE";
-    static volatile boolean running=false;
+    static volatile boolean running=false,listeningConfirmed=false;
+    static volatile long activationAttempt=0;
+    static volatile String status="INACTIVO",statusText="Pulsa Activar JARVIS y completa los permisos para escuchar el nombre.";
+    static void report(String value,String detail){status=value;statusText=detail;MainActivity.backgroundStatusChanged();}
     private static final int NOTICE=20;
     final WakeConversation flow=new WakeConversation();
     final Handler main=new Handler(Looper.getMainLooper());
     final ExecutorService worker=Executors.newSingleThreadExecutor();
     SpeechRecognizer recognizer; TextToSpeech tts; AudioManager audio; AudioFocusRequest focus;
     AudioManager.AudioRecordingCallback recordings;
-    boolean ready=false, initialized=false, speaking=false, pendingStart=false, focused=false;
+    boolean ready=false, initialized=false, speaking=false, pendingStart=false, focused=false, startupFatal=false, recordingMonitorRegistered=false;
     int voiceSequence=0;
     volatile int generation=0;
     Runnable afterSpeech;
@@ -37,7 +40,7 @@ public final class WakeService extends Service {
     JSONArray history=new JSONArray();
 
     @Override public void onCreate(){
-        super.onCreate();audio=getSystemService(AudioManager.class);
+        super.onCreate();try{audio=getSystemService(AudioManager.class);
         AudioAttributes attributes=new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
         focus=new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attributes).setOnAudioFocusChangeListener(change->{if(change<0)pause("Audio ocupado. Escucha pausada; toca Retomar al terminar.");},main).build();
         recordings=new AudioManager.AudioRecordingCallback(){@Override public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs){
@@ -46,7 +49,7 @@ public final class WakeService extends Service {
                 if(config.getClientAudioSource()!=MediaRecorder.AudioSource.VOICE_RECOGNITION || (Build.VERSION.SDK_INT>=29 && config.isClientSilenced())) {pause("Grabación detectada. Micrófono liberado; toca Retomar al terminar.");return;}
             }
         }};
-        audio.registerAudioRecordingCallback(recordings,main);
+        audio.registerAudioRecordingCallback(recordings,main);recordingMonitorRegistered=true;
         tts=new TextToSpeech(this,result->{
             initialized=true;
             if(result!=TextToSpeech.SUCCESS){pause("No se pudo iniciar la voz. Configúrala en JARVIS.");return;}
@@ -60,13 +63,15 @@ public final class WakeService extends Service {
             });
             if(pendingStart){pendingStart=false;activate();}
         });
+        }catch(Exception error){startupFatal=true;report("ERROR","Android no pudo preparar el audio. Revisa los permisos de micrófono y el motor de voz desde Permisos.");stopSelf();}
     }
     @Override public int onStartCommand(Intent intent,int flags,int startId){
+        if(startupFatal){stopSelf();return START_NOT_STICKY;}
         if(intent!=null&&STOP.equals(intent.getAction())){stopSelf();return START_NOT_STICKY;}
         try{
             if(Build.VERSION.SDK_INT>=29)startForeground(NOTICE,notification("Preparando escucha…"),ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             else startForeground(NOTICE,notification("Preparando escucha…"));
-        }catch(Exception error){stopSelf();return START_NOT_STICKY;}
+        }catch(Exception error){report("ERROR",error instanceof SecurityException?"Android rechazó el micrófono en segundo plano. Revisa permisos y vuelve a activar con JARVIS abierto.":"Android no pudo mostrar la notificación de escucha. Revisa las notificaciones de JARVIS en Ajustes.");stopSelf();return START_NOT_STICKY;}
         boolean firstStart=!running;running=true;MainActivity.backgroundModeChanged(true);
         if(firstStart)watchPermissions();
         if(intent!=null&&PAUSE.equals(intent.getAction()))pause("Escucha pausada. Toca Retomar para escuchar JARVIS.");
@@ -102,14 +107,14 @@ public final class WakeService extends Service {
         if(!running||!ready)return;
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pause("Falta permitir el micrófono. Abre JARVIS → Permisos.");return;}
         if(!SpeechRecognizer.isRecognitionAvailable(this)){pause("Este teléfono no tiene un servicio de reconocimiento de voz disponible.");return;}
-        generation++;resetAudio();flow.start();notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
+        generation++;resetAudio();flow.start();report("PREPARANDO","Iniciando reconocimiento de voz…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
     }
     void pause(String message){
-        pendingStart=false;generation++;flow.pause();resetAudio();HttpsURLConnection current=connection;if(current!=null)current.disconnect();notice(message);
+        pendingStart=false;generation++;flow.pause();report("PAUSADO",message);resetAudio();HttpsURLConnection current=connection;if(current!=null)current.disconnect();notice(message);
     }
     void returnToWake(){
         if(flow.state()==WakeConversation.State.PAUSED||flow.state()==WakeConversation.State.STOPPED)return;
-        generation++;resetAudio();flow.quiet();notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");
+        generation++;resetAudio();flow.quiet();report("PREPARANDO","Volviendo a esperar el nombre JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");
         int expected=generation;main.postDelayed(()->{if(expected==generation)listen();},900);
     }
     void listen(){
@@ -124,7 +129,7 @@ public final class WakeService extends Service {
             boolean begun=false;
             boolean valid(){return recognizer==current;}
             public void onReadyForSpeech(Bundle data){
-                if(!valid())return;listeningReady[0]=true;
+                if(!valid())return;listeningReady[0]=true;listeningConfirmed=true;report(flow.state()==WakeConversation.State.WAKE?"ESCUCHANDO":"ESPERANDO PETICIÓN",flow.state()==WakeConversation.State.WAKE?"Di JARVIS. La notificación permite pausar y apagar la escucha.":"Sí, dígame, señor. Espero hasta cuatro segundos por tu petición.");
                 if(flow.state()==WakeConversation.State.COMMAND){flow.ready(SystemClock.elapsedRealtime());scheduleSilenceCheck(generation);}
             }
             public void onBeginningOfSpeech(){if(valid()&&flow.state()==WakeConversation.State.COMMAND){begun=flow.speechBegan(SystemClock.elapsedRealtime());if(begun){int expected=generation;main.postDelayed(()->{if(expected==generation&&recognizer==current)returnToWake();},30000);}}}
@@ -164,7 +169,7 @@ public final class WakeService extends Service {
         // A recently stopped recognition provider may release its VOICE_RECOGNITION session asynchronously.
         for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations())if(config.getClientAudioSource()!=MediaRecorder.AudioSource.VOICE_RECOGNITION){pause("Grabación detectada. Voz y escucha pausadas.");return;}
         if(audio.requestAudioFocus(focus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){pause("Otra aplicación necesita el audio. Escucha pausada.");return;}
-        focused=true;speaking=true;afterSpeech=done;int sequence=++voiceSequence;
+        report("RESPONDIENDO","JARVIS está hablando; después volverá a escuchar.");focused=true;speaking=true;afterSpeech=done;int sequence=++voiceSequence;
         if(tts.speak(text.substring(0,Math.min(4000,text.length())),TextToSpeech.QUEUE_FLUSH,null,String.valueOf(sequence))==TextToSpeech.ERROR){pause("No se pudo reproducir la voz.");return;}
         main.postDelayed(()->{if(sequence==voiceSequence&&speaking)pause("La reproducción tardó demasiado. Escucha pausada.");},180000);
     }
@@ -173,7 +178,7 @@ public final class WakeService extends Service {
         speaking=false;releaseFocus();Runnable done=afterSpeech;afterSpeech=null;if(done!=null)done.run();
     }
     void answer(String command){
-        notice("Consultando tu petición…");final int expected=generation;
+        report("CONSULTANDO","Preparando la respuesta a tu petición…");notice("Consultando tu petición…");final int expected=generation;
         String key=Normalizer.normalize(command.toLowerCase(Locale.ROOT),Normalizer.Form.NFD).replaceAll("\\p{M}","").replaceAll("[^a-z0-9 ]","").trim();
         if(key.matches("(?:que hora es|dime la hora|la hora|hora actual)")){finishAnswer(command,"Son las "+DateFormat.getTimeInstance(DateFormat.SHORT,new Locale("es")).format(new Date())+".",expected);return;}
         if(key.contains("notificacion")){finishAnswer(command,"Esta versión no puede leer las notificaciones de otras aplicaciones.",expected);return;}
@@ -209,7 +214,7 @@ public final class WakeService extends Service {
         }finally{if(connection==current)connection=null;current.disconnect();}
     }
     @Override public void onDestroy(){
-        running=false;MainActivity.backgroundModeChanged(false);generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();HttpsURLConnection current=connection;if(current!=null)current.disconnect();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
+        running=false;if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");MainActivity.backgroundModeChanged(false);generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();HttpsURLConnection current=connection;if(current!=null)current.disconnect();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
 }

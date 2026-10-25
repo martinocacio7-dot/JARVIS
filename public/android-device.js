@@ -3,6 +3,11 @@ let initialized = false;
 export function initAndroidDevice() {
   if (!native() || initialized) return;
   initialized = true;
+  // Current Android app has one native activation control; avoid a second web-only wake button.
+  if ((native().appVersion?.() || 0) >= 5) {
+    document.querySelector('#wake-mode').hidden = true;
+    document.querySelector('.wake-help').textContent = 'Para oír «JARVIS» desde otras apps, pulsa Activar JARVIS en la barra superior de Android y espera el estado ESCUCHANDO. La notificación permite pausar y apagar. Pausa antes de grabar vídeos.';
+  }
   const readAloud = document.querySelector('#read-aloud');
   try { readAloud.checked = localStorage.getItem('jarvis.android.read-aloud') !== 'false'; } catch { readAloud.checked = true; }
   readAloud.addEventListener('change', () => { try { localStorage.setItem('jarvis.android.read-aloud', String(readAloud.checked)); } catch {} });

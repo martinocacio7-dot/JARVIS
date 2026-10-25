@@ -1,6 +1,6 @@
 # JARVIS para Android
 
-Aplicación para Android 8.0 o posterior, conectada a `https://jarvis-privado-rmkm.onrender.com`. La versión 1.1.0 incorpora un modo opcional para oír «JARVIS» desde otras aplicaciones, mediante un servicio de micrófono en primer plano de Android. No accede a las notificaciones de otras aplicaciones.
+Aplicación para Android 8.0 o posterior, conectada a `https://jarvis-privado-rmkm.onrender.com`. La versión 1.1.1 corrige la activación después de conceder permisos y muestra el estado del servicio. Incorpora un modo opcional para oír «JARVIS» desde otras aplicaciones, mediante un servicio de micrófono en primer plano de Android. No accede a las notificaciones de otras aplicaciones.
 
 ## Instalar
 
@@ -12,10 +12,10 @@ En **Permisos** puedes habilitar micrófono, avisos de recordatorios y alarmas e
 
 ## Escuchar fuera de la aplicación
 
-1. Entra a JARVIS y pulsa **Fuera de app** en la barra superior.
-2. Permite micrófono y notificaciones si Android los solicita; vuelve a pulsar el botón después de concederlos. Este modo requiere que su notificación esté habilitada.
-3. Lee el aviso de uso del micrófono y pulsa **Activar**. Si falta el acceso privado, introdúcelo en el teléfono. Se guarda cifrado con una clave de Android Keystore para que el servicio pueda consultar tu servidor sin mantener la pantalla abierta.
-4. Puedes cambiar a otra aplicación. La notificación de escucha muestra **Pausar**, **Retomar** o **Apagar**. Volver a pulsar **Fuera de app** también lo apaga.
+1. Entra a JARVIS y pulsa **Activar JARVIS** en la barra superior de Android.
+2. Pulsa **Activar** en el aviso y permite micrófono y notificaciones si Android los solicita. La activación continúa automáticamente después de cada permiso. Este modo requiere que su notificación esté habilitada.
+3. Si falta el acceso privado, introdúcelo en el teléfono. Espera hasta ver **Escucha fuera de la app: ESCUCHANDO** y la notificación de JARVIS. **INACTIVO**, **PERMISO PENDIENTE**, **ACCESO PENDIENTE**, **PREPARANDO**, **PAUSADO** y **ERROR** indican que todavía no está escuchando el nombre; la línea inferior explica el siguiente paso. Se guarda cifrado con una clave de Android Keystore para que el servicio pueda consultar tu servidor sin mantener la pantalla abierta.
+4. Puedes cambiar a otra aplicación. La notificación de escucha muestra **Pausar**, **Retomar** o **Apagar**. El botón superior cambia a **Apagar JARVIS** y también permite apagarlo.
 
 Funcionamiento:
 
@@ -39,7 +39,9 @@ Al forzar la detención, reiniciar el teléfono o morir el proceso, la escucha n
 
 ## Modo de la pantalla, datos y privacidad
 
-Si no activas **Fuera de app**, el botón **Activar «JARVIS»** de la pantalla solo escucha mientras la aplicación está abierta y tiene foco. Comparte la espera de cuatro segundos. Mientras el servicio está activo, el micrófono y la activación de la pantalla se deshabilitan para evitar dos reconocedores simultáneos. Al apagar el servicio puedes volver a usar el modo de la pantalla.
+En esta versión Android hay un único control de activación por nombre, en la barra superior nativa. El botón de activación solo dentro de la web se oculta para evitar confundir los dos modos. El dictado manual 🎤 sigue disponible cuando el servicio está apagado. Mientras el servicio está activo, el dictado de la pantalla se deshabilita para evitar dos reconocedores simultáneos. La web abierta en un navegador conserva su propio modo de activación, que no funciona fuera de ese navegador.
+
+Si no aparece la notificación, comprueba la línea **Escucha fuera de la app**: la aplicación ahora mantiene el motivo del fallo visible, incluso cuando Android rechaza el inicio. Si deniegas un permiso, la activación se cancela sin insistir ni entrar en un bucle de solicitudes. Puedes volver a activarla manualmente tras corregir el permiso. La versión se identifica como **1.1.1**, código 5. No incorpora el modelo propietario de Amazon Alexa: sigue utilizando el reconocedor de voz de Android para detectar el nombre y para dictar.
 
 La contraseña cifrada se guarda únicamente al activar el modo de segundo plano. Se cifra con AES-GCM y una clave no exportable de Android Keystore, sin incluir valores en el APK ni en registros. Usa **Permisos → Olvidar acceso del modo Fuera de app** para detener el servicio y eliminar ese acceso guardado; eso no equivale a cerrar todas las sesiones web. Las copias de seguridad de datos de la aplicación están excluidas.
 
@@ -58,4 +60,4 @@ cd android
 
 En Windows usa `gradlew.bat`. El archivo entregable sale en `app/build/outputs/apk/release/app-release.apk`. El tipo `release` usa la clave de prueba local (`signingConfigs.debug`) para conservar la firma de las entregas de este entorno, pero `debuggable` está desactivado. Conserva esa clave privada fuera de Git para futuras actualizaciones y configura una firma de lanzamiento propia para distribuir formalmente. GitHub Actions → **Android APK** compila y publica un artefacto descargable.
 
-Las pruebas JVM verifican nombre obligatorio, espera de cuatro segundos, inicio de voz dentro del plazo y rechazo de eventos tras pausa/apagado. Además se ejecutan Android Lint y pruebas web con puente Android simulado. Compilar y simular no verifica permisos, micrófono, voz, grabación simultánea ni continuidad del servicio en un teléfono real.
+Las siete pruebas JVM verifican nombre obligatorio, espera de cuatro segundos, inicio de voz dentro del plazo, rechazo de eventos tras pausa/apagado y continuación de la activación tras micrófono/notificaciones/acceso, sin arranques duplicados ni bucles tras denegar permisos. Además se ejecutan Android Lint y pruebas web con puente Android simulado. Compilar y simular no verifica permisos, micrófono, voz, grabación simultánea ni continuidad del servicio en un teléfono real.
