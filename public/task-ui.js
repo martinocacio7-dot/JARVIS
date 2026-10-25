@@ -1,3 +1,4 @@
+import { syncAndroidReminders } from './android-device.js';
 import { validateTasks, taskDate, localDate, displayTaskDate, exportCalendar } from './task-data.js';
 const $ = selector => document.querySelector(selector);
 let items = [], revision = 0, editing = null, available = false;
@@ -28,7 +29,7 @@ async function save(candidate, message) {
     const valid = validateTasks(candidate);
     const response = await fetch('/api/tasks', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: valid, expectedRevision: revision }) });
     const data = await response.json(); if (!response.ok) throw new Error(data.error || 'No se pudo guardar.');
-    items = validateTasks(data.items); revision = data.revision; render(); report(message); return true;
+    items = validateTasks(data.items); revision = data.revision; render(); const alarms = syncAndroidReminders(items); report(alarms ? `${message.replace(/ Esta web no emite alarmas automáticas; puedes exportar la agenda a tu calendario\./, '')} ${alarms}` : message); return true;
   } catch (error) { report(`No se pudo confirmar el cambio: ${error.message} Actualiza los pendientes antes de reintentar.`); return false; }
   finally { $('#task-controls').disabled = !available; }
 }
@@ -37,7 +38,7 @@ export async function refreshTasks() {
     const response = await fetch('/api/tasks'); const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudieron cargar los pendientes.');
     if (available && data.revision < revision) return;
-    items = validateTasks(data.items); revision = data.revision; available = true; $('#task-controls').disabled = false; render();
+    items = validateTasks(data.items); revision = data.revision; available = true; $('#task-controls').disabled = false; render(); const alarms = syncAndroidReminders(items); if (alarms) report(alarms); return alarms;
   } catch (error) { report(error.message); available = false; $('#task-controls').disabled = true; $('#task-count').textContent = 'Necesita conexión a la base de datos'; }
 }
 export async function openTaskEditor(draft) {

@@ -147,6 +147,10 @@ Separa párrafos con una línea en blanco y usa `# Encabezado` o `## Encabezado 
 
 `POST /api/documents` recibe el formato, título, metadatos, contenido y referencias o tabla, y devuelve el archivo binario con su tipo de contenido y nombre de descarga. Usa la misma contraseña y comprobación de origen de la aplicación. No necesita `DATABASE_URL` para generar archivos.
 
+## Aplicación Android (APK)
+
+La aplicación nativa está en [`android/`](android/README.md). Incluye consulta de hora del teléfono, lectura opcional de notificaciones y avisos de recordatorios mediante Android, además del acceso al mismo JARVIS privado. [Descarga el APK de prueba](downloads/JARVIS-Android-prueba.apk) y sigue las instrucciones de permisos. Requiere Android 8.0 o posterior. La escucha por nombre funciona con la aplicación abierta.
+
 ## Versión móvil instalable
 
 Abre la dirección privada de JARVIS en tu teléfono y entra con tu usuario y contraseña. En Android/Chrome usa **Instalar JARVIS** o el menú **Instalar aplicación**. En iPhone/Safari usa **Compartir → Añadir a pantalla de inicio**. Es una aplicación web instalable (PWA), no un APK. El botón **Funciones** abre biblioteca, documentos, pendientes y ajustes de voz; el chat se adapta al ancho del teléfono.

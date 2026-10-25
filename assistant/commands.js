@@ -8,6 +8,22 @@ function dateFrom(words, now) {
   current.setUTCDate(current.getUTCDate() + (words === 'hoy' ? 0 : words === 'manana' ? 1 : 2));
   return localDate(current);
 }
+function normalizeReminder(text, now) {
+  const words = { una: 1, uno: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12 };
+  text = text.replace(/a (?:las?|la) (una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce)\b/giu, (_, word) => `a las ${words[word.toLowerCase()]}`);
+  text = text.replace(/a (?:las?|la) (\d{1,2})(?: y (media|cuarto))? de la (ma[nñ]ana|tarde|noche)/giu, (_, h, fraction, part) => `a las ${h}${fraction ? ':' + (fraction.toLowerCase() === 'media' ? '30' : '15') : ''} ${/ma[nñ]ana/i.test(part) ? 'am' : 'pm'}`);
+  const front = text.match(/^((?:(?:hoy|ma[nñ]ana|pasado ma[nñ]ana|\d{4}-\d{2}-\d{2})\s+)?a las? \d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?)\s+(?:sobre|para|de|que)\s+(.+)$/iu);
+  if (front) text = `${front[2]} ${front[1]}`;
+  // Without a date, use the next occurrence and state its full date in the reply.
+  if (!/\b(?:hoy|ma[nñ]ana|pasado ma[nñ]ana|\d{4}-\d{2}-\d{2})\s+a las?/iu.test(text)) {
+    const tail = text.match(/\s+(a las? \d{1,2}(?::\d{2})?(?:\s*(?:am|pm))?)[.!?]?$/iu);
+    if (tail) {
+      const today = reminderDraft(`${text.slice(0, tail.index)} hoy ${tail[1]}`, now);
+      text = `${text.slice(0, tail.index)} ${today.dueAt && Date.parse(today.dueAt) <= now.getTime() ? 'mañana' : 'hoy'} ${tail[1]}`;
+    }
+  }
+  return text;
+}
 function reminderDraft(text, now) {
   const match = text.match(/\s+(hoy|ma[nñ]ana|pasado ma[nñ]ana|\d{4}-\d{2}-\d{2})(?:\s+a\s+las?\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?[.!?]?$/iu);
   if (!match) return { kind: 'reminder', text, date: '', time: '', dueAt: null };
@@ -28,9 +44,9 @@ export function parseTaskCommand(text, now = new Date()) {
   const phrase = text.trim().replace(/^jarvis[,\s]+/iu, '');
   const normalized = taskKey(phrase);
   let match;
-  if ((match = phrase.match(/^(?:recu[eé]rdame|av[ií]same|crea un recordatorio(?: para)?|agrega un recordatorio(?: para)?)\s+(.+)$/iu))) {
+  if ((match = phrase.match(/^(?:recu[eé]rdame|av[ií]same|crea un recordatorio(?: para)?|agrega un recordatorio(?: para)?|(?:hazme|hasme|haz|creame|créame) un recordatorio(?: para)?)\s+(.+)$/iu))) {
     if (/\b(cada (dia|semana|mes|ano|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\d+ (minutos?|horas?|dias?))|todos los (dias|lunes|martes|miercoles|jueves|viernes|sabados|domingos|meses)|todas las (semanas|mananas|tardes|noches)|diariamente|semanalmente|mensualmente)\b/.test(normalized)) return { action: 'clarify', message: 'Todavía no programo repeticiones. Indica una única fecha y hora; no he guardado nada.' };
-    return { action: 'create', draft: reminderDraft(match[1], now) };
+    return { action: 'create', draft: reminderDraft(normalizeReminder(match[1], now), now) };
   }
   if ((match = phrase.match(/^(?:a[nñ]ade|agrega|anota|pon)\s+(.+?)\s+(?:a|en)\s+(?:mi|la)\s+lista(?:\s+de compras)?[.!?]?$/iu)) || (match = phrase.match(/^(?:a[nñ]ade|agrega|anota)\s+(?:a|en)\s+mi\s+lista\s+(.+)$/iu))) return { action: 'create', draft: { kind: 'list', text: match[1].trim(), dueAt: null, date: '', time: '' } };
   if ((match = phrase.match(/^(?:cambia|mueve|reprograma)\s+(?:el recordatorio\s+)?(.+?)\s+para\s+(.+)$/iu))) return { action: 'reschedule', target: match[1], draft: reminderDraft(`${match[1]} ${match[2]}`, now) };

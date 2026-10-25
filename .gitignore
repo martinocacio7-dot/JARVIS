@@ -6,3 +6,9 @@ data/
 *.sqlite-shm
 *.sqlite-wal
 neural/model.json.tmp
+android/.gradle/
+android/**/build/
+android/local.properties
+android/*.keystore
+android/*.jks
+dist/

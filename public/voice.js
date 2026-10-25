@@ -1,3 +1,4 @@
+import { sendAndroidVoiceCommand } from './android-device.js';
 import { initVoiceProfile, preferredVoice, stopGreeting, usePersonalVoice } from './voice-profile.js';
 
 export const activationReply = 'Sí, dígame, señor.';
@@ -32,8 +33,8 @@ function disarm(message) {
   armed = false; token++; stopRecognition(); stopSpeaking(); updateArmed();
   if (message) sayStatus(message);
 }
-async function speak(text) {
-  if (usePersonalVoice()) {
+async function speak(text, localOnly = false) {
+  if (!localOnly && usePersonalVoice()) {
     stopRecognition(); stopSpeaking(); speaking = true;
     const controller = new AbortController(); externalAbort = controller;
     try {
@@ -69,10 +70,10 @@ function resumeWake() {
   if (!armed || busy || speaking || manualListening || document.hidden || session) return;
   startRecognition('wake');
 }
-export function speakReply(text) {
+export function speakReply(text, { localOnly = false } = {}) {
   if (!$('#read-aloud').checked) { resumeWake(); return; }
   const current = ++token;
-  speak(text).catch(() => { speaking = false; sayStatus('No se pudo usar la voz. La respuesta permanece en pantalla.'); }).finally(() => { if (current === token) resumeWake(); });
+  speak(text, localOnly).catch(() => { speaking = false; sayStatus('No se pudo usar la voz. La respuesta permanece en pantalla.'); }).finally(() => { if (current === token) resumeWake(); });
 }
 function appendText(prefix, text) {
   const combined = [prefix, text.trim()].filter(Boolean).join(' ');
@@ -87,7 +88,7 @@ async function activate(command) {
   sayStatus(activationReply);
   try { await speak(activationReply); } catch { speaking = false; sayStatus('Sí, dígame, señor. No se pudo reproducir la voz.'); }
   if (current !== token || !armed || document.hidden || busy) return;
-  if (command) { appendText($('#prompt').value.trimEnd(), command); sayStatus('Petición preparada. Revísala y pulsa Enviar. No se ha enviado automáticamente.'); return; }
+  if (command) { appendText($('#prompt').value.trimEnd(), command); if (!sendAndroidVoiceCommand()) sayStatus('Petición preparada. Revísala y pulsa Enviar. No se ha enviado automáticamente.'); return; }
   startRecognition('command');
 }
 function startRecognition(mode) {
@@ -129,7 +130,7 @@ function startRecognition(mode) {
       idleRestarts = Date.now() - started > 10000 ? 0 : idleRestarts + 1;
       if (idleRestarts > 4) { disarm('El navegador no mantiene la escucha. Puedes volver a activarla o usar el botón de micrófono.'); return; }
       restart = setTimeout(resumeWake, 800);
-    } else { sayStatus(text ? 'Dictado terminado. Revisa el texto y pulsa Enviar.' : 'No se detectó un mensaje. Puedes pulsar el micrófono para intentarlo de nuevo.'); if (!text) restart = setTimeout(resumeWake, 800); }
+    } else { if (mode === 'command' && text && sendAndroidVoiceCommand()) return; sayStatus(text ? 'Dictado terminado. Revisa el texto y pulsa Enviar.' : 'No se detectó un mensaje. Puedes pulsar el micrófono para intentarlo de nuevo.'); if (!text) restart = setTimeout(resumeWake, 800); }
   };
   try { recognition.start(); } catch { disarm('No se pudo iniciar el micrófono. Revisa los permisos del navegador.'); }
 }
@@ -140,6 +141,7 @@ export function initVoice() {
   document.addEventListener('jarvis:new-chat', () => { token++; stopRecognition(); stopSpeaking(); resumeWake(); });
   document.addEventListener('jarvis:request-start', () => { busy = true; token++; stopRecognition(); stopSpeaking(); });
   document.addEventListener('jarvis:request-end', () => { busy = false; resumeWake(); });
+  document.addEventListener('jarvis:android-pause', () => disarm('Escucha detenida al salir de la aplicación.'));
   document.addEventListener('visibilitychange', () => { if (document.hidden) disarm('Escucha detenida al salir de la aplicación. Actívala de nuevo al volver.'); });
   window.addEventListener('pagehide', () => disarm()); window.addEventListener('offline', () => disarm('Sin conexión. La escucha se ha detenido.'));
   if (!(window.SpeechRecognition || window.webkitSpeechRecognition) || !window.isSecureContext) {

@@ -1,3 +1,4 @@
+import { initAndroidDevice, deviceReply } from './android-device.js';
 import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
 import { projectView } from './project-ui.js';
 import { initFeedback, reportMisunderstanding } from './feedback-ui.js';
@@ -6,6 +7,7 @@ import { initVoice, isDictating, speakReply, stopSpeaking } from './voice.js';
 import { initTasks, refreshTasks, openTaskEditor } from './task-ui.js';
 import { initMobile } from './mobile.js';
 
+initAndroidDevice();
 const $ = selector => document.querySelector(selector);
 let messages = [];
 let busy = false;
@@ -46,7 +48,7 @@ function render() {
         article.append(choices);
       }
     }
-    if (message.role === 'assistant' && !message.activation && messages[index - 1]?.role === 'user') {
+    if (message.role === 'assistant' && !message.activation && !message.deviceOnly && messages[index - 1]?.role === 'user') {
       const correction = document.createElement('button');
       correction.type = 'button';
       correction.className = 'correct-answer';
@@ -60,7 +62,7 @@ function render() {
     }
     return article;
   }));
-  try { localStorage.setItem('jarvis.messages', JSON.stringify(messages)); } catch { storageAvailable = false; }
+  try { localStorage.setItem('jarvis.messages', JSON.stringify(messages.filter(message => !message.deviceOnly))); } catch { storageAvailable = false; }
 }
 async function send(event) {
   event.preventDefault();
@@ -78,14 +80,16 @@ async function send(event) {
   try {
     const development = $('#work-mode').value === 'development';
     const knowledge = development ? null : libraryRequest(content);
-    const payload = development ? { prompt: content } : knowledge || { messages: messages.map(({ role, content }) => ({ role, content })) };
-    const response = await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) });
+    const payload = development ? { prompt: content } : knowledge || { messages: messages.filter(message => !message.deviceOnly).map(({ role, content }) => ({ role, content })) };
+    const localReply = development ? null : deviceReply(content);
+    const response = localReply === null ? await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) }) : { ok: true, json: async () => ({ reply: localReply, deviceOnly: true }) };
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
-    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
-    if (data.openTasks) refreshTasks();
+    if (data.deviceOnly) messages[messages.length - 1].deviceOnly = true;
+    if (data.openTasks) { const alarmStatus = await refreshTasks(); if (alarmStatus) data.reply = data.reply.replace(/Esta web no emite alarmas automáticas; puedes exportarlo a tu calendario para usar sus avisos\./g, alarmStatus); }
+    messages.push({ role: 'assistant', ...(data.deviceOnly ? { deviceOnly: true } : {}), content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
-    speakReply(data.reply);
+    speakReply(data.reply, { localOnly: Boolean(data.deviceOnly) });
   } catch (error) {
     messages.pop();
     $('#prompt').value = content;
