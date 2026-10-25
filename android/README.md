@@ -6,6 +6,8 @@ Aplicación Android 8.0 o posterior. Abre tu servidor privado `https://jarvis-pr
 
 Descarga [JARVIS-Android-prueba.apk](../downloads/JARVIS-Android-prueba.apk) en tu teléfono, ábrelo y permite la instalación desde ese navegador/gestor de archivos. Es una compilación de prueba firmada, no una publicación en Google Play. Para actualizarla sin desinstalar necesitas conservar la misma clave de firma. Las claves no se publican en el repositorio.
 
+Si el navegador no descarga el APK directamente, descarga el [ZIP con el mismo APK](../downloads/JARVIS-Android-prueba.zip), extráelo en el teléfono y abre el archivo `.apk`.
+
 Abre JARVIS y entra. En **Permisos** puedes habilitar:
 
 - **Micrófono** para dictado y activación «JARVIS» con la aplicación abierta.
