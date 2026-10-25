@@ -16,7 +16,7 @@ test('serves the app and reports local neural mode', async t => {
   assert.equal(status.mode, 'local');
   assert.equal(status.neural.version, 2);
   assert.equal(status.neural.hiddenSize, 32);
-  assert.equal(status.neural.intents, 19);
+  assert.equal(status.neural.intents, 20);
   const response = await app.post({ messages: [{ role: 'user', content: 'Hola' }] });
   assert.equal(response.status, 200);
   const data = await response.json();

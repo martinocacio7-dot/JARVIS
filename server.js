@@ -9,10 +9,11 @@ import { createLibraryDatabase, RevisionConflict } from './knowledge/database.js
 import { validateLibrary } from './public/library-data.js';
 import { develop, isDevelopmentRequest } from './developer/generator.js';
 import { validateFeedback } from './public/feedback-data.js';
+import { validateDocument, isDocumentRequest } from './public/document-data.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
 
-const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
+const files = { '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
 const instruction = 'Eres JARVIS, un asistente personal útil, claro y honesto. Responde en español salvo que te pidan otro idioma. Explica tus límites. No afirmes haber realizado acciones que no puedes ejecutar.';
 
 export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = process.env.JARVIS_MODEL || 'gpt-4.1-mini', request = fetch, auth, database = createLibraryDatabase() } = {}) {
@@ -31,13 +32,13 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
       try { return json(200, await database.read()); }
       catch { return json(503, { error: database.kind === 'unconfigured' ? 'Configura DATABASE_URL en Render para activar la biblioteca persistente.' : 'No se pudo acceder a la base de datos. Vuelve a intentarlo.' }); }
     }
-    if ((req.method === 'POST' && ['/api/chat', '/api/knowledge', '/api/develop'].includes(req.url)) || (req.method === 'PUT' && ['/api/library', '/api/feedback'].includes(req.url))) {
+    if ((req.method === 'POST' && ['/api/chat', '/api/knowledge', '/api/develop', '/api/documents'].includes(req.url)) || (req.method === 'PUT' && ['/api/library', '/api/feedback'].includes(req.url))) {
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(403, { error: 'Origen no permitido.' });
       if (!req.headers['content-type']?.startsWith('application/json')) return json(415, { error: 'Se requiere JSON.' });
       try {
         let body = '';
         let size = 0;
-        const limit = ['/api/library', '/api/feedback'].includes(req.url) ? 1048576 : 65536;
+        const limit = ['/api/library', '/api/feedback'].includes(req.url) ? 1048576 : req.url === '/api/documents' ? 131072 : 65536;
         req.setEncoding('utf8');
         for await (const chunk of req) {
           body += chunk;
@@ -46,6 +47,16 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         let data;
         try { data = JSON.parse(body); } catch { return json(400, { error: 'JSON inválido.' }); }
+        if (req.url === '/api/documents') {
+          let validated;
+          try { validated = validateDocument(data); } catch (error) { return json(400, { error: error.message }); }
+          try {
+            const { generateDocument } = await import('./documents/generator.js');
+            const result = await generateDocument(validated);
+            res.writeHead(200, { 'Content-Type': result.mime, 'Content-Disposition': `attachment; filename="${result.filename}"`, 'Cache-Control': 'no-store' });
+            return res.end(result.buffer);
+          } catch { return json(500, { error: 'No se pudo preparar el archivo. Revisa el contenido e inténtalo de nuevo.' }); }
+        }
         if (req.url === '/api/feedback') {
           let feedback;
           try {
@@ -75,8 +86,12 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
+        if (isDocumentRequest(messages.at(-1).content)) return json(200, { mode: 'local', intent: 'documentos', documentDraft: true, reply: 'Puedo preparar Word, PDF, PowerPoint y Excel con el contenido que proporciones. Para informes uso formato base APA 7 estudiantil y texto negro. Abre «Preparar mi documento» y completa título, autor, texto y fuentes reales. No investigo ni redacto un informe completo a partir de un título.' });
         if (isDevelopmentRequest(messages.at(-1).content)) return json(200, develop(messages.at(-1).content));
-        if (!apiKey) return json(200, { mode: 'local', ...respond(localModel, messages) });
+        if (!apiKey) {
+          const result = respond(localModel, messages);
+          return json(200, { mode: 'local', ...result, ...(result.intent === 'documentos' ? { documentDraft: true } : {}) });
+        }
         const upstream = await request('https://api.openai.com/v1/responses', {
           method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({ model, instructions: instruction, input: messages.map(({ role, content }) => ({ role, content })), max_output_tokens: 1500, store: false }),

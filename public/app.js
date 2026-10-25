@@ -1,6 +1,8 @@
 import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
 import { projectView } from './project-ui.js';
 import { initFeedback, reportMisunderstanding } from './feedback-ui.js';
+import { initDocuments, openDocuments } from './document-ui.js';
+import { initVoice, isDictating, speakReply, stopSpeaking } from './voice.js';
 
 const $ = selector => document.querySelector(selector);
 let messages = [];
@@ -19,6 +21,10 @@ function render() {
     name.textContent = message.role === 'user' ? 'TÚ' : 'JARVIS';
     article.append(name, document.createTextNode(message.content));
     if (message.role === 'assistant') {
+      if (message.documentDraft) {
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'correct-answer'; button.textContent = 'Preparar mi documento';
+        button.addEventListener('click', () => openDocuments(messages[index - 1]?.content || '')); article.append(button);
+      }
       const project = projectView(message.project);
       if (project) article.append(project);
       if (Array.isArray(message.suggestions)) {
@@ -53,7 +59,7 @@ function render() {
 async function send(event) {
   event.preventDefault();
   const content = $('#prompt').value.trim();
-  if (!content || busy) return;
+  if (!content || busy || isDictating()) return;
   busy = true;
   $('#send').disabled = true;
   $('#new-chat').disabled = true;
@@ -69,8 +75,9 @@ async function send(event) {
     const response = await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
-    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
+    messages.push({ role: 'assistant', content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
+    speakReply(data.reply);
   } catch (error) {
     messages.pop();
     $('#prompt').value = content;
@@ -86,10 +93,12 @@ async function send(event) {
 }
 $('#composer').addEventListener('submit', send);
 $('#prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('#composer').requestSubmit(); } });
-$('#new-chat').addEventListener('click', () => { if (busy) return; messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });
+$('#new-chat').addEventListener('click', () => { if (busy || isDictating()) return; stopSpeaking(); messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });
 document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => { $('#prompt').value = button.dataset.prompt; $('#prompt').focus(); }));
 initLibrary();
 initFeedback();
+initDocuments();
+initVoice();
 render();
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
   $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : `● Red local v${data.neural.version} · ${data.neural.intents} intenciones`;

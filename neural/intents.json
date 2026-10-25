@@ -390,5 +390,33 @@
       "quiero abandonar ese tema"
     ],
     "reply": "Dejamos ese tema. Puedes elegir otro cuando quieras."
+  },
+  {
+    "id": "documentos",
+    "examples": [
+      "quiero crear un informe",
+      "necesito un documento de word",
+      "hazme un informe en apa",
+      "genera un archivo pdf",
+      "prepara una presentacion de powerpoint",
+      "quiero crear una hoja de excel",
+      "como hago un documento en word",
+      "puedes crear documentos de oficina",
+      "necesito exportar un informe",
+      "crear documentos en formato apa",
+      "quiero unas diapositivas",
+      "como genero un archivo de excel",
+      "me gustaria preparar un informe academico",
+      "puedes preparar un documento pdf",
+      "quiero un informe con texto negro",
+      "necesito un trabajo con normas apa",
+      "como puedo descargar un documento word",
+      "puedes hacer presentaciones",
+      "quiero convertir mi texto a pdf",
+      "necesito una hoja de calculo",
+      "ayudame con un informe escrito",
+      "prepara mi informe estudiantil"
+    ],
+    "reply": "Puedo crear Word, PDF, PowerPoint y Excel con el contenido que proporciones. En informes aplico formato base APA 7 estudiantil, texto negro, doble espacio y márgenes de 2,54 cm. Abre «Crear Word, PDF, PowerPoint y Excel» y completa tus datos, texto y fuentes reales. No invento referencias ni redacto un trabajo completo a partir de un título."
   }
 ]

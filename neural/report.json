@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "parameters": 32819,
+  "parameters": 35572,
   "training": {
-    "correct": 278,
-    "total": 278,
-    "examples": 278,
-    "initialLoss": 2.9616245836071546,
-    "finalLoss": 0.021075651985754486,
+    "correct": 300,
+    "total": 300,
+    "examples": 300,
+    "initialLoss": 2.9956170012721293,
+    "finalLoss": 0.02104672650096225,
     "seed": 20261025
   },
   "regression": {

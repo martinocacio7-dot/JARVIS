@@ -31,7 +31,7 @@ Repite
 Olvida el contexto
 ```
 
-Reconoce 19 intenciones y ofrece guías de tres pasos sobre programación, proyectos, organización e inteligencia artificial. «Continúa» avanza dentro del tema activo; «Repite» repite la última respuesta sin avanzar. Al cambiar de tema empieza una guía nueva. Sus explicaciones y ejemplos son predefinidos: no ejecuta código, organiza tu agenda ni resuelve cualquier pregunta.
+Reconoce 20 intenciones y ofrece guías de tres pasos sobre programación, proyectos, organización e inteligencia artificial. «Continúa» avanza dentro del tema activo; «Repite» repite la última respuesta sin avanzar. Al cambiar de tema empieza una guía nueva. Sus explicaciones y ejemplos son predefinidos: no ejecuta código, organiza tu agenda ni resuelve cualquier pregunta.
 
 La memoria usa reglas y se reconstruye únicamente desde los mensajes del usuario incluidos en cada petición. Recuerda el nombre indicado con «Me llamo…», «Mi nombre es…» o «Puedes llamarme…». No modifica los pesos del modelo durante el chat. «Olvida el contexto» reinicia nombre y tema para los siguientes mensajes, pero deja el historial visible; «Nueva conversación» borra el historial local de la aplicación.
 
@@ -72,7 +72,7 @@ Se usa TLS con verificación de certificados por defecto. Solo para una conexió
 
 **Entendiste mal** aparece debajo de las nuevas respuestas del modo local. Es distinto de **Enseñar una respuesta mejor**: este último guarda una respuesta literal para la biblioteca; el nuevo botón guarda qué intención debería reconocer la red para tu frase.
 
-1. Pulsa **Entendiste mal**, revisa la frase y selecciona lo que querías pedir entre las 19 intenciones disponibles. Puedes resumir la frase antes de guardar; el máximo es de 1000 caracteres.
+1. Pulsa **Entendiste mal**, revisa la frase y selecciona lo que querías pedir entre las 20 intenciones disponibles. Puedes resumir la frase antes de guardar; el máximo es de 1000 caracteres.
 2. La corrección se guarda en la base de datos como **Pendiente**. En **Mejorar mi comprensión**, comprueba que la etiqueta sea correcta y pulsa **Aprobar** o **Descartar**. También puedes editar o eliminar la corrección; editarla la devuelve a Pendiente.
 3. **Exportar aprobadas para entrenar** descarga solo las aprobadas. Si una misma frase tiene dos etiquetas aprobadas distintas, exige resolver ese conflicto. Se admiten hasta 200 correcciones guardadas.
 
@@ -102,6 +102,31 @@ En PowerShell puedes sustituir `npm` por `npm.cmd`. El entrenamiento sigue compr
 Los archivos exportados, el conjunto ampliado y los pesos entrenados pueden revelar información de tus ejemplos. No introduzcas contraseñas o información sensible, ni subas datos privados a GitHub. Estos pasos permiten aprendizaje supervisado a partir de correcciones; no equivalen a aprender de cualquier mensaje sin revisión.
 
 `GET /api/feedback` devuelve las correcciones y las intenciones disponibles. `PUT /api/feedback` guarda una lista validada con `expectedRevision`; una revisión desactualizada devuelve HTTP 409. Las rutas están protegidas por la misma autenticación y comprobación de origen que la biblioteca. Las revisiones de biblioteca y correcciones son independientes.
+
+## Documentos de Word, PDF, PowerPoint y Excel
+
+Abre **Crear Word, PDF, PowerPoint y Excel**, selecciona un formato y proporciona el contenido. También puedes escribir «Hazme un informe en Word» en el chat y abrir el formulario desde la respuesta. El nuevo comando forma parte de las intenciones entrenadas y hay una ruta explícita para peticiones directas.
+
+- **Word `.docx`:** documento editable con Times New Roman de 12 puntos y texto negro. Formato base APA 7 estudiantil: tamaño carta, márgenes de 2,54 cm, interlineado doble, alineación izquierda, primera línea a 1,27 cm, portada con los datos aportados, número de página arriba a la derecha y referencias alfabéticas con sangría francesa. No añade encabezado abreviado porque el formato estudiantil no lo exige por defecto.
+- **PDF:** versión independiente con el mismo contenido, fuente serif Times de 12 puntos, formato base de informe APA, texto negro y páginas numeradas. Se genera directamente, sin convertir Word ni depender de Microsoft Office o LibreOffice.
+- **PowerPoint `.pptx`:** presentación editable con portada, contenido distribuido en diapositivas y referencias si se proporcionan. Fondo blanco y texto negro, sin paletas de colores decorativas. Revisa la distribución final en tu aplicación de presentaciones.
+- **Excel `.xlsx`:** hoja con los datos que pegues separados por tabulaciones, encabezado, filtros y primera fila inmovilizada. Hasta 200 filas y 20 columnas. Conserva códigos como `007`; el texto que empieza por `=` se almacena como texto, no como una fórmula ejecutable.
+
+El formulario conserva tu redacción: no inserta frases de relleno ni atribuciones de investigación inexistente. La red actual no puede redactar un informe completo solo a partir de un tema, investigar fuentes ni certificar cumplimiento APA integral. El formato base no sustituye la revisión de citas autor-fecha, referencias según el tipo de fuente, tablas, figuras, resúmenes y requisitos de tu institución. Las alertas de citas son comprobaciones simples, no verificaciones bibliográficas.
+
+Separa párrafos con una línea en blanco y usa `# Encabezado` o `## Encabezado secundario`. En Word y PDF, `*texto*` marca cursivas. Introduce referencias completas, una por línea, de fuentes que hayas consultado. Si faltan, no se inventan; el formulario informa de los datos pendientes. El contenido admite hasta 16 000 caracteres y las referencias hasta 4000. Los documentos se generan en memoria, se descargan y no se conservan en el servidor ni se envían a otras IA. No se prometen resultados de detectores de IA.
+
+`POST /api/documents` recibe el formato, título, metadatos, contenido y referencias o tabla, y devuelve el archivo binario con su tipo de contenido y nombre de descarga. Usa la misma contraseña y comprobación de origen de la aplicación. No necesita `DATABASE_URL` para generar archivos.
+
+## Micrófono y respuestas habladas
+
+Pulsa **🎤** para dictar un mensaje en español. El navegador solicitará permiso de micrófono; el sitio debe usar HTTPS o ejecutarse en localhost. Puedes detenerlo con el mismo botón. El texto queda visible para revisarlo y no se envía automáticamente. El micrófono no permanece escuchando, y no hay activación por palabra clave como «Alexa».
+
+El dictado usa Web Speech API (`SpeechRecognition` o `webkitSpeechRecognition`). Depende del navegador y puede enviar el audio a su proveedor de reconocimiento; no es un modelo de voz propio ni una garantía de procesamiento local. Si tu navegador, sus permisos o su servicio no lo admiten, puedes escribir o probar Chrome/Edge. El servidor de Render no necesita un micrófono.
+
+**Leer respuestas con voz local** es opcional y está desactivado al abrir la página. Solo se utiliza una voz en español que el navegador marque como `localService`; si no hay una, se indica que falta y no se recurre a una voz remota. El texto completo queda en pantalla; las respuestas largas leen como máximo 4000 caracteres. **Detener voz** interrumpe la lectura. Al iniciar dictado, se detiene la voz para reducir que se transcriba la propia respuesta.
+
+La voz es una interfaz sobre la red existente: no la convierte en un modelo comparable al de Alexa. Las pruebas de interfaz simulan el reconocimiento y la síntesis; el audio real y los permisos del equipo deben comprobarse en tu navegador. La página informa de denegaciones, ausencia de micrófono y errores de servicio sin perder el texto.
 
 ## Desarrollar prototipos de código
 
@@ -164,11 +189,11 @@ Para activar esta misma protección en otro alojamiento, define `NODE_ENV=produc
 
 ## Red neuronal local
 
-`neural/network.js` implementa la versión 2 de la red propia: 1005 características de entrada, una capa oculta de 32 neuronas con activación tanh y 19 salidas softmax. Tiene 32 819 parámetros aprendidos por retropropagación y descenso de gradiente durante 450 épocas. No usa bibliotecas de IA, modelos descargados ni servicios externos para clasificar.
+`neural/network.js` implementa la versión 2 de la red propia: 1090 características de entrada, una capa oculta de 32 neuronas con activación tanh y 20 salidas softmax. Tiene 35 572 parámetros aprendidos por retropropagación y descenso de gradiente durante 450 épocas. No usa bibliotecas de IA, modelos descargados ni servicios externos para clasificar.
 
 Las entradas incluyen palabras, pares consecutivos de palabras y 128 posiciones para trigramas de caracteres. La red puede combinar características mediante la capa oculta, en lugar de usar solo una clasificación lineal. La preparación del texto normaliza acentos e intenta corregir erratas de una letra cuando encuentra una única palabra candidata; esta regla no es aprendizaje neuronal y no corrige cualquier error.
 
-El conjunto de 278 frases en `neural/intents.json` cubre 19 intenciones: las anteriores más desarrollo de código, entrenamiento de la red, memoria, biblioteca, límites y cancelación. La consulta de memoria informa el nombre y tema disponibles. Cancelar una guía libera el tema sin borrar el nombre. Las respuestas siguen siendo escritas en el conjunto de datos y en `neural/conversation.js`; la red no genera lenguaje libre ni código arbitrario.
+El conjunto de 300 frases en `neural/intents.json` cubre 20 intenciones: las anteriores más desarrollo de código, entrenamiento de la red, memoria, biblioteca, límites, cancelación y creación de documentos. La consulta de memoria informa el nombre y tema disponibles. Cancelar una guía libera el tema sin borrar el nombre. Las respuestas siguen siendo escritas en el conjunto de datos y en `neural/conversation.js`; la red no genera lenguaje libre ni código arbitrario.
 
 Si menos del 60 % de las palabras informativas son conocidas, la puntuación máxima es menor que 0.75 o su diferencia con la segunda opción es menor que 0.2, el modelo no acepta la intención. Cuando hay suficiente vocabulario conocido, puede ofrecer dos ejemplos para aclarar la petición mediante botones. Estas puntuaciones no son una medida calibrada de certeza o veracidad.
 
@@ -176,7 +201,7 @@ Para enseñar nuevas intenciones, añade ejemplos variados, un identificador ún
 
 ### Qué se midió y qué sigue fallando
 
-- Entrenamiento: 278/278 frases reconocidas; la pérdida bajó de aproximadamente 2.96 a 0.021. Esto solo muestra ajuste al conjunto de entrenamiento.
+- Entrenamiento: 300/300 frases reconocidas; la pérdida bajó de aproximadamente 3.00 a 0.021. Esto solo muestra ajuste al conjunto de entrenamiento.
 - Evaluación anterior (`neural/evaluation.json`): 19/19, sin usar esas frases para actualizar pesos.
 - Desafío ampliado (`neural/challenge.json`): 18/22. El reporte conserva los cuatro errores, incluidas dos erratas y dos formulaciones de capacidades que todavía no reconoce con suficiente seguridad.
 - Comparación con la versión publicada en el commit `fe63730`: pasó de 9/20 a 16/20 en las mismas 20 frases adicionales. Los resultados previos se conservan en `neural/baseline.json`. Se cambiaron tanto la arquitectura como los datos, así que no atribuimos toda la mejora a añadir neuronas.
