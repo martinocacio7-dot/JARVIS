@@ -1,47 +1,61 @@
 # JARVIS para Android
 
-Aplicación Android 8.0 o posterior. Abre tu servidor privado `https://jarvis-privado-rmkm.onrender.com` en un WebView con acceso nativo a voz y avisos de agenda. No contiene contraseñas ni claves API. Necesita que el servidor tenga desplegada esta versión del repositorio; usa tu usuario y contraseña habituales.
+Aplicación para Android 8.0 o posterior, conectada a `https://jarvis-privado-rmkm.onrender.com`. La versión 1.1.0 incorpora un modo opcional para oír «JARVIS» desde otras aplicaciones, mediante un servicio de micrófono en primer plano de Android. No accede a las notificaciones de otras aplicaciones.
 
-## Instalar y probar
+## Instalar
 
-Descarga [JARVIS-Android-prueba.apk](../downloads/JARVIS-Android-prueba.apk) en tu teléfono, ábrelo y permite la instalación desde ese navegador/gestor de archivos. Es una compilación de prueba firmada, no una publicación en Google Play. Para actualizarla sin desinstalar necesitas conservar la misma clave de firma. Las claves no se publican en el repositorio.
+Descarga el [APK de prueba](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extráelo y abre el APK en tu teléfono. Usa tu usuario y contraseña habituales. El servidor debe tener desplegada la misma versión web del repositorio.
 
-Si el navegador no descarga el APK directamente, descarga el [ZIP con el mismo APK](../downloads/JARVIS-Android-prueba.zip), extráelo en el teléfono y abre el archivo `.apk`.
+Es una distribución de prueba fuera de Google Play. El APK entregado está firmado y no permite depuración, pero no ha pasado una revisión de Google Play. Mantiene el identificador y la firma de las versiones anteriores compiladas en este entorno. Si Play Protect bloquea la instalación, utiliza la web instalable mientras se gestiona una revisión oficial; no es necesario desactivar Play Protect. La compilación desde otra máquina usa otra clave de prueba, salvo que configures tu propia firma.
 
-Abre JARVIS y entra. En Android, **Leer respuestas en voz alta** viene activado; puedes desactivarlo y se recuerda tu elección. Si no hay voz española instalada, usa **Permisos → Instalar o configurar voz en español**. En **Permisos** puedes habilitar:
+En **Permisos** puedes habilitar micrófono, avisos de recordatorios y alarmas exactas, o instalar una voz en español. Las respuestas habladas vienen activadas y puedes cambiar esa preferencia. Las notificaciones de recordatorios y la notificación de escucha son notificaciones de JARVIS; no requieren leer mensajes de otras apps.
 
-- **Micrófono** para dictado y activación «JARVIS» con la aplicación abierta.
-- **Permitir avisos de recordatorios** para que Android muestre los recordatorios.
-- **Alarmas y recordatorios a la hora exacta** para avisos puntuales. Si no lo permites, Android programa avisos aproximados y JARVIS lo indica.
-Desde la versión 1.0.1 no se declara el servicio de acceso a notificaciones de otras aplicaciones ni ofrece activar ese permiso. La versión anterior fue bloqueada por Play Protect con un aviso de acceso sensible. El aviso no identifica una causa exacta: reducir permisos no garantiza que Google acepte un APK distribuido fuera de Play. Si vuelve a bloquearlo, utiliza la versión web instalable mientras se tramita una revisión por los canales oficiales de Google; no es necesario desactivar Play Protect.
+## Escuchar fuera de la aplicación
 
-Pulsa **Activar «JARVIS»** y prueba:
+1. Entra a JARVIS y pulsa **Fuera de app** en la barra superior.
+2. Permite micrófono y notificaciones si Android los solicita; vuelve a pulsar el botón después de concederlos. Este modo requiere que su notificación esté habilitada.
+3. Lee el aviso de uso del micrófono y pulsa **Activar**. Si falta el acceso privado, introdúcelo en el teléfono. Se guarda cifrado con una clave de Android Keystore para que el servicio pueda consultar tu servidor sin mantener la pantalla abierta.
+4. Puedes cambiar a otra aplicación. La notificación de escucha muestra **Pausar**, **Retomar** o **Apagar**. Volver a pulsar **Fuera de app** también lo apaga.
 
-- «JARVIS, qué hora es»: consulta la hora y zona del teléfono.
-- «JARVIS, qué notificaciones tengo»: informa de que esta versión no tiene acceso.
-- «JARVIS, hazme un recordatorio mañana a las 9 sobre tomar agua»: guarda el pendiente en tu base de datos y sincroniza su aviso en el teléfono.
+Funcionamiento:
 
-En Android las peticiones de ese modo de voz se envían al terminar de hablar; el dictado manual con 🎤 permite revisar antes de enviar. Se requiere activar la escucha cada vez que vuelvas a la aplicación. No escucha con la pantalla bloqueada o en segundo plano. Al salir de JARVIS o perder el foco de la ventana se destruye su reconocedor de voz. También se detiene cuando Android informa de otra grabación o retira el foco de audio, y no se reactiva automáticamente; vuelve a pulsar Activar «JARVIS» al terminar. Si Android informa de audio ocupado, la respuesta queda en pantalla. Escuchar una palabra desde otra aplicación exigiría mantener el micrófono activo y podría entrar en conflicto con una cámara o grabadora. Esta versión prioriza liberar el micrófono, por lo que no incorpora escucha permanente en segundo plano. La detección de grabaciones depende de lo que Android y el proveedor de reconocimiento expongan: no garantiza compatibilidad con todas las cámaras, grabadoras o equipos. Antes de grabar, sal de JARVIS y comprueba un vídeo corto con sonido. Android puede interrumpir la escucha si su servicio no está disponible. Instala una voz española en los ajustes de síntesis de voz si no hay ninguna voz local disponible.
+- Mientras espera, ignora las frases que no contienen la palabra «JARVIS».
+- Al oír el nombre dice **«Sí, dígame, señor.»** y espera tu petición.
+- Los **cuatro segundos** cuentan desde que el reconocedor está listo para captar la petición. Si no empiezas a hablar dentro del plazo, vuelve a esperar el nombre **sin despedida ni voz adicional de JARVIS**. Los tonos propios del reconocedor dependen del motor de Android.
+- Si empiezas dentro del plazo, permite terminar la frase, con un límite de 30 segundos. También acepta «JARVIS, qué hora es» en una frase.
+- Contesta con una voz española instalada en el teléfono y vuelve a esperar el nombre. El modo de segundo plano utiliza voz local; la voz personalizada de ElevenLabs sigue disponible en la interfaz web, con su configuración independiente.
 
-Las horas de los recordatorios se interpretan en **America/Guayaquil (UTC−5)** y se muestran al confirmar. Cuando solo indicas una hora se elige su próxima ocurrencia; si faltan datos se abre el formulario. No admite recordatorios recurrentes.
+Prueba «JARVIS» → «Qué hora es», o «JARVIS, hazme un recordatorio mañana a las 9 sobre tomar agua». La hora se consulta en el teléfono. Las demás peticiones se envían a la API privada de JARVIS; los recordatorios guardados se sincronizan con los avisos de Android. Su zona horaria sigue siendo **America/Guayaquil (UTC−5)**. No admite recordatorios recurrentes.
 
-## Avisos y privacidad
+El silencio no significa que el teléfono haya apagado el micrófono: para volver a detectar el nombre tiene que seguir escuchando. Este modo puede consumir batería y datos. El reconocedor de Android puede enviar audio a su proveedor incluso antes de oír «JARVIS»; no es un detector de palabra local propio ni un sistema de bajo consumo como el de un asistente integrado del fabricante.
 
-Los recordatorios se sincronizan al cargar/actualizar pendientes, al crearlos y al editarlos desde esta app. Los cambios hechos en otro equipo necesitan abrir o actualizar JARVIS en el teléfono; no hay sincronización push. Una vez programado, el aviso puede aparecer con la app cerrada y sin Internet. Los avisos futuros se restauran tras reiniciar Android. Si fuerzas la detención de JARVIS o revocas permisos, vuelve a abrirla y revisa los permisos. Android y el fabricante pueden retrasar o bloquear avisos; comprueba un recordatorio corto en tu dispositivo antes de depender de ellos.
+## Cámara, grabadoras y llamadas
 
-Esta versión no puede consultar notificaciones de otras aplicaciones. Las respuestas locales de hora y de disponibilidad quedan fuera del historial y de las llamadas al servidor o a ElevenLabs. Se usa una voz local instalada; si falta, se muestra el texto. El servicio de reconocimiento de voz de Android puede enviar el audio al proveedor correspondiente. La voz personalizada de ElevenLabs sigue disponible para las demás respuestas; requiere su configuración independiente.
+**Antes de grabar un vídeo o un audio, pulsa Pausar o Apagar en la notificación de JARVIS.** La pausa destruye su reconocedor y detiene su voz; **Retomar** es manual. Al detectar otra grabación, audio silenciado por Android, un conflicto del reconocedor o pérdida de foco de audio, el servicio también se pausa sin reactivarse solo.
 
-Se rechaza tráfico HTTP, errores TLS y navegación interna a otros dominios. Los enlaces HTTPS externos se abren en el navegador sin el puente nativo. Los documentos se guardan mediante el selector de archivos de Android, sin solicitar acceso general al almacenamiento. No hay telemetría propia ni almacenamiento de la contraseña en preferencias.
+La detección depende de lo que Android y el proveedor de reconocimiento expongan. No garantiza que una cámara o grabadora pueda empezar con audio mientras JARVIS tenga el micrófono activo. Comprueba un vídeo corto con sonido en tu teléfono; no se ha probado con un Android físico en este entorno.
 
-## Compilar
+Al forzar la detención, reiniciar el teléfono o morir el proceso, la escucha no se inicia automáticamente: vuelve a abrir JARVIS y actívala. Algunos fabricantes y servicios de voz pueden detenerla antes. No se garantiza disponibilidad continua con pantalla bloqueada ni frente a restricciones de batería del equipo.
 
-Abre esta carpeta en Android Studio o instala JDK 21, Android SDK 35 y Build Tools 35.0.0. Configura `ANDROID_HOME` o un `local.properties` local con `sdk.dir=...`. No publiques ese archivo ni claves de firma.
+## Modo de la pantalla, datos y privacidad
+
+Si no activas **Fuera de app**, el botón **Activar «JARVIS»** de la pantalla solo escucha mientras la aplicación está abierta y tiene foco. Comparte la espera de cuatro segundos. Mientras el servicio está activo, el micrófono y la activación de la pantalla se deshabilitan para evitar dos reconocedores simultáneos. Al apagar el servicio puedes volver a usar el modo de la pantalla.
+
+La contraseña cifrada se guarda únicamente al activar el modo de segundo plano. Se cifra con AES-GCM y una clave no exportable de Android Keystore, sin incluir valores en el APK ni en registros. Usa **Permisos → Olvidar acceso del modo Fuera de app** para detener el servicio y eliminar ese acceso guardado; eso no equivale a cerrar todas las sesiones web. Las copias de seguridad de datos de la aplicación están excluidas.
+
+El servicio conserva solo el contexto reciente en memoria y lo pierde al apagarse. No almacena ni envía transcripciones ambientales que no incluyan el nombre como mensajes de chat; el proveedor de reconocimiento puede procesar el audio mientras escucha. Al pronunciar una petición, esta sí se envía al servidor privado para responder. La conexión usa HTTPS, autenticación privada y no sigue redirecciones. No hay acceso a SMS ni lectura de notificaciones ajenas.
+
+Los recordatorios se sincronizan al abrir/actualizar pendientes, al modificarlos en la app y después de órdenes de agenda ejecutadas por el servicio. Los cambios de otro equipo necesitan actualizar JARVIS en el teléfono; no hay sincronización push. Los avisos futuros se restauran tras reiniciar Android, independientemente de la escucha. Android necesita permisos de notificaciones y alarmas para mostrarlos con la precisión correspondiente.
+
+## Compilar y comprobar
+
+Instala JDK 21, Android SDK 35 y Build Tools 35.0.0. Configura `ANDROID_HOME` o `local.properties` con `sdk.dir=...`. En el entorno de nube se puede usar `python3 scripts/setup-android-cloud.py` desde la raíz del repositorio.
 
 ```sh
 cd android
-./gradlew --no-daemon assembleDebug lintDebug
+./gradlew --no-daemon assembleRelease lintRelease testDebugUnitTest
 ```
 
-En Windows usa `gradlew.bat`. El APK sale en `app/build/outputs/apk/debug/app-debug.apk`. También puedes usar GitHub → Actions → **Android APK** → Run workflow y descargar el artefacto del resultado. Cada nueva máquina genera su propia firma de prueba: para una distribución estable configura una clave de lanzamiento privada y consérvala.
+En Windows usa `gradlew.bat`. El archivo entregable sale en `app/build/outputs/apk/release/app-release.apk`. El tipo `release` usa la clave de prueba local (`signingConfigs.debug`) para conservar la firma de las entregas de este entorno, pero `debuggable` está desactivado. Conserva esa clave privada fuera de Git para futuras actualizaciones y configura una firma de lanzamiento propia para distribuir formalmente. GitHub Actions → **Android APK** compila y publica un artefacto descargable.
 
-Las comprobaciones realizadas son compilación, análisis Android Lint, revisión del manifiesto empaquetado y pruebas de integración web con el puente Android simulado (hora, privacidad de respuestas locales, voz y recordatorios). La entrega de avisos reales, el reconocimiento con micrófono y los permisos deben probarse en un teléfono Android; no se han verificado con un teléfono físico.
+Las pruebas JVM verifican nombre obligatorio, espera de cuatro segundos, inicio de voz dentro del plazo y rechazo de eventos tras pausa/apagado. Además se ejecutan Android Lint y pruebas web con puente Android simulado. Compilar y simular no verifica permisos, micrófono, voz, grabación simultánea ni continuidad del servicio en un teléfono real.

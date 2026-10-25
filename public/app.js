@@ -105,6 +105,12 @@ async function send(event) {
   }
 }
 $('#composer').addEventListener('submit', send);
+document.addEventListener('jarvis:background-reply', event => {
+  const { command, reply } = event.detail || {};
+  if (busy || typeof command !== 'string' || typeof reply !== 'string' || command.length > 8000 || reply.length > 16000) return;
+  messages.push({ role: 'user', content: command }, { role: 'assistant', content: reply });
+  messages = messages.slice(-40); render(); refreshTasks();
+});
 document.addEventListener('jarvis:awake', event => { messages.push({ role: 'assistant', content: event.detail.text, activation: true }); messages = messages.slice(-40); render(); });
 $('#prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('#composer').requestSubmit(); } });
 $('#new-chat').addEventListener('click', () => { if (busy || isDictating()) return; stopSpeaking(); document.dispatchEvent(new Event('jarvis:new-chat')); messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });

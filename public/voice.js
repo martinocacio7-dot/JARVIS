@@ -7,14 +7,14 @@ export function wakePhrase(text) {
   return match ? { command: text.slice(match.index + match[0].length).replace(/^[\s,.:;!?¡¿-]+/, '').trim() } : null;
 }
 let manualListening = false, armed = false, busy = false, speaking = false;
-let session = null, restart = null, outputDone = null, token = 0, idleRestarts = 0;
+let session = null, restart = null, commandTimer = null, outputDone = null, token = 0, idleRestarts = 0;
 let externalAbort = null, externalAudio = null;
 const $ = selector => document.querySelector(selector);
 const sayStatus = text => { $('#voice-notice').textContent = text; };
 export const isDictating = () => manualListening;
 
 function stopRecognition() {
-  clearTimeout(restart); restart = null;
+  clearTimeout(restart); restart = null; clearTimeout(commandTimer); commandTimer = null;
   const old = session; session = null;
   try { old?.abort(); } catch { /* Ya estaba detenido. */ }
   manualListening = false; $('#prompt').readOnly = false;
@@ -106,8 +106,11 @@ function startRecognition(mode) {
   const prefix = $('#prompt').value.trimEnd(); let text = ''; const started = Date.now();
   recognition.lang = 'es-EC'; recognition.interimResults = mode !== 'wake'; recognition.continuous = mode === 'wake';
   if (mode !== 'wake') { manualListening = true; $('#prompt').readOnly = true; }
+  const commandQuiet = () => { if (session !== recognition) return; stopRecognition(); if (armed) { sayStatus('Esperando «JARVIS».'); resumeWake(); } };
+  recognition.onspeechstart = () => { if (session !== recognition || mode !== 'command') return; clearTimeout(commandTimer); commandTimer = setTimeout(commandQuiet, 30000); };
   recognition.onstart = () => {
     if (session !== recognition) return;
+    if (mode === 'command') { clearTimeout(commandTimer); commandTimer = setTimeout(commandQuiet, 4000); }
     if (mode === 'wake') sayStatus('Escucha activa: di «JARVIS». El navegador puede enviar audio a su proveedor mientras este modo esté activo.');
     else { $('#microphone').textContent = '■'; $('#microphone').setAttribute('aria-pressed', 'true'); $('#microphone').setAttribute('aria-label', 'Detener dictado'); sayStatus('Escuchando tu mensaje… Revisa el texto antes de enviarlo.'); }
   };
@@ -127,12 +130,13 @@ function startRecognition(mode) {
   recognition.onerror = event => {
     if (session !== recognition) return;
     if (event.error === 'no-speech' && mode === 'wake') return;
+    if (event.error === 'no-speech' && mode === 'command') { commandQuiet(); return; }
     const error = ({ 'not-allowed': 'No se permitió el micrófono. Revisa los permisos del sitio.', 'service-not-allowed': 'Este navegador no habilita el servicio de voz. Prueba Chrome/Edge.', 'audio-busy': 'Otro proceso está usando el micrófono o el audio. JARVIS se ha detenido; vuelve a activarlo cuando termines.', 'audio-capture': 'No se encontró un micrófono disponible.', 'no-speech': 'No se detectó voz. Puedes intentarlo de nuevo.', network: 'El servicio de voz del navegador no pudo conectarse.', aborted: 'Dictado detenido.' })[event.error] || 'No se pudo completar el dictado.';
     disarm(error);
   };
   recognition.onend = () => {
     if (session !== recognition) return;
-    session = null; manualListening = false; $('#prompt').readOnly = false; $('#microphone').textContent = '🎤'; $('#microphone').setAttribute('aria-pressed', 'false'); $('#microphone').setAttribute('aria-label', 'Dictar mensaje');
+    clearTimeout(commandTimer); commandTimer = null; session = null; manualListening = false; $('#prompt').readOnly = false; $('#microphone').textContent = '🎤'; $('#microphone').setAttribute('aria-pressed', 'false'); $('#microphone').setAttribute('aria-label', 'Dictar mensaje');
     if (mode === 'wake' && armed && !busy) {
       idleRestarts = Date.now() - started > 10000 ? 0 : idleRestarts + 1;
       if (idleRestarts > 4) { disarm('El navegador no mantiene la escucha. Puedes volver a activarla o usar el botón de micrófono.'); return; }

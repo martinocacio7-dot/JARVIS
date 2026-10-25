@@ -17,8 +17,11 @@ import android.view.ViewGroup;
 import org.json.*;
 import java.util.*;
 import java.io.*;
+import java.lang.ref.WeakReference;
 
 public final class MainActivity extends Activity {
+    static WeakReference<MainActivity> active=new WeakReference<>(null);
+    String sessionUser,sessionPassword;
     static final String HOME="https://jarvis-privado-rmkm.onrender.com";
     WebView web; SpeechRecognizer recognition; TextToSpeech tts;
     volatile boolean trusted=false, foreground=false, windowFocused=false, ttsReady=false;
@@ -35,12 +38,13 @@ public final class MainActivity extends Activity {
         Uri uri=Uri.parse(url); return "https".equals(uri.getScheme()) && "jarvis-privado-rmkm.onrender.com".equals(uri.getHost()) && (uri.getPort()==-1 || uri.getPort()==443) && uri.getUserInfo()==null;
     }
     @Override public void onCreate(Bundle state) {
-        super.onCreate(state);
+        super.onCreate(state);active=new WeakReference<>(this);
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(11,14,19));root.setFitsSystemWindows(true);
         int buttonHeight=Math.round(48*getResources().getDisplayMetrics().density);
         LinearLayout bar=new LinearLayout(this);
         Button reload=new Button(this);reload.setText("JARVIS ↻");reload.setOnClickListener(v->web.loadUrl(HOME));bar.addView(reload,new LinearLayout.LayoutParams(0,buttonHeight,1));
         Button permissions=new Button(this);permissions.setText("Permisos");permissions.setOnClickListener(v->permissions());bar.addView(permissions,new LinearLayout.LayoutParams(0,buttonHeight,1));
+        Button background=new Button(this);background.setText("Fuera de app");background.setOnClickListener(v->backgroundMode());bar.addView(background,new LinearLayout.LayoutParams(0,buttonHeight,1));
         root.addView(bar);status=new TextView(this);status.setTextColor(Color.LTGRAY);status.setTextSize(12);status.setText("Conectando a tu JARVIS privado…");root.addView(status);
         web=new WebView(this);root.addView(web,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,0,1));setContentView(root);
         WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setMediaPlaybackRequiresUserGesture(false);settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
@@ -48,7 +52,7 @@ public final class MainActivity extends Activity {
         web.addJavascriptInterface(new Device(),"JarvisAndroid");
         web.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){trusted=allowed(url);status.setText("Conectando…");}
-            @Override public void onPageFinished(WebView view,String url){trusted=allowed(url);status.setText(trusted?"Privado · Escucha solo con la app abierta":"Página no disponible");}
+            @Override public void onPageFinished(WebView view,String url){trusted=allowed(url);status.setText(trusted?"Privado · Usa Fuera de app para escuchar en segundo plano":"Página no disponible");emit("background-mode",0,String.valueOf(WakeService.running));}
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){
                 if (allowed(request.getUrl().toString())) return false;
                 if (request.isForMainFrame() && "https".equals(request.getUrl().getScheme())) { try { startActivity(new Intent(Intent.ACTION_VIEW,request.getUrl())); } catch (Exception ignored) {} }
@@ -59,7 +63,7 @@ public final class MainActivity extends Activity {
                 LinearLayout fields=new LinearLayout(MainActivity.this);fields.setOrientation(LinearLayout.VERTICAL);
                 EditText user=new EditText(MainActivity.this);user.setHint("Usuario de JARVIS");user.setSingleLine(true);user.setText("jarvis");fields.addView(user);
                 EditText password=new EditText(MainActivity.this);password.setHint("Contraseña privada");password.setInputType(129);fields.addView(password);
-                new AlertDialog.Builder(MainActivity.this).setTitle("Entrar a JARVIS").setView(fields).setPositiveButton("Entrar",(d,w)->{handler.proceed(user.getText().toString(),password.getText().toString());password.setText("");}).setNegativeButton("Cancelar",(d,w)->handler.cancel()).setOnCancelListener(d->handler.cancel()).show();
+                new AlertDialog.Builder(MainActivity.this).setTitle("Entrar a JARVIS").setView(fields).setPositiveButton("Entrar",(d,w)->{sessionUser=user.getText().toString();sessionPassword=password.getText().toString();handler.proceed(sessionUser,sessionPassword);password.setText("");}).setNegativeButton("Cancelar",(d,w)->handler.cancel()).setOnCancelListener(d->handler.cancel()).show();
             }
         });
         web.setWebChromeClient(new WebChromeClient(){
@@ -84,13 +88,44 @@ public final class MainActivity extends Activity {
         audio.registerAudioRecordingCallback(recordings,new Handler(getMainLooper()));
         web.loadUrl(HOME);
     }
+    static void backgroundModeChanged(boolean enabled){MainActivity activity=active.get();if(activity!=null)activity.emit("background-mode",0,String.valueOf(enabled));}
+    static void backgroundReply(String command,String reply){MainActivity activity=active.get();if(activity!=null&&activity.foreground)try{activity.emit("background-reply",0,new JSONObject().put("command",command).put("reply",reply).toString());}catch(JSONException ignored){}}
+    void backgroundMode(){
+        if(WakeService.running){stopService(new Intent(this,WakeService.class));Toast.makeText(this,"Escucha fuera de la app apagada",Toast.LENGTH_SHORT).show();return;}
+        if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},5);Toast.makeText(this,"Permite el micrófono y vuelve a pulsar Fuera de app",Toast.LENGTH_LONG).show();return;}
+        if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},6);Toast.makeText(this,"Permite la notificación para poder pausar y apagar la escucha",Toast.LENGTH_LONG).show();return;}
+        if(!getSystemService(NotificationManager.class).areNotificationsEnabled()){startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));Toast.makeText(this,"Activa las notificaciones para poder pausar y apagar la escucha",Toast.LENGTH_LONG).show();return;}
+        NotificationChannel channel=getSystemService(NotificationManager.class).getNotificationChannel("jarvis_listening");
+        if(channel!=null&&channel.getImportance()==NotificationManager.IMPORTANCE_NONE){startActivity(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()).putExtra(Settings.EXTRA_CHANNEL_ID,"jarvis_listening"));return;}
+        new AlertDialog.Builder(this).setTitle("Escuchar JARVIS fuera de la aplicación").setMessage("Mantendrá el micrófono activo con una notificación visible. El servicio de reconocimiento de Android puede enviar audio a su proveedor incluso antes del nombre. Al decir JARVIS responderá y esperará 4 segundos por tu petición; sin petición vuelve a esperar el nombre en silencio. Puede afectar batería o grabaciones: pausa la escucha desde la notificación antes de grabar. Para consultar tu servidor privado guardará tu acceso cifrado con Android Keystore en este teléfono. Puedes borrarlo desde Permisos.").setNegativeButton("Cancelar",null).setPositiveButton("Activar",(dialog,which)->{
+            try{
+                if(sessionUser!=null&&sessionPassword!=null)PrivateLogin.save(this,sessionUser,sessionPassword);
+                PrivateLogin.authorization(this);
+            }catch(Exception error){backgroundLogin();return;}
+            launchBackgroundService();
+        }).show();
+    }
+    void launchBackgroundService(){
+        try{pauseAudio("El modo Fuera de app controla la escucha. Puedes pausarlo o apagarlo desde su notificación.");startForegroundService(new Intent(this,WakeService.class));}
+        catch(Exception error){Toast.makeText(this,"Android no permitió iniciar la escucha. Abre JARVIS y revisa sus permisos.",Toast.LENGTH_LONG).show();}
+    }
+    void backgroundLogin(){
+        LinearLayout fields=new LinearLayout(this);fields.setOrientation(LinearLayout.VERTICAL);
+        EditText user=new EditText(this);user.setSingleLine(true);user.setText("jarvis");user.setHint("Usuario de JARVIS");fields.addView(user);
+        EditText password=new EditText(this);password.setHint("Contraseña de JARVIS");password.setInputType(129);fields.addView(password);
+        new AlertDialog.Builder(this).setTitle("Acceso privado para Fuera de app").setView(fields).setNegativeButton("Cancelar",null).setPositiveButton("Guardar cifrado y activar",(d,w)->{
+            try{PrivateLogin.save(this,user.getText().toString(),password.getText().toString());password.setText("");launchBackgroundService();}
+            catch(Exception error){Toast.makeText(this,"No se pudo guardar el acceso cifrado en este teléfono.",Toast.LENGTH_LONG).show();}
+        }).show();
+    }
     void permissions(){
-        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Instalar o configurar voz en español", "Privacidad"},(d,which)->{
+        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Instalar o configurar voz en español", "Privacidad", "Olvidar acceso del modo Fuera de app"},(d,which)->{
             if(which==0)requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},1);
             if(which==1){if(Build.VERSION.SDK_INT>=33)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},2);else startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));}
             if(which==2 && Build.VERSION.SDK_INT>=31)startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,Uri.parse("package:"+getPackageName())));
             if(which==3){try{startActivity(new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA));}catch(Exception error){new AlertDialog.Builder(this).setMessage("Abre Ajustes → Idioma y entrada → Síntesis de voz e instala una voz en español.").setPositiveButton("Entendido",null).show();}}
-            if(which==4)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El reconocimiento de voz depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha se detiene al salir. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
+            if(which==4)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El reconocimiento de voz depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha de la pantalla se detiene al salir. El modo Fuera de app solo funciona si lo activas; mantiene una notificación para pausarlo y apagarlo. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
+            if(which==5){stopService(new Intent(this,WakeService.class));PrivateLogin.clear(this);sessionUser=null;sessionPassword=null;Toast.makeText(this,"Acceso cifrado del modo Fuera de app eliminado",Toast.LENGTH_LONG).show();}
         }).show();
     }
     void emit(String type,int id,String text){runOnUiThread(()->{if(web==null||!trusted)return;try{JSONObject event=new JSONObject().put("type",type).put("id",id).put("text",text);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('jarvis:android',{detail:"+event+"}));",null);}catch(Exception ignored){}});}
@@ -105,7 +140,7 @@ public final class MainActivity extends Activity {
         return false;
     }
     synchronized int beginAudio(){
-        if(!trusted || !foreground || !windowFocused || audioBusy(false))return -1;
+        if(WakeService.running || !trusted || !foreground || !windowFocused || audioBusy(false))return -1;
         if(audio.requestAudioFocus(audioFocus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED)return -1;
         audioLease=++nextAudioLease;return audioLease;
     }
@@ -114,6 +149,7 @@ public final class MainActivity extends Activity {
         endSpeech();if(tts!=null)tts.stop();finishAudio(audioLease);emit("audio-interrupted",0,message);
     }
     void startSpeech(int id){
+        if(WakeService.running){emit("error",id,"audio-busy");return;}
         if(!foreground||!trusted||!windowFocused){emit("error",id,"audio-busy");return;}
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pendingSpeech=id;requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},1);return;}
         if(!SpeechRecognizer.isRecognitionAvailable(this)){emit("error",id,"service-not-allowed");return;}
@@ -122,7 +158,7 @@ public final class MainActivity extends Activity {
         recognition.setRecognitionListener(new RecognitionListener(){
             boolean ended=false;
             void finish(){if(ended)return;ended=true;if(speechId==id)endSpeech();emit("end",id,"");}
-            public void onReadyForSpeech(Bundle b){emit("start",id,"");}public void onBeginningOfSpeech(){} public void onRmsChanged(float r){} public void onBufferReceived(byte[] b){} public void onEndOfSpeech(){} public void onEvent(int e,Bundle b){}
+            public void onReadyForSpeech(Bundle b){emit("start",id,"");}public void onBeginningOfSpeech(){emit("speech",id,"");} public void onRmsChanged(float r){} public void onBufferReceived(byte[] b){} public void onEndOfSpeech(){} public void onEvent(int e,Bundle b){}
             public void onPartialResults(Bundle b){}
             public void onResults(Bundle b){ArrayList<String> results=b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);if(results!=null&&!results.isEmpty())emit("result",id,results.get(0));finish();}
             public void onError(int error){if(ended)return;emit("error",id,error==SpeechRecognizer.ERROR_NO_MATCH||error==SpeechRecognizer.ERROR_SPEECH_TIMEOUT?"no-speech":error==SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS?"not-allowed":"network");finish();}
@@ -131,6 +167,7 @@ public final class MainActivity extends Activity {
         recognition.startListening(intent);
     }
     final class Device {
+        @JavascriptInterface public boolean backgroundMode(){return WakeService.running;}
         @JavascriptInterface public int beginPlayback(){return beginAudio();}
         @JavascriptInterface public void endPlayback(int lease){finishAudio(lease);}
         @JavascriptInterface public void startRecognition(int id){runOnUiThread(()->startSpeech(id));}
@@ -154,6 +191,6 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onResume(){super.onResume();foreground=true;Reminders.restore(this);}
     @Override protected void onPause(){foreground=false;pendingSpeech=-1;endSpeech();if(tts!=null)tts.stop();finishAudio(audioLease);if(web!=null)web.evaluateJavascript("document.dispatchEvent(new Event('jarvis:android-pause'));",null);super.onPause();}
-    @Override protected void onDestroy(){if(audio!=null&&recordings!=null)audio.unregisterAudioRecordingCallback(recordings);finishAudio(audioLease);endSpeech();if(tts!=null)tts.shutdown();if(files!=null)files.onReceiveValue(null);if(web!=null){web.removeJavascriptInterface("JarvisAndroid");web.destroy();web=null;}super.onDestroy();}
+    @Override protected void onDestroy(){if(active.get()==this)active.clear();if(audio!=null&&recordings!=null)audio.unregisterAudioRecordingCallback(recordings);finishAudio(audioLease);endSpeech();if(tts!=null)tts.shutdown();if(files!=null)files.onReceiveValue(null);if(web!=null){web.removeJavascriptInterface("JarvisAndroid");web.destroy();web=null;}super.onDestroy();}
     @Override public void onBackPressed(){if(web.canGoBack())web.goBack();else super.onBackPressed();}
 }

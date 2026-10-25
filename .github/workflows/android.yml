@@ -17,9 +17,9 @@ jobs:
           java-version: '21'
       - name: Compilar y analizar Android
         working-directory: android
-        run: ./gradlew --no-daemon assembleDebug lintDebug
+        run: ./gradlew --no-daemon assembleRelease lintRelease testDebugUnitTest
       - uses: actions/upload-artifact@v4
         with:
           name: JARVIS-Android-prueba
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error

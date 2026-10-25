@@ -23,11 +23,19 @@ export function initAndroidDevice() {
   Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: synthesis });
   Object.defineProperty(window, 'SpeechSynthesisUtterance', { configurable: true, value: class { constructor(text) { this.text = text; } } });
   window.addEventListener('jarvis:android', ({ detail }) => {
+    if (detail.type === 'background-mode') {
+      const enabled = detail.text === 'true';
+      document.querySelector('#wake-mode').disabled = enabled; document.querySelector('#microphone').disabled = enabled;
+      if (enabled) document.dispatchEvent(new CustomEvent('jarvis:android-audio-interrupted', { detail: { text: 'El modo Fuera de app controla la escucha. Usa su notificación para pausarlo o apagarlo.' } }));
+      return;
+    }
+    if (detail.type === 'background-reply') { try { document.dispatchEvent(new CustomEvent('jarvis:background-reply', { detail: JSON.parse(detail.text) })); } catch {} return; }
     if (detail.type === 'audio-interrupted') { document.dispatchEvent(new CustomEvent('jarvis:android-audio-interrupted', { detail: { text: detail.text } })); return; }
     if (detail.type === 'voices') { synthesis.dispatchEvent(new Event('voiceschanged')); return; }
     if (detail.type.startsWith('tts-')) { if (detail.id === utteranceId) { const value = utterance; utterance = null; (detail.type === 'tts-end' ? value?.onend : value?.onerror)?.(); } return; }
     const current = recognition; if (!current || current.id !== detail.id) return;
     if (detail.type === 'start') current.onstart?.();
+    if (detail.type === 'speech') current.onspeechstart?.();
     if (detail.type === 'result') current.onresult?.({ resultIndex: 0, results: [Object.assign([{ transcript: detail.text }], { isFinal: true })] });
     if (detail.type === 'error') current.onerror?.({ error: detail.text });
     if (detail.type === 'end') { if (recognition === current) recognition = null; current.onend?.(); }
