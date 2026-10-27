@@ -58,3 +58,8 @@ header{border-color:#282134}main{isolation:isolate}
 @keyframes orb-breathe{0%,100%{transform:scale(.96) rotate(-5deg);opacity:.8}50%{transform:scale(1.04) rotate(5deg);opacity:1}}
 @media(max-width:800px){.voice-home{padding-top:22px}#voice-orb{width:224px;height:224px}.suggestions{grid-template-columns:1fr}.suggestions button{padding:13px 16px}.suggestions small{display:none}.composer-wrap{margin-top:18px}#composer textarea{min-height:42px;max-height:120px}.mode-picker span{display:none}header{padding:16px}.voice-options{justify-content:center}}
 @media(prefers-reduced-motion:reduce){#particle-sphere{animation:none!important}}
+
+.reply-code{white-space:normal;margin:16px 0;border:1px solid #4b395d;border-radius:12px;overflow:hidden;max-width:100%}
+.reply-code-bar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;background:#21172e;padding:9px 12px;font-size:11px;color:#cdb8e7}
+.reply-code-bar button{font:inherit;background:#39254e;color:#eee2ff;border:1px solid #745591;border-radius:6px;padding:7px 10px;min-height:36px}
+.reply-code pre{white-space:pre;overflow:auto;margin:0;padding:16px;background:#100d17;font:13px/1.7 ui-monospace,monospace;tab-size:4}

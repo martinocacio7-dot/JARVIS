@@ -1,0 +1,296 @@
+[
+  {
+    "id": "variables",
+    "title": "Variables",
+    "aliases": [
+      "variable",
+      "variables",
+      "const",
+      "let"
+    ],
+    "summary": "Una variable asocia un nombre con un valor. En JavaScript, let permite reasignar y const impide reasignar ese nombre; un objeto declarado con const todavía puede cambiar por dentro.",
+    "simple": "Piensa en una etiqueta: edad señala el número que quieres usar. Puedes leer ese valor para calcular otro.",
+    "examples": {
+      "javascript": {
+        "code": "const edad = 27;\nconsole.log(edad + 1);",
+        "output": "28",
+        "solution": "const precio = 10;\nconsole.log(precio * 2);"
+      },
+      "python": {
+        "code": "edad = 27\nprint(edad + 1)",
+        "output": "28",
+        "solution": "precio = 10\nprint(precio * 2)"
+      }
+    },
+    "exercise": "Crea una variable precio con valor 10 y muestra el doble.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide",
+    "explanation": {
+      "python": "En Python, una variable es un nombre que referencia un objeto. Se asigna con = y el nombre puede volver a asociarse con otro valor. Python no usa las palabras let o const para declarar variables."
+    }
+  },
+  {
+    "id": "functions",
+    "title": "Funciones",
+    "aliases": [
+      "funcion",
+      "funciones",
+      "function",
+      "def"
+    ],
+    "summary": "Una función agrupa una operación reutilizable. Recibe argumentos y puede devolver un resultado con return; imprimir un valor y devolverlo son operaciones distintas.",
+    "simple": "Es como una máquina: le das un número y te devuelve otro. Así evitas escribir la misma operación varias veces.",
+    "examples": {
+      "javascript": {
+        "code": "function doble(numero) { return numero * 2; }\nconsole.log(doble(3));",
+        "output": "6",
+        "solution": "function triple(numero) { return numero * 3; }\nconsole.log(triple(4));"
+      },
+      "python": {
+        "code": "def doble(numero):\n    return numero * 2\n\nprint(doble(3))",
+        "output": "6",
+        "solution": "def triple(numero):\n    return numero * 3\n\nprint(triple(4))"
+      }
+    },
+    "exercise": "Escribe una función triple que devuelva el triple de su argumento.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide"
+  },
+  {
+    "id": "conditions",
+    "title": "Condicionales",
+    "aliases": [
+      "condicional",
+      "condicionales",
+      "if",
+      "else"
+    ],
+    "summary": "Un condicional ejecuta una rama según una condición verdadera o falsa. En este ejemplo se compara edad con 18 antes de elegir el mensaje.",
+    "simple": "Es una decisión: si se cumple la condición haces una cosa; si no, haces otra.",
+    "examples": {
+      "javascript": {
+        "code": "const edad = 20;\nif (edad >= 18) { console.log(\"Mayor\"); } else { console.log(\"Menor\"); }",
+        "output": "Mayor",
+        "solution": "const nota = 8;\nconsole.log(nota >= 7 ? \"Aprobado\" : \"Pendiente\");"
+      },
+      "python": {
+        "code": "edad = 20\nif edad >= 18:\n    print(\"Mayor\")\nelse:\n    print(\"Menor\")",
+        "output": "Mayor",
+        "solution": "nota = 8\nprint(\"Aprobado\" if nota >= 7 else \"Pendiente\")"
+      }
+    },
+    "exercise": "Muestra Aprobado si nota es al menos 7 y Pendiente en caso contrario.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide"
+  },
+  {
+    "id": "loops",
+    "title": "Bucles",
+    "aliases": [
+      "bucle",
+      "bucles",
+      "ciclo",
+      "ciclos",
+      "for",
+      "while"
+    ],
+    "summary": "Un bucle repite instrucciones. Debe tener una forma de terminar para evitar una repetición infinita. Aquí acumulamos los números del 1 al 3.",
+    "simple": "En vez de escribir tres sumas a mano, recorres los números y añades cada uno al total.",
+    "examples": {
+      "javascript": {
+        "code": "let total = 0;\nfor (let numero = 1; numero <= 3; numero++) { total += numero; }\nconsole.log(total);",
+        "output": "6",
+        "solution": "let total = 0;\nfor (let numero = 1; numero <= 5; numero++) { total += numero; }\nconsole.log(total);"
+      },
+      "python": {
+        "code": "total = 0\nfor numero in range(1, 4):\n    total += numero\nprint(total)",
+        "output": "6",
+        "solution": "total = 0\nfor numero in range(1, 6):\n    total += numero\nprint(total)"
+      }
+    },
+    "exercise": "Suma los números del 1 al 5 con un bucle. El total esperado es 15.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide"
+  },
+  {
+    "id": "lists",
+    "title": "Arrays y listas",
+    "aliases": [
+      "array",
+      "arrays",
+      "arreglo",
+      "arreglos",
+      "lista de python",
+      "listas de python",
+      "lista en python",
+      "listas en python",
+      "lista python",
+      "listas python"
+    ],
+    "summary": "Un array de JavaScript o una lista de Python guarda una secuencia de elementos. El primer índice es 0. length y len permiten conocer la cantidad de elementos.",
+    "simple": "Es una fila de casillas. La casilla 0 contiene el primer elemento.",
+    "examples": {
+      "javascript": {
+        "code": "const precios = [10, 20, 30];\nconsole.log(precios[0]);\nconsole.log(precios.length);",
+        "output": "10\n3",
+        "solution": "const precios = [10, 20, 30];\nprecios.push(40);\nconsole.log(precios.length);"
+      },
+      "python": {
+        "code": "precios = [10, 20, 30]\nprint(precios[0])\nprint(len(precios))",
+        "output": "10\n3",
+        "solution": "precios = [10, 20, 30]\nprecios.append(40)\nprint(len(precios))"
+      }
+    },
+    "exercise": "Añade 40 al final de precios y muestra la nueva cantidad de elementos.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide"
+  },
+  {
+    "id": "objects",
+    "title": "Objetos y diccionarios",
+    "aliases": [
+      "objeto",
+      "objetos",
+      "diccionario",
+      "diccionarios"
+    ],
+    "summary": "Un objeto de JavaScript o un diccionario de Python puede asociar claves con valores. Sirve, por ejemplo, para mantener juntos el nombre y la edad de una persona. No son estructuras idénticas en ambos lenguajes.",
+    "simple": "En lugar de recordar posiciones, buscas un dato por su etiqueta: nombre, edad o ciudad.",
+    "examples": {
+      "javascript": {
+        "code": "const persona = { nombre: \"Miguel\", edad: 25 };\nconsole.log(persona.nombre);",
+        "output": "Miguel",
+        "solution": "const persona = { nombre: \"Miguel\" };\npersona.ciudad = \"Quito\";\nconsole.log(persona.ciudad);"
+      },
+      "python": {
+        "code": "persona = {\"nombre\": \"Miguel\", \"edad\": 25}\nprint(persona[\"nombre\"])",
+        "output": "Miguel",
+        "solution": "persona = {\"nombre\": \"Miguel\"}\npersona[\"ciudad\"] = \"Quito\"\nprint(persona[\"ciudad\"])"
+      }
+    },
+    "exercise": "Añade la clave ciudad con valor Quito y muéstrala.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide"
+  },
+  {
+    "id": "async",
+    "title": "Asincronía",
+    "aliases": [
+      "async",
+      "await",
+      "promesa",
+      "promesas",
+      "asincronia",
+      "asincrono",
+      "asincrona"
+    ],
+    "summary": "La asincronía permite esperar operaciones sin bloquear necesariamente toda la aplicación. await espera un resultado dentro de una función async. No convierte automáticamente un cálculo pesado en trabajo paralelo.",
+    "simple": "Puedes dejar una operación pendiente y continuar con otras tareas. Cuando termina, recibes su resultado.",
+    "examples": {
+      "javascript": {
+        "code": "async function obtenerNumero() { return 7; }\nobtenerNumero().then(numero => console.log(numero));",
+        "output": "7",
+        "solution": "async function obtenerNumero() { return 14; }\nobtenerNumero().then(numero => console.log(numero));"
+      },
+      "python": {
+        "code": "import asyncio\n\nasync def obtener_numero():\n    await asyncio.sleep(0)\n    return 7\n\nprint(asyncio.run(obtener_numero()))",
+        "output": "7",
+        "solution": "import asyncio\n\nasync def obtener_numero():\n    return 14\n\nprint(asyncio.run(obtener_numero()))"
+      }
+    },
+    "exercise": "Haz que la función asíncrona devuelva 14 y muestra el resultado.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide"
+  },
+  {
+    "id": "api",
+    "title": "API y respuestas JSON",
+    "aliases": [
+      "api",
+      "apis",
+      "peticion http"
+    ],
+    "summary": "Una API define cómo un programa usa funciones o datos de otro componente. En una API HTTP revisas método, URL, estado y formato de respuesta. Este ejemplo solo simula leer un JSON: no hace ninguna petición a Internet.",
+    "simple": "Es un acuerdo entre programas: uno pide algo con un formato y el otro devuelve una respuesta con otro formato conocido.",
+    "examples": {
+      "javascript": {
+        "code": "const texto = '{\"estado\":\"ok\"}';\nconst respuesta = JSON.parse(texto);\nconsole.log(respuesta.estado);",
+        "output": "ok",
+        "solution": "const respuesta = JSON.parse('{\"total\":3}');\nconsole.log(respuesta.total);"
+      },
+      "python": {
+        "code": "import json\n\nrespuesta = json.loads('{\"estado\":\"ok\"}')\nprint(respuesta[\"estado\"])",
+        "output": "ok",
+        "solution": "import json\n\nrespuesta = json.loads('{\"total\":3}')\nprint(respuesta[\"total\"])"
+      }
+    },
+    "exercise": "Lee el campo total del JSON {\"total\":3} y muéstralo.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/JavaScript/Guide"
+  },
+  {
+    "id": "html",
+    "title": "HTML",
+    "aliases": [
+      "html"
+    ],
+    "summary": "HTML describe la estructura y el significado del contenido de una página. Un encabezado h1 identifica el título principal; un párrafo p contiene texto. HTML por sí solo no añade toda la lógica de una aplicación.",
+    "simple": "Es el esqueleto de una página: indica qué contenido es un título y qué contenido es un párrafo.",
+    "examples": {
+      "html": {
+        "code": "<h1>Hola, Miguel</h1>\n<p>Esta es mi primera página.</p>",
+        "output": "Un título y un párrafo en la página.",
+        "solution": "<h1>Hola, Miguel</h1>\n<p>Esta es mi primera página.</p>\n<p>Estoy aprendiendo HTML.</p>"
+      }
+    },
+    "exercise": "Añade un segundo párrafo que diga Estoy aprendiendo HTML.",
+    "reference": "https://developer.mozilla.org/es/docs/Learn_web_development/Core/Structuring_content"
+  },
+  {
+    "id": "css",
+    "title": "CSS",
+    "aliases": [
+      "css"
+    ],
+    "summary": "CSS define la presentación del contenido HTML. Los selectores eligen elementos y las declaraciones establecen propiedades como color, margen o tamaño.",
+    "simple": "HTML pone el contenido; CSS decide cómo se ve.",
+    "examples": {
+      "css": {
+        "code": ".tarjeta {\n  color: #111;\n  background: #fff;\n  padding: 16px;\n}",
+        "output": "Los elementos con clase tarjeta tendrán texto oscuro, fondo blanco y espacio interior.",
+        "solution": ".tarjeta {\n  color: #111;\n  background: #fff;\n  padding: 16px;\n  border: 1px solid #000;\n}"
+      }
+    },
+    "exercise": "Añade un borde de un píxel negro a la tarjeta.",
+    "reference": "https://developer.mozilla.org/es/docs/Web/CSS"
+  },
+  {
+    "id": "sql",
+    "title": "SQL",
+    "aliases": [
+      "sql",
+      "select"
+    ],
+    "summary": "SQL permite consultar y modificar datos en bases relacionales. SELECT lee columnas; WHERE filtra filas. Este ejemplo usa sintaxis compatible con SQLite y datos de demostración.",
+    "simple": "Es una forma de pedir filas concretas de una tabla.",
+    "examples": {
+      "sql": {
+        "code": "CREATE TABLE personas (nombre TEXT, edad INTEGER);\nINSERT INTO personas VALUES ('Miguel', 25), ('Ana', 17);\nSELECT nombre FROM personas WHERE edad >= 18;",
+        "output": "Miguel",
+        "solution": "SELECT nombre FROM personas WHERE edad < 18;"
+      }
+    },
+    "exercise": "Consulta solo el nombre de las personas menores de 18 años.",
+    "reference": "https://www.sqlite.org/lang_select.html"
+  },
+  {
+    "id": "git",
+    "title": "Git",
+    "aliases": [
+      "git"
+    ],
+    "summary": "Git registra versiones de archivos. git status muestra el estado del directorio de trabajo y git diff muestra cambios todavía no preparados. Estos comandos no crean por sí solos un commit.",
+    "simple": "Es un historial de cambios que tú decides registrar.",
+    "examples": {
+      "text": {
+        "code": "git status\ngit diff",
+        "output": "La salida depende de los cambios que haya en tu repositorio.",
+        "solution": "git diff --staged"
+      }
+    },
+    "exercise": "Consulta qué cambios has preparado para el próximo commit.",
+    "reference": "https://git-scm.com/docs/git-status"
+  }
+]

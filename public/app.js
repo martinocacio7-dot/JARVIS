@@ -6,6 +6,7 @@ import { initDocuments, openDocuments } from './document-ui.js';
 import { initVoice, isDictating, speakReply, stopSpeaking } from './voice.js';
 import { initTasks, refreshTasks, openTaskEditor } from './task-ui.js';
 import { initMobile } from './mobile.js';
+import { replyView } from './reply-view.js';
 
 initAndroidDevice();
 const $ = selector => document.querySelector(selector);
@@ -23,7 +24,7 @@ function render() {
     article.className = `message ${message.role}`;
     const name = document.createElement('strong');
     name.textContent = message.role === 'user' ? 'TÚ' : 'JARVIS';
-    article.append(name, document.createTextNode(message.content));
+    article.append(name, message.role === 'assistant' ? replyView(message.content) : document.createTextNode(message.content));
     if (message.role === 'assistant') {
       if (message.openTasks) {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'correct-answer'; button.textContent = message.taskDraft ? 'Completar pendiente' : 'Abrir mis pendientes';

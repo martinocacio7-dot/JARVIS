@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createAuth } from './auth.js';
 import { searchLibrary } from './knowledge/search.js';
 import { createLibraryDatabase, RevisionConflict } from './knowledge/database.js';
-import { validateLibrary } from './public/library-data.js';
+import { validateLibrary, normalize } from './public/library-data.js';
 import { develop, isDevelopmentRequest } from './developer/generator.js';
 import { validateFeedback } from './public/feedback-data.js';
 import { validateDocument, isDocumentRequest } from './public/document-data.js';
@@ -16,7 +16,7 @@ import { createVoiceService } from './voice/elevenlabs.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
 
-const files = { '/voice-home.js': ['voice-home.js', 'text/javascript'], '/android-device.js': ['android-device.js', 'text/javascript'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice-profile.js': ['voice-profile.js', 'text/javascript'], '/mobile.js': ['mobile.js', 'text/javascript'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/sw.js': ['sw.js', 'text/javascript'], '/icons/jarvis-180.png': ['icons/jarvis-180.png', 'image/png'], '/icons/jarvis-192.png': ['icons/jarvis-192.png', 'image/png'], '/icons/jarvis-512.png': ['icons/jarvis-512.png', 'image/png'], '/task-data.js': ['task-data.js', 'text/javascript'], '/task-ui.js': ['task-ui.js', 'text/javascript'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
+const files = { '/reply-view.js': ['reply-view.js', 'text/javascript'], '/voice-home.js': ['voice-home.js', 'text/javascript'], '/android-device.js': ['android-device.js', 'text/javascript'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice-profile.js': ['voice-profile.js', 'text/javascript'], '/mobile.js': ['mobile.js', 'text/javascript'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/sw.js': ['sw.js', 'text/javascript'], '/icons/jarvis-180.png': ['icons/jarvis-180.png', 'image/png'], '/icons/jarvis-192.png': ['icons/jarvis-192.png', 'image/png'], '/icons/jarvis-512.png': ['icons/jarvis-512.png', 'image/png'], '/task-data.js': ['task-data.js', 'text/javascript'], '/task-ui.js': ['task-ui.js', 'text/javascript'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
 const publicInstallAssets = new Set(['/manifest.webmanifest', '/sw.js', '/icons/jarvis-180.png', '/icons/jarvis-192.png', '/icons/jarvis-512.png']);
 const instruction = 'Eres JARVIS, un asistente personal útil, claro y honesto. Responde en español salvo que te pidan otro idioma. Explica tus límites. No afirmes haber realizado acciones que no puedes ejecutar.';
 
@@ -137,7 +137,13 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
           catch (error) { return json(error instanceof RevisionConflict ? 409 : 503, { error: error instanceof RevisionConflict ? error.message : 'No pude guardar o consultar el pendiente. Revisa la conexión a la base de datos y el límite de 200 pendientes; no asumas que quedó guardado.' }); }
         }
         if (isDocumentRequest(messages.at(-1).content)) return json(200, { mode: 'local', intent: 'documentos', documentDraft: true, reply: 'Puedo preparar Word, PDF, PowerPoint y Excel con el contenido que proporciones. Para informes uso formato base APA 7 estudiantil y texto negro. Abre «Preparar mi documento» y completa título, autor, texto y fuentes reales. No investigo ni redacto un informe completo a partir de un título.' });
-        if (isDevelopmentRequest(messages.at(-1).content)) return json(200, develop(messages.at(-1).content));
+        if (isDevelopmentRequest(messages.at(-1).content)) {
+          if (!apiKey && !/\b(app|aplicacion|pagina|inventario|tareas|calculadora|sistema|web)\b/i.test(normalize(messages.at(-1).content))) {
+            const lesson = respond(localModel, messages);
+            if (lesson.kind === 'lesson') return json(200, { mode: 'local', ...lesson });
+          }
+          return json(200, develop(messages.at(-1).content));
+        }
         if (!apiKey) {
           const result = respond(localModel, messages);
           return json(200, { mode: 'local', ...result, ...(result.intent === 'documentos' ? { documentDraft: true } : {}) });

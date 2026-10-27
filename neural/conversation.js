@@ -1,4 +1,5 @@
 import { predict, tokenize } from './network.js';
+import { answerLesson, lessonTitle } from '../knowledge/lessons.js';
 
 const topics = {
   programacion: {
@@ -40,6 +41,7 @@ const topics = {
 // respuestas del asistente para establecer nombres o temas.
 export function respond(model, messages) {
   let name = null;
+  let lesson = null;
   let topic = null;
   let step = 0;
   let lastReply = null;
@@ -51,6 +53,7 @@ export function respond(model, messages) {
     const introduction = text.match(/^(?:me llamo|mi nombre es|puedes llamarme)\s+([\p{L}]+(?:[ '\-][\p{L}]+){0,3})[.!]?$/iu);
     if (['olvida el contexto', 'olvida mi nombre', 'borra el contexto', 'olvida todo'].includes(normalized)) {
       name = null;
+      lesson = null;
       topic = null;
       step = 0;
       result = { intent: 'olvidar_contexto', reply: 'He reiniciado el nombre y el tema para los mensajes siguientes. El historial sigue visible; usa «Nueva conversación» para borrarlo del navegador.' };
@@ -58,19 +61,27 @@ export function respond(model, messages) {
       name = introduction[1];
       result = { intent: 'guardar_nombre', reply: `Encantado, ${name}. Usaré tu nombre mientras esté en el historial reciente de esta conversación.` };
     } else {
-      result = predict(model, text);
+      const taught = answerLesson(text, lesson);
+      if (taught) {
+        lesson = taught.state;
+        result = { kind: 'lesson', intent: taught.intent, reply: taught.reply };
+        topic = lesson ? 'programacion' : null;
+        step = 0;
+      } else result = predict(model, text);
       if (result.intent === 'cancelar') {
+        lesson = null;
         topic = null;
         step = 0;
       } else if (result.intent === 'memoria') {
-        result.reply = `En el historial reciente: ${name ? `tu nombre es ${name}` : 'no tengo un nombre guardado'}; ${topic ? `el tema es ${topics[topic].name}` : 'no hay un tema activo'}. La biblioteca guarda documentos por separado cuando su base de datos está conectada. Conversar no cambia mis pesos.`;
-      } else if (topics[result.intent]) {
+        result.reply = `En el historial reciente: ${name ? `tu nombre es ${name}` : 'no tengo un nombre guardado'}; ${topic ? `el tema es ${(lessonTitle(lesson) || topics[topic].name)}` : 'no hay un tema activo'}. La biblioteca guarda documentos por separado cuando su base de datos está conectada. Conversar no cambia mis pesos.`;
+      } else if (topics[result.intent] && !taught) {
+        lesson = null;
         topic = result.intent;
         step = 0;
       } else if (result.intent === 'consultar_nombre' && name) {
         result.reply = `Me dijiste que te llamas ${name}.`;
       } else if (result.intent === 'recordar_tema' && topic) {
-        result.reply = `Estábamos hablando de ${topics[topic].name}. Escribe «Continúa» para seguir desde donde nos quedamos.`;
+        result.reply = `Estábamos hablando de ${(lessonTitle(lesson) || topics[topic].name)}. Escribe «Continúa» para seguir desde donde nos quedamos.`;
       } else if (result.intent === 'continuar' && topic) {
         const current = topics[topic];
         result.reply = step < current.steps.length
@@ -79,7 +90,7 @@ export function respond(model, messages) {
       } else if (result.intent === 'repetir' && lastReply) {
         result.reply = lastReply;
       } else if (result.intent === 'saludo' && name) {
-        result.reply = `Hola, ${name}. ${topic ? `Podemos continuar con ${topics[topic].name}.` : '¿Quieres aprender programación, crear un proyecto u organizar tu día?'}`;
+        result.reply = `Hola, ${name}. ${topic ? `Podemos continuar con ${(lessonTitle(lesson) || topics[topic].name)}.` : '¿Quieres aprender programación, crear un proyecto u organizar tu día?'}`;
       }
     }
     lastReply = result.reply;

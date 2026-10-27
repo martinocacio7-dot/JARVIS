@@ -275,3 +275,16 @@ Las tres configuraciones acertaron 623/623 ejemplos de entrenamiento, 19/19 de r
 La comprobación posterior de la candidata de 64 (162 133 parámetros, 2511 entradas) obtuvo 39/50 en prueba frente a 40/50 de la red guardada. **La promoción fue rechazada**: `neural/model.json` y `neural/report.json` conservan los pesos y el reporte anteriores. No se eligió otra arquitectura utilizando ese resultado de prueba. `neural/width-comparison.json` registra las tres configuraciones y el rechazo final.
 
 Puedes probar una configuración mediante `npm run train -- --hidden-size 64` (o 128), también junto a `--data archivo.json`. Sin esa opción se conserva el tamaño de los pesos guardados. El control de calidad sigue bloqueando cualquier caída en los conjuntos existentes; no se redujeron los umbrales para aceptar la candidata. Estos conjuntos pequeños ya se usaron en el desarrollo del proyecto y no son una evaluación independiente de inteligencia general. Los ejemplos adicionales enseñan formas de pedir funciones existentes; no incorporan un modelo generativo ni mejoran el detector de voz Android.
+
+
+## Respuestas locales con ejemplos y contexto
+
+El chat local incorpora doce fichas revisadas en knowledge/lessons.json: variables, funciones, condicionales, bucles, arrays/listas, objetos/diccionarios, asincronía, API/JSON, HTML, CSS, SQL y Git. Cada ficha ofrece explicación, una versión sencilla, un ejemplo, un ejercicio y una solución. Los ocho temas generales tienen ejemplos JavaScript y Python; HTML, CSS, SQL y Git usan su propio formato. Las referencias son enlaces de documentación seleccionados, no resultados de una búsqueda en Internet.
+
+Prueba «Explícame funciones en Python» → «Más fácil» → «Dame un ejemplo» → «Dame un ejercicio» → «Dame la solución». «Y en JavaScript» cambia el lenguaje cuando hay un ejemplo disponible. «Otro ejemplo» usa la variante de solución revisada. El lenguaje se conserva al pasar a otro concepto compatible. Las peticiones ambiguas o los lenguajes no disponibles se aclaran; no se promete convertir código arbitrario.
+
+El contexto se reconstruye solo con los mensajes del usuario incluidos en cada petición; no se comparte entre conversaciones y se limpia con «Olvida el contexto» o al cancelar la guía. Repetir una respuesta no avanza el ejercicio. El generador de proyectos conserva sus tres prototipos, mientras que peticiones de fragmentos como «Hazme código de una función en Python» se responden con ejemplos locales.
+
+knowledge/lessons.js selecciona fichas por expresiones explícitas y seguimientos acotados. Es una capa de conocimiento programada, no un modelo generativo: no cambia las 32 neuronas activas, no ejecuta código enviado por el usuario ni amplía conocimientos automáticamente al conversar. Los fragmentos y resultados son ejemplos fijos revisados; no representan la ejecución de una solicitud del usuario.
+
+El chat presenta bloques de código y permite copiarlos. El renderizador usa nodos de texto, sin interpretar HTML ni ejecutar scripts del mensaje. Si el portapapeles no está disponible, indica cómo copiar manualmente. Las pruebas verifican continuidad, aislamiento, reset/cancelación, routing HTTP, salida de ejemplos JavaScript y SQL; también se comprobaron los ocho ejemplos Python y sus soluciones. Se probó en navegador móvil la copia y la visualización segura de HTML.
