@@ -43,7 +43,7 @@ public final class WakeService extends Service {
     final ExecutorService worker=Executors.newSingleThreadExecutor();
     LocalWakeDetector wakeDetector;
     boolean wakeListening=false,wakePreparing=false;
-    int commandRetries=0;
+    int commandRetries=0;boolean commandDefault=false;
     long detectorSession=0,releaseDeadline=0;
     PowerManager.WakeLock cpuLock;long cpuLeaseUntil=0;
     SpeechRecognizer recognizer;TextToSpeech tts; AudioManager audio; AudioFocusRequest focus;
@@ -85,7 +85,7 @@ public final class WakeService extends Service {
             if(selected==null){pause("Instala una voz española desde Permisos de JARVIS.");return;}
             tts.setVoice(selected);tts.setAudioAttributes(attributes);ready=true;
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener(){
-                public void onStart(String id){}
+                public void onStart(String id){main.postDelayed(()->watchSpeechCompletion(id,0),500);}
                 public void onDone(String id){main.post(()->speechDone(id));}
                 public void onError(String id){main.post(()->{if(id.equals(String.valueOf(voiceSequence)))pause("No se pudo reproducir la voz. Revisa la síntesis de voz.");});}
             });
@@ -168,7 +168,7 @@ public final class WakeService extends Service {
         if(!running||!ready)return;
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pause("Falta permitir el micrófono. Abre JARVIS → Permisos.");return;}
         if(!SpeechRecognizer.isRecognitionAvailable(this)){pause("Este teléfono no tiene un servicio de reconocimiento disponible para tu pregunta.");return;}
-        commandRetries=0;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
+        commandRetries=0;commandDefault=false;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
     }
     void pause(String message){
         pendingStart=false;generation++;flow.pause();updateCpuLock();report("PAUSADO",message);resetAudio();HttpsURLConnection current=connection;if(current!=null)current.disconnect();notice(message);
@@ -185,15 +185,26 @@ public final class WakeService extends Service {
         if(flow.input()!=WakeConversation.Input.COMMAND)return;
         if(flow.silenceExpired(SystemClock.elapsedRealtime())){returnToWake();return;}
         if(!microphoneReady(()->listen()))return;
-        final SpeechRecognizer current=SpeechRecognizer.createSpeechRecognizer(this);recognizer=current;
+        final SpeechRecognizer current;
+        try {
+            boolean local=!commandDefault&&Build.VERSION.SDK_INT>=31&&SpeechRecognizer.isOnDeviceRecognitionAvailable(this);
+            current=local?SpeechRecognizer.createOnDeviceSpeechRecognizer(this):SpeechRecognizer.createSpeechRecognizer(this);
+            remember("DICTADO",local?"Motor Android instalado en el dispositivo":"Motor Android predeterminado");
+        }catch(RuntimeException error){remember("DICTADO","No se pudo crear el motor de la pregunta");returnToWake();return;}
+        final boolean onDevice=!commandDefault&&Build.VERSION.SDK_INT>=31&&SpeechRecognizer.isOnDeviceRecognitionAvailable(this);
+        recognizer=current;
+        report("PREPARANDO PETICIÓN","Preparando el micrófono para tu pregunta…");notice("Preparando el micrófono para tu pregunta…");
         final boolean[] listeningReady={false};
-        main.postDelayed(()->{if(recognizer==current&&!listeningReady[0])pause("El micrófono no se preparó a tiempo. Toca Retomar para volver a intentar.");},10000);
+        main.postDelayed(()->{if(recognizer==current&&!listeningReady[0]){
+            remember("DICTADO SIN INICIO","Android no confirmó el micrófono en diez segundos; regreso al detector del nombre.");
+            returnToWake();
+        }},10000);
         current.setRecognitionListener(new RecognitionListener(){
             boolean begun=false;
             boolean valid(){return recognizer==current;}
             public void onReadyForSpeech(Bundle data){
                 if(!valid())return;listeningReady[0]=true;report(flow.state()==WakeConversation.State.WAKE?"ESCUCHANDO":"ESPERANDO PETICIÓN",flow.state()==WakeConversation.State.WAKE?"Di JARVIS. La notificación permite pausar y apagar la escucha.":"Sí, dígame, señor. Espero hasta cuatro segundos por tu petición.");
-                if(flow.state()==WakeConversation.State.COMMAND){flow.ready(SystemClock.elapsedRealtime());scheduleSilenceCheck(generation);}
+                if(flow.state()==WakeConversation.State.COMMAND){notice("Te escucho. Tienes cuatro segundos para empezar tu pregunta.");flow.ready(SystemClock.elapsedRealtime());scheduleSilenceCheck(generation);}
             }
             public void onBeginningOfSpeech(){if(valid()&&flow.state()==WakeConversation.State.COMMAND){begun=flow.speechBegan(SystemClock.elapsedRealtime());if(begun){int expected=generation;main.postDelayed(()->{if(expected==generation&&recognizer==current)returnToWake();},30000);}}}
             public void onRmsChanged(float value){}public void onBufferReceived(byte[] value){}public void onEndOfSpeech(){}public void onPartialResults(Bundle value){}public void onEvent(int type,Bundle value){}
@@ -203,6 +214,10 @@ public final class WakeService extends Service {
             }
             public void onError(int error){
                 if(!valid())return;destroyRecognizer();
+                if(onDevice&&!listeningReady[0]&&error!=SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS){
+                    commandDefault=true;remember("DICTADO","Motor local no preparado (código "+error+"); un intento con el predeterminado.");
+                    int expected=generation;main.postDelayed(()->{if(expected==generation&&flow.input()==WakeConversation.Input.COMMAND)listen();},250);return;
+                }
                 if(error==SpeechRecognizer.ERROR_NO_MATCH||error==SpeechRecognizer.ERROR_SPEECH_TIMEOUT){
                     long remaining=flow.remainingSilence(SystemClock.elapsedRealtime());
                     if(!listeningReady[0]){pause("Android no preparó el dictado de tu pregunta. Revisa el servicio de reconocimiento y copia el diagnóstico desde Permisos.");return;}
@@ -262,7 +277,7 @@ public final class WakeService extends Service {
                     stopWakeDetector();
                     if(!flow.keyword())return;
                     say("Sí, dígame, señor.",()->{
-                        if(!flow.greeted())return;commandRetries=0;
+                        if(!flow.greeted())return;commandRetries=0;commandDefault=false;
                         notice("Dígame: espero hasta cuatro segundos por tu petición.");
                         int turn=generation;main.postDelayed(()->{if(turn==generation)listen();},450);
                     });
@@ -287,6 +302,14 @@ public final class WakeService extends Service {
         report("RESPONDIENDO","JARVIS está hablando; después volverá a escuchar.");focused=true;speaking=true;afterSpeech=done;int sequence=++voiceSequence;
         if(tts.speak(text.substring(0,Math.min(4000,text.length())),TextToSpeech.QUEUE_FLUSH,null,String.valueOf(sequence))==TextToSpeech.ERROR){pause("No se pudo reproducir la voz.");return;}
         main.postDelayed(()->{if(sequence==voiceSequence&&speaking)pause("La reproducción tardó demasiado. Escucha pausada.");},180000);
+    }
+    // Some TTS providers omit onDone when the activity is in the background.
+    // Only an onStart for this utterance arms this check; never open the mic while TTS speaks.
+    void watchSpeechCompletion(String id,int quietChecks){
+        if(!id.equals(String.valueOf(voiceSequence))||!speaking)return;
+        int checks=SpeechCompletionPolicy.nextQuietChecks(tts.isSpeaking(),quietChecks);
+        if(checks>=2){remember("VOZ","Fin confirmado por el motor de síntesis");speechDone(id);return;}
+        main.postDelayed(()->watchSpeechCompletion(id,checks),250);
     }
     void speechDone(String id){
         if(!id.equals(String.valueOf(voiceSequence))||!speaking)return;

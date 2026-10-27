@@ -1,4 +1,4 @@
-# JARVIS para Android · 1.3.3
+# JARVIS para Android · 1.3.4
 
 Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
 
@@ -7,7 +7,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.3** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
+2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.4** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -99,3 +99,12 @@ Dos pruebas JVM verifican los avisos tardíos, la conservación de los cuatro se
 El callback de grabación ya no decide una pausa usando su lista histórica: consulta las configuraciones actuales. Un indicador de captura silenciada se vuelve a comprobar tras 250 ms, o después del margen de liberación de tres segundos cuando JARVIS acaba de cerrar su propia captura. La comprobación diferida conserva la generación de la conversación y no puede reanudar una pausa. Las fuentes CAMCORDER, VOICE_COMMUNICATION y el modo de llamada siguen interrumpiendo inmediatamente; un micrófono que permanece silenciado también pausa al terminar el margen.
 
 La prueba adicional cubre el límite del margen y que cámara/llamada nunca queden exentas. Se mantienen las pruebas de cuatro segundos y de foco. Sin diagnóstico ni teléfono físico no se puede asegurar que esta fuera la causa del dispositivo; el estado conserva un motivo explícito para distinguirlo.
+
+
+## Saludo sin continuación en segundo plano (1.3.4)
+
+Después de onStart de la voz actual se consulta isSpeaking; dos observaciones consecutivas sin reproducción permiten completar el saludo si el proveedor omite onDone. El identificador de voz invalida las comprobaciones tras pausa/apagado o nueva reproducción. No se abre la captura mientras el motor informa que sigue hablando.
+
+En Android 12+ se prefiere SpeechRecognizer instalado en el dispositivo cuando Android declara que existe. Si devuelve un error antes de estar listo, se intenta una vez el predeterminado, excepto denegación de permiso. No instala paquetes de idiomas ni garantiza que haya español local. El predeterminado puede usar Internet. La notificación distingue preparación y micrófono listo; diez segundos sin confirmación terminan el intento y regresan al detector del nombre. Los cuatro segundos siguen empezando en onReadyForSpeech.
+
+Las pruebas JVM cubren la confirmación de fin de voz y su paso a la ventana de cuatro segundos. La compilación y Lint no validan restricciones de fabricantes ni el servicio de reconocimiento de un teléfono físico; sigue siendo necesario comprobar la secuencia fuera de la app.
