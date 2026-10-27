@@ -71,6 +71,9 @@ export function deviceReply(text, now = new Date()) {
   if (!native()) return null;
   const phrase = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/^jarvis[\s,]*/, '').replace(/[^a-z0-9 ]/g, '').trim();
   if (/^(?:que hora es|dime la hora|que hora tienes|la hora|hora actual)$/.test(phrase)) return `Son las ${new Intl.DateTimeFormat('es', { hour: 'numeric', minute: '2-digit' }).format(now)}.`;
+  if (/^(?:que dia es(?: hoy)?|que dia estamos|en que dia estamos|que fecha es(?: hoy)?|cual es la fecha(?: de hoy)?|dime la fecha(?: de hoy)?|fecha de hoy|que dia de la semana es(?: hoy)?)$/.test(phrase)) return `Hoy es ${new Intl.DateTimeFormat('es-EC', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(now)}.`;
+  const open = phrase.match(/^(?:abre|abrir|abreme|entra a|entra en|inicia|ejecuta) (?:la (?:aplicacion|app) |el )?([a-z0-9 ]{1,60})$/);
+  if (open) return native().openApp ? native().openApp(open[1]) : 'Para abrir aplicaciones necesitas actualizar el APK de JARVIS.';
   if (/^(?:lee |leeme |dime |muestra |que |cuales son |tengo |hay )?(?:mis |las )?notificaciones(?: tengo)?$/.test(phrase) || /^(?:que|cuales) notificaciones tengo$/.test(phrase)) return native().notifications();
   return null;
 }

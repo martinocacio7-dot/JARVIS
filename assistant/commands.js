@@ -1,6 +1,21 @@
 import { randomUUID } from 'node:crypto';
 import { taskKey, localDate, taskDate, displayTaskDate, validateTasks } from '../public/task-data.js';
 
+const reminderStart = /^(?:recu[eé]rdame|av[ií]same|(?:crea|agrega|pon|hazme|hasme|haz|has|creame|créame)(?: un)? recordatorio)(?: para)?(?:\s+(.*))?$/iu;
+const numberWords = { un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, quince: 15, veinte: 20, treinta: 30, cuarenta: 40, sesenta: 60 };
+function relativeDraft(text, now) {
+  const key = taskKey(text);
+  const match = key.match(/(?:^| )(?:en|dentro de) (\d+|un|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte|treinta|cuarenta|sesenta) (minutos?|horas?)(?: para| sobre| de| que)?(?: |$)/);
+  if (!match) return null;
+  const amount = numberWords[match[1]] ?? Number(match[1]);
+  const minutes = amount * (match[2].startsWith('hora') ? 60 : 1);
+  if (minutes < 1 || minutes > 10080) return { kind: 'reminder', text, date: '', time: '', dueAt: null };
+  // Match against the original to preserve accents and the user's description.
+  const original = text.match(/(?:^|\s)(?:en|dentro de) (?:\d+|un|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|quince|veinte|treinta|cuarenta|sesenta) (?:minutos?|horas?)(?:\s+(?:para|sobre|de|que))?(?:\s+|$)/iu);
+  const description = (text.slice(0, original.index) + ' ' + text.slice(original.index + original[0].length)).trim();
+  const dueAt = new Date(now.getTime() + minutes * 60000).toISOString();
+  return { kind: 'reminder', text: description, date: localDate(new Date(dueAt)), time: displayTaskDate(dueAt), dueAt };
+}
 const notice = 'Queda guardado para consultarlo en JARVIS. Esta web no emite alarmas automáticas; puedes exportarlo a tu calendario para usar sus avisos.';
 function dateFrom(words, now) {
   if (/^\d{4}-\d{2}-\d{2}$/.test(words)) return words;
@@ -27,7 +42,7 @@ function normalizeReminder(text, now) {
 function reminderDraft(text, now) {
   const match = text.match(/\s+(hoy|ma[nñ]ana|pasado ma[nñ]ana|\d{4}-\d{2}-\d{2})(?:\s+a\s+las?\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?[.!?]?$/iu);
   if (!match) return { kind: 'reminder', text, date: '', time: '', dueAt: null };
-  const date = dateFrom(taskKey(match[1]), now);
+  const date = dateFrom(/^\d{4}-\d{2}-\d{2}$/.test(match[1]) ? match[1] : taskKey(match[1]), now);
   let hour = match[2] === undefined ? null : Number(match[2]);
   const minute = match[3] || '00';
   if (hour !== null && match[4]) {
@@ -44,9 +59,9 @@ export function parseTaskCommand(text, now = new Date()) {
   const phrase = text.trim().replace(/^jarvis[,\s]+/iu, '');
   const normalized = taskKey(phrase);
   let match;
-  if ((match = phrase.match(/^(?:recu[eé]rdame|av[ií]same|crea un recordatorio(?: para)?|agrega un recordatorio(?: para)?|(?:hazme|hasme|haz|creame|créame) un recordatorio(?: para)?)\s+(.+)$/iu))) {
+  if ((match = phrase.match(reminderStart))) {
     if (/\b(cada (dia|semana|mes|ano|lunes|martes|miercoles|jueves|viernes|sabado|domingo|\d+ (minutos?|horas?|dias?))|todos los (dias|lunes|martes|miercoles|jueves|viernes|sabados|domingos|meses)|todas las (semanas|mananas|tardes|noches)|diariamente|semanalmente|mensualmente)\b/.test(normalized)) return { action: 'clarify', message: 'Todavía no programo repeticiones. Indica una única fecha y hora; no he guardado nada.' };
-    return { action: 'create', draft: reminderDraft(normalizeReminder(match[1], now), now) };
+    return { action: 'create', draft: relativeDraft(match[1] || '', now) || reminderDraft(normalizeReminder(match[1] || '', now), now) };
   }
   if ((match = phrase.match(/^(?:a[nñ]ade|agrega|anota|pon)\s+(.+?)\s+(?:a|en)\s+(?:mi|la)\s+lista(?:\s+de compras)?[.!?]?$/iu)) || (match = phrase.match(/^(?:a[nñ]ade|agrega|anota)\s+(?:a|en)\s+mi\s+lista\s+(.+)$/iu))) return { action: 'create', draft: { kind: 'list', text: match[1].trim(), dueAt: null, date: '', time: '' } };
   if ((match = phrase.match(/^(?:cambia|mueve|reprograma)\s+(?:el recordatorio\s+)?(.+?)\s+para\s+(.+)$/iu))) return { action: 'reschedule', target: match[1], draft: reminderDraft(`${match[1]} ${match[2]}`, now) };
@@ -56,12 +71,35 @@ export function parseTaskCommand(text, now = new Date()) {
   return null;
 }
 
+// Reconstruct only a pending reminder in this conversation. Assistant text cannot
+// manufacture an action, and a different command/question clears the pending draft.
+export function parseTaskConversation(messages, now = new Date()) {
+  let pending = null, result = null;
+  for (const message of messages) {
+    if (message.role !== 'user') continue;
+    const text = message.content.trim();
+    result = parseTaskCommand(text, now);
+    if (!result && pending) {
+      const key = taskKey(text);
+      const schedule = /^(?:hoy|manana|pasado manana|a las? |en \d|en (?:un|dos|tres|cinco|diez|quince|treinta) |dentro de )/.test(key);
+      if (schedule && pending.text) {
+        const dateOnly = pending.date && /^a las? /.test(key) ? pending.date + ' ' : '';
+        result = parseTaskCommand('Recuérdame ' + pending.text + ' ' + dateOnly + text, now);
+      } else if (!pending.text && !/^(?:que|como|cual|quien|abre|entra|cancela|olvida|no)\b/.test(key)) {
+        result = parseTaskCommand('Recuérdame ' + text, now);
+      }
+    }
+    pending = result?.action === 'create' && result.draft.kind === 'reminder' && (!result.draft.text || !result.draft.dueAt) ? result.draft : null;
+  }
+  return result;
+}
+
 export async function executeTaskCommand(command, database, now = new Date()) {
   const response = reply => ({ mode: 'assistant', reply, openTasks: true });
-  const draftReply = (draft, reason) => ({ ...response(`${reason} Completa el pendiente en «Mis pendientes»; todavía no lo he guardado. Las horas se interpretan en America/Guayaquil (UTC−5).`), taskDraft: draft });
+  const draftReply = (draft, reason) => ({ ...response(`${reason} Puedes responder con los datos que faltan o completar «Mis pendientes»; todavía no lo he guardado. Las horas se interpretan en America/Guayaquil (UTC−5).`), taskDraft: draft });
   if (command.action === 'clarify') return response(command.message);
-  if (command.draft && (!command.draft.text.trim() || command.draft.text.length > 300)) return draftReply(command.draft, 'Necesito una descripción de entre 1 y 300 caracteres.');
-  if (command.action === 'create' && command.draft.kind === 'reminder' && !command.draft.dueAt) return draftReply(command.draft, 'Necesito una fecha y una hora exactas.');
+  if (command.draft && (!command.draft.text.trim() || command.draft.text.length > 300)) return draftReply(command.draft, '¿Qué debo recordarte? Indica una descripción de hasta 300 caracteres y cuándo debo avisarte; por ejemplo: tomar agua en cinco minutos.');
+  if (command.action === 'create' && command.draft.kind === 'reminder' && !command.draft.dueAt) return draftReply(command.draft, '¿Cuándo debo avisarte? Dime, por ejemplo, mañana a las nueve o en cinco minutos.');
   if (command.action === 'create' && command.draft.dueAt && Date.parse(command.draft.dueAt) <= now.getTime()) return draftReply(command.draft, 'Esa fecha y hora ya pasaron. Elige una futura.');
   const saved = await database.readTasks();
   let items = saved.items;

@@ -288,3 +288,10 @@ El contexto se reconstruye solo con los mensajes del usuario incluidos en cada p
 knowledge/lessons.js selecciona fichas por expresiones explícitas y seguimientos acotados. Es una capa de conocimiento programada, no un modelo generativo: no cambia las 32 neuronas activas, no ejecuta código enviado por el usuario ni amplía conocimientos automáticamente al conversar. Los fragmentos y resultados son ejemplos fijos revisados; no representan la ejecución de una solicitud del usuario.
 
 El chat presenta bloques de código y permite copiarlos. El renderizador usa nodos de texto, sin interpretar HTML ni ejecutar scripts del mensaje. Si el portapapeles no está disponible, indica cómo copiar manualmente. Las pruebas verifican continuidad, aislamiento, reset/cancelación, routing HTTP, salida de ejemplos JavaScript y SQL; también se comprobaron los ocho ejemplos Python y sus soluciones. Se probó en navegador móvil la copia y la visualización segura de HTML.
+
+
+### Comandos cotidianos y recordatorios conversacionales
+
+El chat reconoce «qué día es hoy» y variantes usando America/Guayaquil sin consultar un modelo externo. En Android la fecha usa el huso horario del teléfono. Los recordatorios admiten intervalos («recuérdame tomar agua en cinco minutos») y datos en varios mensajes («haz un recordatorio» → «tomar agua en cinco minutos»). El borrador solo se guarda al tener descripción y fecha/hora válidas; las confirmaciones de recordatorios indican UTC−5. Una pregunta diferente o «cancela» descarta el borrador.
+
+El APK 1.4.0 permite solicitar aplicaciones instaladas por su nombre: «abre WhatsApp» o «entra a Netflix». Desde segundo plano se abre mediante un toque en una notificación, conforme a las restricciones de Android. No controla las funciones internas de esas aplicaciones. Ver [Android](android/README.md).

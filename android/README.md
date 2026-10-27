@@ -1,4 +1,4 @@
-# JARVIS para Android · 1.3.4
+# JARVIS para Android · 1.4.0
 
 Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
 
@@ -7,7 +7,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.4** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
+2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.4.0** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -108,3 +108,15 @@ Después de onStart de la voz actual se consulta isSpeaking; dos observaciones c
 En Android 12+ se prefiere SpeechRecognizer instalado en el dispositivo cuando Android declara que existe. Si devuelve un error antes de estar listo, se intenta una vez el predeterminado, excepto denegación de permiso. No instala paquetes de idiomas ni garantiza que haya español local. El predeterminado puede usar Internet. La notificación distingue preparación y micrófono listo; diez segundos sin confirmación terminan el intento y regresan al detector del nombre. Los cuatro segundos siguen empezando en onReadyForSpeech.
 
 Las pruebas JVM cubren la confirmación de fin de voz y su paso a la ventana de cuatro segundos. La compilación y Lint no validan restricciones de fabricantes ni el servicio de reconocimiento de un teléfono físico; sigue siendo necesario comprobar la secuencia fuera de la app.
+
+
+## Fecha, recordatorios y apertura de aplicaciones (1.4.0)
+
+- «Qué día es hoy», «qué fecha es hoy» o «dime la fecha»: respuesta con día de la semana y fecha del teléfono, sin servidor. El chat web consulta America/Guayaquil.
+- «Recuérdame tomar agua en cinco minutos», «pon un recordatorio para revisar el informe dentro de dos horas» o «hazme un recordatorio mañana a las nueve de la mañana sobre estudiar»: guarda en la base de datos y sincroniza las alarmas Android. Los recordatorios siguen interpretándose en America/Guayaquil y la confirmación incluye la fecha/hora. Los intervalos admitidos son de un minuto a siete días, sin repeticiones.
+- «Haz un recordatorio» pide descripción y horario. «Recuérdame estudiar mañana» permite completar con «a las nueve de la mañana». Una pregunta distinta o «cancela» descarta el borrador del contexto; no borra avisos ya guardados. No se guarda un borrador sin datos completos.
+- «Abre WhatsApp», «entra a Netflix» o «abre la aplicación cámara»: busca coincidencia exacta del nombre visible entre aplicaciones con icono de inicio. La consulta de visibilidad es MAIN/LAUNCHER, sin QUERY_ALL_PACKAGES. Si no encuentra una app o encuentra varias, no elige por su cuenta.
+
+Con JARVIS visible solicita la apertura mediante un intent explícito. Desde segundo plano prepara una notificación que el usuario toca para abrirla: no solicita superposición ni intenta eludir las restricciones de lanzamiento de Android. El canal «Abrir aplicaciones» debe estar permitido. No lee datos ni controla la interfaz de otras apps. La apertura no resuelve el problema de dictado en segundo plano: todavía hace falta el diagnóstico del dispositivo para investigarlo.
+
+Las pruebas verifican fechas en un cambio de día UTC/Guayaquil, creación real en SQLite, borradores y cancelación, selección explícita de comandos y compatibilidad con APK anteriores. La apertura física de otras apps y las alarmas requieren validación en el teléfono; las pruebas JVM no simulan PackageManager ni fabricantes Android.

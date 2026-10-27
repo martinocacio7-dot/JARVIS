@@ -319,6 +319,10 @@ public final class WakeService extends Service {
         report("CONSULTANDO","Preparando la respuesta a tu petición…");notice("Consultando tu petición…");final int expected=generation;
         String key=Normalizer.normalize(command.toLowerCase(Locale.ROOT),Normalizer.Form.NFD).replaceAll("\\p{M}","").replaceAll("[^a-z0-9 ]","").trim();
         if(key.matches("(?:que hora es|dime la hora|la hora|hora actual)")){finishAnswer(command,"Son las "+DateFormat.getTimeInstance(DateFormat.SHORT,new Locale("es")).format(new Date())+".",expected);return;}
+        String calendar=DeviceCommands.calendarReply(command,java.time.ZonedDateTime.now());
+        if(calendar!=null){finishAnswer(command,calendar,expected);return;}
+        String app=DeviceCommands.appTarget(command);
+        if(app!=null){MainActivity activity=MainActivity.active.get();finishAnswer(command,AppLauncher.open(this,app,activity!=null&&activity.foreground&&activity.windowFocused),expected);return;}
         if(key.contains("notificacion")){finishAnswer(command,"Esta versión no puede leer las notificaciones de otras aplicaciones.",expected);return;}
         worker.execute(()->{
             try{

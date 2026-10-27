@@ -11,7 +11,8 @@ import { develop, isDevelopmentRequest } from './developer/generator.js';
 import { validateFeedback } from './public/feedback-data.js';
 import { validateDocument, isDocumentRequest } from './public/document-data.js';
 import { validateTasks } from './public/task-data.js';
-import { parseTaskCommand, executeTaskCommand } from './assistant/commands.js';
+import { parseTaskConversation, executeTaskCommand } from './assistant/commands.js';
+import { calendarReply } from './assistant/calendar.js';
 import { createVoiceService } from './voice/elevenlabs.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
@@ -131,7 +132,9 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
-        const command = parseTaskCommand(messages.at(-1).content, now());
+        const calendar = calendarReply(messages.at(-1).content, now());
+        if (calendar) return json(200, { mode: 'assistant', reply: calendar });
+        const command = parseTaskConversation(messages, now());
         if (command) {
           try { return json(200, await executeTaskCommand(command, database, now())); }
           catch (error) { return json(error instanceof RevisionConflict ? 409 : 503, { error: error instanceof RevisionConflict ? error.message : 'No pude guardar o consultar el pendiente. Revisa la conexión a la base de datos y el límite de 200 pendientes; no asumas que quedó guardado.' }); }
