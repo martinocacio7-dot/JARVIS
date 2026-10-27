@@ -61,7 +61,11 @@ public final class WakeService extends Service {
         cpuLock.setReferenceCounted(false);
         audio=getSystemService(AudioManager.class);
         AudioAttributes attributes=new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build();
-        focus=new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attributes).setOnAudioFocusChangeListener(change->{if(change<0)pause("Audio ocupado. Escucha pausada; toca Retomar al terminar.");},main).build();
+        focus=new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK).setAudioAttributes(attributes).setOnAudioFocusChangeListener(change->{
+            // Android recognition can take focus after the greeting has released it.
+            // A queued loss from that handoff must not pause the question capture.
+            if(VoiceFocusPolicy.shouldPause(change,focused,speaking))pause("Audio ocupado durante la respuesta. Escucha pausada; toca Retomar al terminar.");
+        },main).build();
         recordings=new AudioManager.AudioRecordingCallback(){@Override public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs){
             if(flow.state()==WakeConversation.State.PAUSED || flow.state()==WakeConversation.State.STOPPED)return;
             for(AudioRecordingConfiguration config:configs) {

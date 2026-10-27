@@ -1,4 +1,4 @@
-# JARVIS para Android · 1.3.1
+# JARVIS para Android · 1.3.2
 
 Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
 
@@ -7,7 +7,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.1** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
+2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.2** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -85,3 +85,10 @@ Para usarlo desde otra app: activa desde la barra superior nativa con JARVIS abi
 Se conserva Android SpeechRecognizer para el dictado de la pregunta: una prueba exploratoria de Vosk con vocabulario libre transcribió mal varias frases sintéticas, incluida «qué hora es», y no se activó esa alternativa. El detector del nombre sí sigue siendo local. El dictado Android puede usar Internet y emitir tonos; los errores incluyen su código en el diagnóstico.
 
 Las pruebas verifican liberación de CPU al pausar/apagar y que un reintento temprano no amplía el plazo. No se comprobó un Android físico ni el ahorro de batería de un fabricante concreto. Pausa JARVIS antes de grabar vídeos y prueba la secuencia sin grabar la pantalla.
+
+
+## Cambio de audio después del saludo (1.3.2)
+
+La pérdida de foco de audio solo pausa cuando JARVIS aún posee ese foco y está hablando. Un aviso tardío después de liberar el foco al terminar «Sí, dígame, señor.» ya no cancela el dictado de la pregunta. Se mantienen la pausa por grabación/llamada, la pausa manual y los errores explícitos del reconocedor. No se reanuda automáticamente una pausa real.
+
+Dos pruebas JVM verifican los avisos tardíos, la conservación de los cuatro segundos y las interrupciones durante una respuesta. Esta corrección aborda una causa identificada en el código; sin el diagnóstico del teléfono no confirma la causa de cualquier estado PAUSADO. No se validó en un Android físico.
