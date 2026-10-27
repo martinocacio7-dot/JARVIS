@@ -68,6 +68,11 @@ export function respond(model, messages) {
         topic = lesson ? 'programacion' : null;
         step = 0;
       } else result = predict(model, text);
+      if (result.intent === 'desconocido') {
+        result.reply = topic
+          ? `No entendí qué necesitas sobre ${lessonTitle(lesson) || topics[topic].name}. ¿Quieres una explicación, un ejemplo o ayuda con algo concreto?`
+          : 'No entendí bien lo que necesitas. ¿Qué quieres hacer y con qué necesitas ayuda? Puedes darme un ejemplo. Mi modo local todavía no responde cualquier tema.';
+      }
       if (result.intent === 'cancelar') {
         lesson = null;
         topic = null;

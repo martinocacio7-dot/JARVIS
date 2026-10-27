@@ -1,4 +1,4 @@
-# JARVIS para Android · 1.4.0
+# JARVIS para Android · 1.5.0
 
 Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
 
@@ -7,7 +7,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.4.0** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
+2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.5.0** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -120,3 +120,14 @@ Las pruebas JVM cubren la confirmación de fin de voz y su paso a la ventana de 
 Con JARVIS visible solicita la apertura mediante un intent explícito. Desde segundo plano prepara una notificación que el usuario toca para abrirla: no solicita superposición ni intenta eludir las restricciones de lanzamiento de Android. El canal «Abrir aplicaciones» debe estar permitido. No lee datos ni controla la interfaz de otras apps. La apertura no resuelve el problema de dictado en segundo plano: todavía hace falta el diagnóstico del dispositivo para investigarlo.
 
 Las pruebas verifican fechas en un cambio de día UTC/Guayaquil, creación real en SQLite, borradores y cancelación, selección explícita de comandos y compatibilidad con APK anteriores. La apertura física de otras apps y las alarmas requieren validación en el teléfono; las pruebas JVM no simulan PackageManager ni fabricantes Android.
+
+
+## Conversación continua (1.5.0)
+
+Activa el modo nativo y di «Jarvis» una vez. El saludo conserva los cuatro segundos iniciales; después de cada respuesta vuelve al dictado con ocho segundos para empezar el siguiente turno. El plazo comienza cuando Android confirma el micrófono listo, no mientras JARVIS está hablando. No hay captura paralela del nombre y la pregunta. El historial reciente se conserva como antes, hasta doce mensajes, sin modificar los pesos del modelo.
+
+«Eso es todo», «gracias, eso es todo», «gracias», «hasta luego» o «termina la conversación» cierran el diálogo y vuelven al detector del nombre. También termina con silencio. Abrir otra aplicación cierra el diálogo para no interpretar su audio como continuación. La pausa por grabación, llamada o acción manual nunca reanuda el diálogo automáticamente.
+
+Un NO_MATCH/SPEECH_TIMEOUT después de detectar voz permite pedir una repetición, como máximo una vez sin una frase válida entre medias. Si solo hay silencio no insiste. Las preguntas de aclaración semánticas provienen del modo local: conserva las aclaraciones de recordatorios y lecciones; cuando no reconoce una intención pide concretar qué necesitas. No añade generación libre ni una comprensión general comparable a una persona.
+
+Cinco pruebas JVM verifican encadenamiento de turnos, los plazos, retorno al nombre, cierre explícito y rechazo de callbacks de continuación después de pausa/apagado. Todavía falta probar el micrófono y el proveedor de dictado del teléfono real, en especial las restricciones de segundo plano.

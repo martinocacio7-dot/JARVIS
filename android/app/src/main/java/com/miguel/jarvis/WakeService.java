@@ -43,7 +43,7 @@ public final class WakeService extends Service {
     final ExecutorService worker=Executors.newSingleThreadExecutor();
     LocalWakeDetector wakeDetector;
     boolean wakeListening=false,wakePreparing=false;
-    int commandRetries=0;boolean commandDefault=false;
+    int repairPrompts=0;int commandRetries=0;boolean commandDefault=false;
     long detectorSession=0,releaseDeadline=0;
     PowerManager.WakeLock cpuLock;long cpuLeaseUntil=0;
     SpeechRecognizer recognizer;TextToSpeech tts; AudioManager audio; AudioFocusRequest focus;
@@ -168,7 +168,7 @@ public final class WakeService extends Service {
         if(!running||!ready)return;
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pause("Falta permitir el micrófono. Abre JARVIS → Permisos.");return;}
         if(!SpeechRecognizer.isRecognitionAvailable(this)){pause("Este teléfono no tiene un servicio de reconocimiento disponible para tu pregunta.");return;}
-        commandRetries=0;commandDefault=false;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
+        repairPrompts=0;commandRetries=0;commandDefault=false;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
     }
     void pause(String message){
         pendingStart=false;generation++;flow.pause();updateCpuLock();report("PAUSADO",message);resetAudio();HttpsURLConnection current=connection;if(current!=null)current.disconnect();notice(message);
@@ -203,14 +203,14 @@ public final class WakeService extends Service {
             boolean begun=false;
             boolean valid(){return recognizer==current;}
             public void onReadyForSpeech(Bundle data){
-                if(!valid())return;listeningReady[0]=true;report(flow.state()==WakeConversation.State.WAKE?"ESCUCHANDO":"ESPERANDO PETICIÓN",flow.state()==WakeConversation.State.WAKE?"Di JARVIS. La notificación permite pausar y apagar la escucha.":"Sí, dígame, señor. Espero hasta cuatro segundos por tu petición.");
-                if(flow.state()==WakeConversation.State.COMMAND){notice("Te escucho. Tienes cuatro segundos para empezar tu pregunta.");flow.ready(SystemClock.elapsedRealtime());scheduleSilenceCheck(generation);}
+                if(!valid())return;listeningReady[0]=true;report(flow.state()==WakeConversation.State.WAKE?"ESCUCHANDO":"ESPERANDO PETICIÓN",flow.state()==WakeConversation.State.WAKE?"Di JARVIS. La notificación permite pausar y apagar la escucha.":"Te escucho. Puedes continuar sin volver a decir JARVIS.");
+                if(flow.state()==WakeConversation.State.COMMAND){notice("Te escucho: "+(flow.waitingMillis()/1000)+" segundos para empezar a hablar. Di eso es todo para terminar.");flow.ready(SystemClock.elapsedRealtime());scheduleSilenceCheck(generation);}
             }
             public void onBeginningOfSpeech(){if(valid()&&flow.state()==WakeConversation.State.COMMAND){begun=flow.speechBegan(SystemClock.elapsedRealtime());if(begun){int expected=generation;main.postDelayed(()->{if(expected==generation&&recognizer==current)returnToWake();},30000);}}}
             public void onRmsChanged(float value){}public void onBufferReceived(byte[] value){}public void onEndOfSpeech(){}public void onPartialResults(Bundle value){}public void onEvent(int type,Bundle value){}
             public void onResults(Bundle data){
                 if(!valid())return;ArrayList<String> values=data.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);String text=values==null||values.isEmpty()?"":values.get(0).trim();destroyRecognizer();
-                if(flow.command(text,SystemClock.elapsedRealtime()))answer(text);else returnToWake();
+                if(flow.command(text,SystemClock.elapsedRealtime())){repairPrompts=0;answer(text);}else returnToWake();
             }
             public void onError(int error){
                 if(!valid())return;destroyRecognizer();
@@ -227,6 +227,8 @@ public final class WakeService extends Service {
                         main.postDelayed(()->{if(expected==generation&&flow.input()==WakeConversation.Input.COMMAND)listen();},200);
                     }else if(!begun&&remaining>0){
                         report("ESPERANDO PETICIÓN","No se detectó pregunta. Al terminar el plazo vuelvo a esperar JARVIS.");
+                    }else if(begun&&repairPrompts<1&&flow.requestRepeat()){
+                        repairPrompts++;say("No entendí bien lo que dijiste. ¿Puedes repetirlo?",()->continueConversation());
                     }else returnToWake();
                 }else pause("El dictado Android se detuvo (código "+error+"). Revisa su servicio de voz, Internet y permisos; copia el diagnóstico desde Permisos.");
             }
@@ -277,7 +279,7 @@ public final class WakeService extends Service {
                     stopWakeDetector();
                     if(!flow.keyword())return;
                     say("Sí, dígame, señor.",()->{
-                        if(!flow.greeted())return;commandRetries=0;commandDefault=false;
+                        if(!flow.greeted())return;repairPrompts=0;commandRetries=0;commandDefault=false;
                         notice("Dígame: espero hasta cuatro segundos por tu petición.");
                         int turn=generation;main.postDelayed(()->{if(turn==generation)listen();},450);
                     });
@@ -285,6 +287,12 @@ public final class WakeService extends Service {
                 public void error(){if(valid())pause("El detector local perdió el micrófono. Revisa permisos y grabaciones; toca Retomar al terminar.");}
             });
         }catch(Exception error){pause("No se pudo abrir el micrófono del detector local. Revisa los permisos.");}
+    }
+    void continueConversation(){
+        if(!running||!flow.followUp())return;
+        generation++;resetAudio();commandRetries=0;commandDefault=false;
+        report("PREPARANDO PETICIÓN","Puedes seguir hablando después de que el micrófono esté listo, sin decir JARVIS.");
+        int expected=generation;main.postDelayed(()->{if(expected==generation&&flow.input()==WakeConversation.Input.COMMAND)listen();},450);
     }
     void scheduleSilenceCheck(int expected){
         main.postDelayed(()->{
@@ -319,6 +327,7 @@ public final class WakeService extends Service {
         report("CONSULTANDO","Preparando la respuesta a tu petición…");notice("Consultando tu petición…");final int expected=generation;
         String key=Normalizer.normalize(command.toLowerCase(Locale.ROOT),Normalizer.Form.NFD).replaceAll("\\p{M}","").replaceAll("[^a-z0-9 ]","").trim();
         if(key.matches("(?:que hora es|dime la hora|la hora|hora actual)")){finishAnswer(command,"Son las "+DateFormat.getTimeInstance(DateFormat.SHORT,new Locale("es")).format(new Date())+".",expected);return;}
+        if(DeviceCommands.endsConversation(command)){finishAnswer(command,"De acuerdo. Cuando me necesites, di JARVIS.",expected);return;}
         String calendar=DeviceCommands.calendarReply(command,java.time.ZonedDateTime.now());
         if(calendar!=null){finishAnswer(command,calendar,expected);return;}
         String app=DeviceCommands.appTarget(command);
@@ -342,7 +351,7 @@ public final class WakeService extends Service {
         if(expected!=generation||!flow.answer())return;
         try{history.put(new JSONObject().put("role","user").put("content",command));history.put(new JSONObject().put("role","assistant").put("content",text));while(history.length()>12)history.remove(0);}catch(JSONException ignored){}
         MainActivity.backgroundReply(command,text);
-        say(text,()->returnToWake());
+        say(text,()->{if(DeviceCommands.endsConversation(command)||DeviceCommands.appTarget(command)!=null)returnToWake();else continueConversation();});
     }
     JSONObject request(String path,JSONObject body)throws Exception{
         HttpsURLConnection current=(HttpsURLConnection)new URL(MainActivity.HOME+path).openConnection();connection=current;

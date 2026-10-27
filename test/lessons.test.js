@@ -62,3 +62,13 @@ test('chat HTTP entrega fragmentos sin usar IA externa y preserva generador de p
   assert.equal(project.mode, 'development'); assert.ok(project.project);
   assert.equal((await post('Crea código para una aplicación con funciones')).mode, 'development');
 });
+
+test('pide aclaración sin inventar y conserva el tema para la siguiente pregunta', () => {
+  const unknown = chat('zqxv blorf zqxv');
+  assert.equal(unknown.intent, 'desconocido');
+  assert.match(unknown.reply, /¿Qué quieres hacer/);
+  const contextual = chat('Explícame funciones en Python', 'zqxv blorf zqxv');
+  assert.equal(contextual.intent, 'desconocido');
+  assert.match(contextual.reply, /¿Quieres una explicación, un ejemplo/);
+  assert.match(chat('Explícame funciones en Python', 'zqxv blorf zqxv', 'Dame un ejemplo').reply, /def |print\(/);
+});

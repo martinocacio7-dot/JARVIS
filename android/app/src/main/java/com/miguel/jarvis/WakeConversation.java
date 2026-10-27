@@ -3,6 +3,8 @@ package com.miguel.jarvis;
 /** Platform-independent conversation timing, shared by the Android service and JVM tests. */
 public final class WakeConversation {
     public static final long WAIT_MS = 4000;
+    public static final long FOLLOW_UP_MS = 8000;
+    private long waitMs = WAIT_MS;
     private static final java.util.regex.Pattern NAME = java.util.regex.Pattern.compile("(?:^|[^\\p{L}\\p{N}])jarv[ií]s(?=$|[^\\p{L}\\p{N}])", java.util.regex.Pattern.CASE_INSENSITIVE | java.util.regex.Pattern.UNICODE_CASE);
     public static String afterName(String text) {
         if (text == null) return null;
@@ -16,10 +18,16 @@ public final class WakeConversation {
     private long deadline;
     private boolean speech;
     public State state() { return state; }
-    public void start() { state = State.WAKE; deadline = 0; speech = false; }
+    public long waitingMillis() { return waitMs; }
+    public boolean followUp() {
+        if(state != State.REPLY)return false;
+        state=State.COMMAND;deadline=0;speech=false;waitMs=FOLLOW_UP_MS;return true;
+    }
+    public boolean requestRepeat() { if(state!=State.COMMAND)return false;state=State.REPLY;deadline=0;speech=false;return true; }
+    public void start() { waitMs=WAIT_MS;state = State.WAKE; deadline = 0; speech = false; }
     public boolean keyword() { if (state != State.WAKE) return false; state = State.GREETING; return true; }
     public boolean greeted() { if (state != State.GREETING) return false; state = State.COMMAND; deadline = 0; speech = false; return true; }
-    public void ready(long now) { if (state == State.COMMAND && deadline == 0) deadline = now + WAIT_MS; }
+    public void ready(long now) { if (state == State.COMMAND && deadline == 0) deadline = now + waitMs; }
     public boolean speechBegan(long now) { if (state != State.COMMAND || deadline == 0 || now >= deadline) return false; speech = true; return true; }
     public long remainingSilence(long now) { return state == State.COMMAND && deadline != 0 && !speech ? Math.max(0, deadline - now) : 0; }
     public boolean silenceExpired(long now) { return state == State.COMMAND && deadline != 0 && !speech && now >= deadline; }

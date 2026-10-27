@@ -295,3 +295,8 @@ El chat presenta bloques de código y permite copiarlos. El renderizador usa nod
 El chat reconoce «qué día es hoy» y variantes usando America/Guayaquil sin consultar un modelo externo. En Android la fecha usa el huso horario del teléfono. Los recordatorios admiten intervalos («recuérdame tomar agua en cinco minutos») y datos en varios mensajes («haz un recordatorio» → «tomar agua en cinco minutos»). El borrador solo se guarda al tener descripción y fecha/hora válidas; las confirmaciones de recordatorios indican UTC−5. Una pregunta diferente o «cancela» descarta el borrador.
 
 El APK 1.4.0 permite solicitar aplicaciones instaladas por su nombre: «abre WhatsApp» o «entra a Netflix». Desde segundo plano se abre mediante un toque en una notificación, conforme a las restricciones de Android. No controla las funciones internas de esas aplicaciones. Ver [Android](android/README.md).
+
+
+### Conversación de voz continua en Android 1.5.0
+
+En el modo nativo «Activar JARVIS» basta decir el nombre una vez: después de cada respuesta deja ocho segundos para comenzar otro turno, manteniendo el historial reciente. El silencio o «eso es todo» vuelven al detector del nombre. Si el dictado detecta voz sin entenderla, permite una petición de repetición. El modo local pide detalles cuando no reconoce una intención; sigue limitado a las funciones y contenidos implementados. Esto no modifica el dictado manual web ni garantiza resolver restricciones del micrófono en segundo plano.
