@@ -1,0 +1,6 @@
+Vosk Android SDK 0.3.75 — Alpha Cephei Inc.
+https://github.com/alphacep/vosk-api
+Spanish model vosk-model-small-es-0.42 — AC Technologies LLC.
+Original model: https://alphacephei.com/vosk/models/vosk-model-small-es-0.42.zip
+Pinned mirror, checksums and provenance: android/wake-model.json in the JARVIS source repository.
+Only model data is used from the mirror; application code from that repository is not used.

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ['android/**', '.github/workflows/android.yml']
+    paths: ['android/**', 'scripts/prepare-wake-model.py', '.github/workflows/android.yml']
 permissions:
   contents: read
 jobs:

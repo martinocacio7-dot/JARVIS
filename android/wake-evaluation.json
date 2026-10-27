@@ -1,0 +1,1807 @@
+{
+  "note": "Synthetic eSpeak voices only; not a phone/microphone test or real-world accuracy estimate. Python Vosk 0.3.45; Android SDK 0.3.75. No user audio used or uploaded.",
+  "model": "vosk-model-small-es-0.42",
+  "grammar": [
+    "jarvis",
+    "hola",
+    "gracias",
+    "buenos días",
+    "adiós",
+    "javier",
+    "carlos",
+    "avisa",
+    "servicio",
+    "mañana",
+    "quiero",
+    "que hora es",
+    "[unk]"
+  ],
+  "threshold": 0.85,
+  "syntheticActivation": {
+    "detected": 9,
+    "total": 9
+  },
+  "syntheticNegative": {
+    "falseActivations": 0,
+    "total": 36
+  },
+  "results": [
+    {
+      "voice": "es",
+      "text": "Jarvis",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 1.08,
+              "start": 0.51,
+              "word": "jarvis"
+            }
+          ],
+          "text": "jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Oye Jarvis",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.529601,
+              "end": 0.72,
+              "start": 0.48,
+              "word": "hola"
+            },
+            {
+              "conf": 1.0,
+              "end": 1.32,
+              "start": 0.781135,
+              "word": "jarvis"
+            }
+          ],
+          "text": "hola jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Jarvis por favor",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.99,
+              "start": 0.51,
+              "word": "jarvis"
+            }
+          ],
+          "text": "jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Gracias por la ayuda",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.812324,
+              "end": 0.93,
+              "start": 0.51,
+              "word": "gracias"
+            },
+            {
+              "conf": 1.0,
+              "end": 1.26,
+              "start": 0.96,
+              "word": "hola"
+            }
+          ],
+          "text": "gracias hola"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Vamos a cenar en casa",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Buenos días señor",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.9,
+              "start": 0.51,
+              "word": "buenos"
+            },
+            {
+              "conf": 1.0,
+              "end": 1.20131,
+              "start": 0.9,
+              "word": "días"
+            }
+          ],
+          "text": "buenos días"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Javier ven un momento",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.9,
+              "start": 0.51,
+              "word": "javier"
+            }
+          ],
+          "text": "javier"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "¿Qué hora es?",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.814236,
+              "end": 0.674206,
+              "start": 0.51,
+              "word": "que"
+            },
+            {
+              "conf": 0.979962,
+              "end": 1.11,
+              "start": 0.87,
+              "word": "es"
+            }
+          ],
+          "text": "que es"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Mañana tengo trabajo",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.910505,
+              "end": 0.84,
+              "start": 0.48,
+              "word": "mañana"
+            }
+          ],
+          "text": "mañana"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Me llamo Miguel",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "El servicio está cerrado",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 1.29,
+              "start": 0.665026,
+              "word": "servicio"
+            }
+          ],
+          "text": "servicio"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Necesito crear un informe",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Pon la cámara a grabar",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.981966,
+              "end": 0.84,
+              "start": 0.54,
+              "word": "hola"
+            }
+          ],
+          "text": "hola"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "Abre la puerta",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es",
+      "text": "La lavadora terminó",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Jarvis",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 1.08,
+              "start": 0.51,
+              "word": "jarvis"
+            }
+          ],
+          "text": "jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Oye Jarvis",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.523687,
+              "end": 0.72,
+              "start": 0.48,
+              "word": "hola"
+            },
+            {
+              "conf": 1.0,
+              "end": 1.32,
+              "start": 0.781282,
+              "word": "jarvis"
+            }
+          ],
+          "text": "hola jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Jarvis por favor",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.99,
+              "start": 0.51,
+              "word": "jarvis"
+            }
+          ],
+          "text": "jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Gracias por la ayuda",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.880405,
+              "end": 0.93,
+              "start": 0.51,
+              "word": "gracias"
+            },
+            {
+              "conf": 1.0,
+              "end": 1.26,
+              "start": 0.956412,
+              "word": "hola"
+            }
+          ],
+          "text": "gracias hola"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Vamos a cenar en casa",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Buenos días señor",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.9,
+              "start": 0.51,
+              "word": "buenos"
+            },
+            {
+              "conf": 1.0,
+              "end": 1.17,
+              "start": 0.9,
+              "word": "días"
+            }
+          ],
+          "text": "buenos días"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Javier ven un momento",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.9,
+              "start": 0.51,
+              "word": "javier"
+            }
+          ],
+          "text": "javier"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "¿Qué hora es?",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.875159,
+              "end": 0.663667,
+              "start": 0.51,
+              "word": "que"
+            },
+            {
+              "conf": 0.577746,
+              "end": 0.75,
+              "start": 0.663667,
+              "word": "hora"
+            },
+            {
+              "conf": 0.987012,
+              "end": 1.11,
+              "start": 0.87,
+              "word": "es"
+            }
+          ],
+          "text": "que hora es"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Mañana tengo trabajo",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.902945,
+              "end": 0.84,
+              "start": 0.48,
+              "word": "mañana"
+            }
+          ],
+          "text": "mañana"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Me llamo Miguel",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "El servicio está cerrado",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 1.29,
+              "start": 0.663004,
+              "word": "servicio"
+            }
+          ],
+          "text": "servicio"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Necesito crear un informe",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Pon la cámara a grabar",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.984597,
+              "end": 0.84,
+              "start": 0.54,
+              "word": "hola"
+            }
+          ],
+          "text": "hola"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "Abre la puerta",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "es-la",
+      "text": "La lavadora terminó",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Jarvis",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 1.02,
+              "start": 0.51,
+              "word": "jarvis"
+            }
+          ],
+          "text": "jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Oye Jarvis",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 1.26,
+              "start": 0.72,
+              "word": "jarvis"
+            }
+          ],
+          "text": "jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Jarvis por favor",
+      "expected": true,
+      "detected": true,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.9,
+              "start": 0.51,
+              "word": "jarvis"
+            }
+          ],
+          "text": "jarvis"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Gracias por la ayuda",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.909575,
+              "end": 0.96,
+              "start": 0.51,
+              "word": "gracias"
+            },
+            {
+              "conf": 1.0,
+              "end": 1.32,
+              "start": 0.99,
+              "word": "hola"
+            }
+          ],
+          "text": "gracias hola"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Vamos a cenar en casa",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Buenos días señor",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.594019,
+              "end": 0.93,
+              "start": 0.51,
+              "word": "buenos"
+            }
+          ],
+          "text": "buenos"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Javier ven un momento",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 0.9,
+              "start": 0.51,
+              "word": "javier"
+            }
+          ],
+          "text": "javier"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "¿Qué hora es?",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.92602,
+              "end": 1.05,
+              "start": 0.84,
+              "word": "hola"
+            }
+          ],
+          "text": "hola"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Mañana tengo trabajo",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.562126,
+              "end": 0.84,
+              "start": 0.51,
+              "word": "mañana"
+            }
+          ],
+          "text": "mañana"
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Me llamo Miguel",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "El servicio está cerrado",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 1.0,
+              "end": 1.14,
+              "start": 0.69,
+              "word": "servicio"
+            }
+          ],
+          "text": "servicio"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Necesito crear un informe",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.626389,
+              "end": 1.5,
+              "start": 1.321805,
+              "word": "hola"
+            }
+          ],
+          "text": "hola"
+        },
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Pon la cámara a grabar",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "Abre la puerta",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "text": ""
+        }
+      ]
+    },
+    {
+      "voice": "en-us",
+      "text": "La lavadora terminó",
+      "expected": false,
+      "detected": false,
+      "results": [
+        {
+          "result": [
+            {
+              "conf": 0.718063,
+              "end": 1.65,
+              "start": 1.194858,
+              "word": "servicio"
+            }
+          ],
+          "text": "servicio"
+        },
+        {
+          "text": ""
+        }
+      ]
+    }
+  ],
+  "additionalSyntheticCheck": {
+    "note": "Additional phrases after grammar and threshold were fixed. Same synthetic voices; not independent real-world testing. No threshold or grammar tuning after these results. One English Harvey phrase was falsely recognized as Jarvis.",
+    "activation": {
+      "detected": 8,
+      "total": 9
+    },
+    "negative": {
+      "falseActivations": 1,
+      "total": 36
+    },
+    "results": [
+      {
+        "voice": "es",
+        "text": "Jarvis despierta",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.99,
+                "start": 0.51,
+                "word": "jarvis"
+              }
+            ],
+            "text": "jarvis"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Hola Jarvis dime",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.571331,
+                "end": 0.72,
+                "start": 0.48,
+                "word": "hola"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.17,
+                "start": 0.72,
+                "word": "jarvis"
+              }
+            ],
+            "text": "hola jarvis"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Jarvis me escuchas",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.99,
+                "start": 0.51,
+                "word": "jarvis"
+              }
+            ],
+            "text": "jarvis"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "El jardín está bonito",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.753434,
+                "end": 0.66,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "¿Ya ves la pantalla?",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Lleva las llaves",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Javier está en casa",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.93,
+                "start": 0.51,
+                "word": "javier"
+              }
+            ],
+            "text": "javier"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "El árbitro llegó",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Gracias por venir",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.933378,
+                "end": 0.93,
+                "start": 0.51,
+                "word": "gracias"
+              }
+            ],
+            "text": "gracias"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Harvey viene mañana",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 1.59,
+                "start": 1.14,
+                "word": "mañana"
+              }
+            ],
+            "text": "mañana"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Es tarde para salir",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.972603,
+                "end": 0.69,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Me avisas después",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.606643,
+                "end": 1.23,
+                "start": 1.08,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Hay varios archivos",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "La grabación empieza ahora",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.770988,
+                "end": 1.92,
+                "start": 1.68,
+                "word": "hora"
+              }
+            ],
+            "text": "hora"
+          }
+        ]
+      },
+      {
+        "voice": "es",
+        "text": "Estoy trabajando con el ordenador",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.66,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Jarvis despierta",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.99,
+                "start": 0.51,
+                "word": "jarvis"
+              }
+            ],
+            "text": "jarvis"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Hola Jarvis dime",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.674332,
+                "end": 0.72,
+                "start": 0.48,
+                "word": "hola"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.17,
+                "start": 0.72,
+                "word": "jarvis"
+              }
+            ],
+            "text": "hola jarvis"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Jarvis me escuchas",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.99,
+                "start": 0.51,
+                "word": "jarvis"
+              }
+            ],
+            "text": "jarvis"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "El jardín está bonito",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.708797,
+                "end": 0.66,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "¿Ya ves la pantalla?",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Lleva las llaves",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Javier está en casa",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.93,
+                "start": 0.51,
+                "word": "javier"
+              }
+            ],
+            "text": "javier"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "El árbitro llegó",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Gracias por venir",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.964865,
+                "end": 0.93,
+                "start": 0.51,
+                "word": "gracias"
+              }
+            ],
+            "text": "gracias"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Harvey viene mañana",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 1.59,
+                "start": 1.14,
+                "word": "mañana"
+              }
+            ],
+            "text": "mañana"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Es tarde para salir",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.968662,
+                "end": 0.69,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Me avisas después",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.761662,
+                "end": 0.99,
+                "start": 0.66,
+                "word": "avisa"
+              }
+            ],
+            "text": "avisa"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Hay varios archivos",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "La grabación empieza ahora",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.883562,
+                "end": 1.92,
+                "start": 1.68,
+                "word": "hora"
+              }
+            ],
+            "text": "hora"
+          }
+        ]
+      },
+      {
+        "voice": "es-la",
+        "text": "Estoy trabajando con el ordenador",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.66,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Jarvis despierta",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.931844,
+                "end": 0.93,
+                "start": 0.51,
+                "word": "jarvis"
+              }
+            ],
+            "text": "jarvis"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Hola Jarvis dime",
+        "expected": true,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Jarvis me escuchas",
+        "expected": true,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.956766,
+                "end": 0.9,
+                "start": 0.51,
+                "word": "jarvis"
+              },
+              {
+                "conf": 0.501037,
+                "end": 1.26,
+                "start": 0.93,
+                "word": "días"
+              }
+            ],
+            "text": "jarvis días"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "El jardín está bonito",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "¿Ya ves la pantalla?",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Lleva las llaves",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Javier está en casa",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.9,
+                "start": 0.51,
+                "word": "javier"
+              }
+            ],
+            "text": "javier"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "El árbitro llegó",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.363139,
+                "end": 0.66,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Gracias por venir",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.939158,
+                "end": 0.969436,
+                "start": 0.51,
+                "word": "gracias"
+              },
+              {
+                "conf": 0.357662,
+                "end": 1.2,
+                "start": 0.99,
+                "word": "hola"
+              },
+              {
+                "conf": 0.730578,
+                "end": 1.65,
+                "start": 1.41,
+                "word": "adiós"
+              }
+            ],
+            "text": "gracias hola adiós"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Harvey viene mañana",
+        "expected": false,
+        "detected": true,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 0.9,
+                "start": 0.51,
+                "word": "jarvis"
+              },
+              {
+                "conf": 1.0,
+                "end": 1.65,
+                "start": 1.14,
+                "word": "mañana"
+              }
+            ],
+            "text": "jarvis mañana"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Es tarde para salir",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Me avisas después",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 1.02,
+                "start": 0.75,
+                "word": "avisa"
+              }
+            ],
+            "text": "avisa"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Hay varios archivos",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "La grabación empieza ahora",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 1.0,
+                "end": 2.188483,
+                "start": 1.92,
+                "word": "hola"
+              }
+            ],
+            "text": "hola"
+          },
+          {
+            "text": ""
+          }
+        ]
+      },
+      {
+        "voice": "en-us",
+        "text": "Estoy trabajando con el ordenador",
+        "expected": false,
+        "detected": false,
+        "results": [
+          {
+            "result": [
+              {
+                "conf": 0.976438,
+                "end": 0.69,
+                "start": 0.48,
+                "word": "es"
+              }
+            ],
+            "text": "es"
+          },
+          {
+            "result": [
+              {
+                "conf": 0.444532,
+                "end": 2.216149,
+                "start": 2.013636,
+                "word": "hola"
+              }
+            ],
+            "text": "hola"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -11,6 +11,9 @@ export function initAndroidDevice() {
   if ((native().appVersion?.() || 0) >= 7) {
     document.querySelector('.wake-help').textContent = 'Activa JARVIS en la barra superior. Configura tu AccessKey de Picovoice en Permisos → Detector local. Di «JARVIS», espera «Sí, dígame, señor» y luego habla. El nombre se detecta en el teléfono; el dictado posterior puede usar Internet. Pausa antes de grabar vídeos.';
   }
+  if ((native().appVersion?.() || 0) >= 9) {
+    document.querySelector('.wake-help').textContent = 'Detector español local, sin cuenta ni AccessKey. Activa JARVIS en la barra superior, espera ESCUCHANDO, di «JARVIS» y espera el saludo antes de tu petición. El dictado posterior puede usar Internet. Pausa antes de grabar vídeos.';
+  }
   const readAloud = document.querySelector('#read-aloud');
   try { readAloud.checked = localStorage.getItem('jarvis.android.read-aloud') !== 'false'; } catch { readAloud.checked = true; }
   readAloud.addEventListener('change', () => { try { localStorage.setItem('jarvis.android.read-aloud', String(readAloud.checked)); } catch {} });

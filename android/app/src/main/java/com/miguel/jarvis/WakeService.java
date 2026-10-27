@@ -1,7 +1,6 @@
 package com.miguel.jarvis;
 
 import android.Manifest;
-import ai.picovoice.porcupine.*;
 import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
@@ -38,8 +37,9 @@ public final class WakeService extends Service {
     private static final int NOTICE=20;
     final WakeConversation flow=new WakeConversation();
     final Handler main=new Handler(Looper.getMainLooper());
+    final Handler engineCallbacks=new Handler(Looper.getMainLooper());
     final ExecutorService worker=Executors.newSingleThreadExecutor();
-    PorcupineManager wakeDetector;
+    LocalWakeDetector wakeDetector;
     boolean wakeListening=false,wakePreparing=false;
     long detectorSession=0,releaseDeadline=0;
     SpeechRecognizer recognizer; TextToSpeech tts; AudioManager audio; AudioFocusRequest focus;
@@ -171,55 +171,55 @@ public final class WakeService extends Service {
         try{current.startListening(request);}catch(Exception error){pause("No se pudo iniciar el micrófono. Abre JARVIS para revisar permisos.");}
     }
     void stopWakeDetector(){
-        boolean wasListening=wakeListening;wakeListening=false;
-        if(wakeDetector!=null)try{wakeDetector.stop();}catch(PorcupineException ignored){}
+        boolean wasListening=wakeListening;wakeListening=false;detectorSession++;
+        if(wakeDetector!=null)try{wakeDetector.stop();}catch(RuntimeException ignored){}
         if(wasListening)releaseDeadline=SystemClock.elapsedRealtime()+MicrophoneHandoff.GRACE_MS;
     }
     void deleteWakeDetector(){
         detectorSession++;
         stopWakeDetector();
-        if(wakeDetector!=null){wakeDetector.delete();wakeDetector=null;}
+        if(wakeDetector!=null){wakeDetector.close();wakeDetector=null;}
     }
     void startWakeDetector(){
         if(!microphoneReady(()->startWakeDetector()))return;
         if(wakeDetector!=null){startLocalCapture();return;}
-        final String key;
-        try{key=WakeAccessKey.load(this);}catch(Exception error){pause("No se pudo leer la clave cifrada. Configura el detector desde Permisos.");return;}
-        if(key.isEmpty()){pause("Configura Detector local · clave de Picovoice desde Permisos. El micrófono manual sigue disponible.");return;}
-        wakePreparing=true;
-        final int expected=generation;final long session=++detectorSession;
+        wakePreparing=true;report("PREPARANDO","Cargando el detector español sin clave. La primera preparación puede tardar unos segundos…");
+        final int expected=generation;
         worker.execute(()->{
-            PorcupineManager prepared=null;
+            LocalWakeDetector prepared=null;
             try{
-                prepared=new PorcupineManager.Builder().setAccessKey(key).setKeyword(Porcupine.BuiltInKeyword.JARVIS).setSensitivity(.65f)
-                    .setErrorCallback(error->main.post(()->{if(session==detectorSession&&wakeListening)pause("El detector local se detuvo. Revisa micrófono y clave desde Permisos.");}))
-                    .build(this,index->main.post(()->{
-                        if(session!=detectorSession||!running||!wakeListening||flow.state()!=WakeConversation.State.WAKE)return;
-                        stopWakeDetector();
-                        if(!flow.keyword())return;
-                        say("Sí, dígame, señor.",()->{
-                            if(!flow.greeted())return;
-                            notice("Dígame: espero hasta cuatro segundos por tu petición.");
-                            int turn=generation;main.postDelayed(()->{if(turn==generation)listen();},450);
-                        });
-                    }));
-                final PorcupineManager built=prepared;
-                main.post(()->{
-                    if(expected!=generation||!running||flow.state()!=WakeConversation.State.WAKE){built.delete();return;}
+                prepared=new LocalWakeDetector(this);
+                final LocalWakeDetector built=prepared;
+                engineCallbacks.post(()->{
+                    if(expected!=generation||!running||flow.state()!=WakeConversation.State.WAKE){built.close();return;}
                     wakePreparing=false;wakeDetector=built;startLocalCapture();
                 });
             }catch(Exception | LinkageError error){
-                if(prepared!=null)prepared.delete();
-                main.post(()->{if(expected==generation){wakePreparing=false;pause("No se pudo iniciar el detector. Comprueba la AccessKey de Picovoice, su licencia y la conexión. No se reintentará automáticamente.");}});
+                if(prepared!=null)prepared.close();
+                engineCallbacks.post(()->{if(expected==generation){wakePreparing=false;pause("No se pudo preparar el detector local. Revisa espacio libre y actualiza el APK. No necesitas ninguna AccessKey.");}});
             }
         });
     }
     void startLocalCapture(){
         if(!microphoneReady(()->startLocalCapture()))return;
+        final long session=++detectorSession;
+        wakeListening=true;
         try{
-            wakeDetector.start();wakeListening=true;listeningConfirmed=true;
-            report("ESCUCHANDO","Detector local activo. Di JARVIS y espera el saludo antes de tu petición.");
-            notice("Di JARVIS. Pausa antes de grabar vídeos.");
+            wakeDetector.start(new LocalWakeDetector.Listener(){
+                boolean valid(){return session==detectorSession&&running&&wakeListening&&flow.state()==WakeConversation.State.WAKE;}
+                public void ready(){if(!valid())return;listeningConfirmed=true;report("ESCUCHANDO","Detector español local activo, sin clave. Di JARVIS y espera el saludo.");notice("Di JARVIS. Pausa antes de grabar vídeos.");}
+                public void keyword(){
+                    if(!valid())return;
+                    stopWakeDetector();
+                    if(!flow.keyword())return;
+                    say("Sí, dígame, señor.",()->{
+                        if(!flow.greeted())return;
+                        notice("Dígame: espero hasta cuatro segundos por tu petición.");
+                        int turn=generation;main.postDelayed(()->{if(turn==generation)listen();},450);
+                    });
+                }
+                public void error(){if(valid())pause("El detector local perdió el micrófono. Revisa permisos y grabaciones; toca Retomar al terminar.");}
+            });
         }catch(Exception error){pause("No se pudo abrir el micrófono del detector local. Revisa los permisos.");}
     }
     void scheduleSilenceCheck(int expected){

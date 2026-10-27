@@ -1,3 +1,0 @@
-Porcupine Android SDK 4.0.2 / Picovoice Inc.
-https://github.com/Picovoice/porcupine
-The SDK includes native libraries and the built-in English JARVIS wake-word model. Use requires a Picovoice AccessKey and is subject to provider terms. No AccessKey is bundled.
