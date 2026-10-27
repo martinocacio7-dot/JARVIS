@@ -68,9 +68,14 @@ public final class WakeService extends Service {
         },main).build();
         recordings=new AudioManager.AudioRecordingCallback(){@Override public void onRecordingConfigChanged(List<AudioRecordingConfiguration> configs){
             if(flow.state()==WakeConversation.State.PAUSED || flow.state()==WakeConversation.State.STOPPED)return;
-            for(AudioRecordingConfiguration config:configs) {
-                if(RecordingPolicy.interrupts(config.getClientAudioSource(), Build.VERSION.SDK_INT>=29 && config.isClientSilenced())) {pause("Grabación detectada. Micrófono liberado; toca Retomar al terminar.");return;}
-            }
+            // Callback snapshots can describe the capture we just stopped. Read current
+            // configurations after handoff instead of pausing on that stale snapshot.
+            if(recordingConflict(false)){pause("Grabación o llamada detectada. Micrófono liberado; toca Retomar al terminar.");return;}
+            int expected=generation;
+            long delay=Math.max(250,releaseDeadline-SystemClock.elapsedRealtime()+100);
+            main.removeCallbacks(checkRecording);
+            recordingGeneration=expected;
+            main.postDelayed(checkRecording,delay);
         }};
         audio.registerAudioRecordingCallback(recordings,main);recordingMonitorRegistered=true;
         tts=new TextToSpeech(this,result->{
@@ -129,6 +134,20 @@ public final class WakeService extends Service {
         PendingIntent stop=PendingIntent.getService(this,2,new Intent(this,WakeService.class).setAction(STOP),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(this,"jarvis_listening").setSmallIcon(com.miguel.jarvis.R.drawable.jarvis).setContentTitle(paused?"JARVIS · Escucha pausada":"JARVIS · Micrófono en segundo plano").setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text)).setContentIntent(open).setOngoing(true).setOnlyAlertOnce(true).setVisibility(Notification.VISIBILITY_PRIVATE).addAction(new Notification.Action.Builder(null,paused?"Retomar":"Pausar",toggle).build()).addAction(new Notification.Action.Builder(null,"Apagar",stop).build()).build();
     }
+    int recordingGeneration;
+    final Runnable checkRecording=()->{
+        if(recordingGeneration!=generation||!running||flow.state()==WakeConversation.State.PAUSED||flow.state()==WakeConversation.State.STOPPED)return;
+        if(recordingConflict(true))pause("Android mantiene el micrófono silenciado o detecta una grabación/llamada activa. Micrófono liberado; toca Retomar al terminar.");
+    };
+    boolean recordingConflict(boolean includeSilenced){
+        if(audio.getMode()==AudioManager.MODE_IN_CALL||audio.getMode()==AudioManager.MODE_IN_COMMUNICATION)return true;
+        long now=SystemClock.elapsedRealtime();
+        for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations()){
+            boolean silenced=includeSilenced&&Build.VERSION.SDK_INT>=29&&config.isClientSilenced();
+            if(RecordingPolicy.interrupts(config.getClientAudioSource(),silenced,now,releaseDeadline))return true;
+        }
+        return false;
+    }
     void notice(String text){if(running)getSystemService(NotificationManager.class).notify(NOTICE,notification(text));}
     void destroyRecognizer(){SpeechRecognizer old=recognizer;recognizer=null;if(old!=null){old.destroy();releaseDeadline=SystemClock.elapsedRealtime()+MicrophoneHandoff.GRACE_MS;}}
     void releaseFocus(){if(focused){focused=false;audio.abandonAudioFocusRequest(focus);}}
@@ -136,7 +155,7 @@ public final class WakeService extends Service {
     boolean microphoneReady(Runnable retry){
         boolean conflict=audio.getMode()==AudioManager.MODE_IN_CALL||audio.getMode()==AudioManager.MODE_IN_COMMUNICATION;
         List<AudioRecordingConfiguration> configs=audio.getActiveRecordingConfigurations();
-        for(AudioRecordingConfiguration config:configs)conflict|=RecordingPolicy.interrupts(config.getClientAudioSource(),Build.VERSION.SDK_INT>=29&&config.isClientSilenced());
+        for(AudioRecordingConfiguration config:configs)conflict|=RecordingPolicy.interrupts(config.getClientAudioSource(),Build.VERSION.SDK_INT>=29&&config.isClientSilenced(),SystemClock.elapsedRealtime(),releaseDeadline);
         MicrophoneHandoff.Decision decision=MicrophoneHandoff.decide(!configs.isEmpty(),conflict,SystemClock.elapsedRealtime(),releaseDeadline);
         if(decision==MicrophoneHandoff.Decision.READY){releaseDeadline=0;if("LIBERANDO MICRÓFONO".equals(status))report("PREPARANDO","Micrófono liberado. Preparando la siguiente etapa de escucha…");return true;}
         if(decision==MicrophoneHandoff.Decision.PAUSE){pause("El micrófono está ocupado por otra captura o Android no liberó la anterior. Detén grabaciones o llamadas y toca Retomar.");return false;}
@@ -263,7 +282,7 @@ public final class WakeService extends Service {
         stopWakeDetector();destroyRecognizer();releaseFocus();
         if(!running||!ready||flow.state()==WakeConversation.State.PAUSED||flow.state()==WakeConversation.State.STOPPED)return;
         // A recently stopped recognition provider may release its VOICE_RECOGNITION session asynchronously.
-        for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations())if(RecordingPolicy.interrupts(config.getClientAudioSource(), Build.VERSION.SDK_INT>=29 && config.isClientSilenced())){pause("Grabación detectada. Voz y escucha pausadas.");return;}
+        for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations())if(RecordingPolicy.interrupts(config.getClientAudioSource(), Build.VERSION.SDK_INT>=29 && config.isClientSilenced(),SystemClock.elapsedRealtime(),releaseDeadline)){pause("Grabación detectada. Voz y escucha pausadas.");return;}
         if(audio.requestAudioFocus(focus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){pause("Otra aplicación necesita el audio. Escucha pausada.");return;}
         report("RESPONDIENDO","JARVIS está hablando; después volverá a escuchar.");focused=true;speaking=true;afterSpeech=done;int sequence=++voiceSequence;
         if(tts.speak(text.substring(0,Math.min(4000,text.length())),TextToSpeech.QUEUE_FLUSH,null,String.valueOf(sequence))==TextToSpeech.ERROR){pause("No se pudo reproducir la voz.");return;}

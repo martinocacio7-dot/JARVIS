@@ -1,4 +1,4 @@
-# JARVIS para Android · 1.3.2
+# JARVIS para Android · 1.3.3
 
 Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
 
@@ -7,7 +7,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.2** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
+2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.3** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -92,3 +92,10 @@ Las pruebas verifican liberación de CPU al pausar/apagar y que un reintento tem
 La pérdida de foco de audio solo pausa cuando JARVIS aún posee ese foco y está hablando. Un aviso tardío después de liberar el foco al terminar «Sí, dígame, señor.» ya no cancela el dictado de la pregunta. Se mantienen la pausa por grabación/llamada, la pausa manual y los errores explícitos del reconocedor. No se reanuda automáticamente una pausa real.
 
 Dos pruebas JVM verifican los avisos tardíos, la conservación de los cuatro segundos y las interrupciones durante una respuesta. Esta corrección aborda una causa identificada en el código; sin el diagnóstico del teléfono no confirma la causa de cualquier estado PAUSADO. No se validó en un Android físico.
+
+
+## Comprobación de grabación durante el cambio de captura (1.3.3)
+
+El callback de grabación ya no decide una pausa usando su lista histórica: consulta las configuraciones actuales. Un indicador de captura silenciada se vuelve a comprobar tras 250 ms, o después del margen de liberación de tres segundos cuando JARVIS acaba de cerrar su propia captura. La comprobación diferida conserva la generación de la conversación y no puede reanudar una pausa. Las fuentes CAMCORDER, VOICE_COMMUNICATION y el modo de llamada siguen interrumpiendo inmediatamente; un micrófono que permanece silenciado también pausa al terminar el margen.
+
+La prueba adicional cubre el límite del margen y que cámara/llamada nunca queden exentas. Se mantienen las pruebas de cuatro segundos y de foco. Sin diagnóstico ni teléfono físico no se puede asegurar que esta fuera la causa del dispositivo; el estado conserva un motivo explícito para distinguirlo.
