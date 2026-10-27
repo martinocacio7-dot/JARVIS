@@ -1,4 +1,4 @@
-# JARVIS para Android · 1.3.0
+# JARVIS para Android · 1.3.1
 
 Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
 
@@ -7,7 +7,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.0** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
+2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.3.1** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -21,7 +21,7 @@ Mientras espera el nombre, un AudioRecord alimenta continuamente al modelo local
 
 El vocabulario incluye el nombre, distractores y [unk]. Solo la palabra final exacta jarvis con confianza acústica >= 0.85 activa el asistente. Las hipótesis parciales no activan nada. Esta puntuación no es una probabilidad calibrada.
 
-Tras detectar el nombre se libera la captura local antes del saludo y se abre **una sesión** de dictado Android, que puede enviar audio al proveedor, necesitar Internet y emitir sus tonos normales. Los cuatro segundos solo limitan la espera para empezar la petición; si empiezas a tiempo, hay hasta 30 segundos para terminar. El silencio vuelve al detector local sin despedida ni un bucle de sesiones de dictado.
+Tras detectar el nombre se libera la captura local antes del saludo y se abre el dictado Android, que puede enviar audio al proveedor, necesitar Internet y emitir sus tonos normales. Los cuatro segundos solo limitan la espera para empezar la petición; si empiezas a tiempo, hay hasta 30 segundos para terminar. Si el reconocedor termina antes por falta de voz, se permite un solo reintento dentro del mismo plazo original; no se reinician los cuatro segundos. El silencio vuelve al detector local sin despedida ni sesiones de dictado continuas mientras espera el nombre.
 
 La hora se consulta en el teléfono. Las demás peticiones se envían por HTTPS con autenticación al servidor privado, sin seguir redirecciones. El servicio responde con una voz española local instalada. La voz de ElevenLabs de la interfaz web conserva su configuración independiente.
 
@@ -60,7 +60,7 @@ El modelo y la caché no se añaden a Git. La caché queda en android/.gradle/wa
 
 ## Verificación y límites
 
-Las 16 pruebas JVM cubren separación entre nombre y dictado, espera de cuatro segundos, ausencia de vencimiento durante una hora simulada esperando el nombre, pausa/apagado, transición limitada del micrófono, permisos y aceptación del nombre/confianza. También se ejecutan Android Lint y pruebas web con puente simulado.
+Las 19 pruebas JVM cubren separación entre nombre y dictado, espera de cuatro segundos, ausencia de vencimiento durante una hora simulada esperando el nombre, pausa/apagado, transición limitada del micrófono, permisos y aceptación del nombre/confianza. También se ejecutan Android Lint y pruebas web con puente simulado.
 
 [wake-evaluation.json](wake-evaluation.json) registra ensayos con voces sintéticas eSpeak: 9/9 activaciones y 0/36 falsas activaciones en la primera tanda; la adicional obtuvo 8/9 y 1/36. Con las dos voces españolas, ambas tandas detectaron las 12 activaciones sin disparar con las 48 frases negativas. La falsa activación adicional fue «Harvey» con voz inglesa. No se ajustaron umbral o vocabulario a esa tanda adicional.
 
@@ -72,3 +72,16 @@ python scripts/evaluate-wake-model.py --model /ruta/al/modelo --output adicional
 ~~~
 
 Valida en el teléfono: 30 segundos en silencio, «JARVIS» → saludo → hora, silencio tras el saludo, pausa manual, otra app y pantalla bloqueada. Prueba la cámara con JARVIS pausado. Puede fallar o activarse por palabras parecidas; no es el modelo de Amazon Alexa ni añade inteligencia generativa al chat.
+
+
+## Conversación y escucha fuera de la app (1.3.1)
+
+La secuencia es: detector local → «Sí, dígame, señor.» → preparar dictado → cuatro segundos para empezar la pregunta → responder o volver silenciosamente al detector. El saludo no consume esos cuatro segundos: empiezan cuando el reconocedor confirma que está listo. La ausencia de pregunta termina la conversación activa, no el servicio que debe seguir oyendo «JARVIS».
+
+El servicio solicita un bloqueo parcial de CPU con duración limitada y renovación mientras está activado, incluida la preparación, el saludo, el dictado y la respuesta. Se libera al pausar o apagar. No enciende la pantalla ni arranca tras reiniciar/forzar detención; requiere activación explícita y conserva la notificación. Esta continuidad consume batería y las restricciones del fabricante pueden seguir deteniendo el proceso.
+
+Para usarlo desde otra app: activa desde la barra superior nativa con JARVIS abierto, espera ESCUCHANDO y la notificación, luego sal con Inicio. En Permisos → Segundo plano y batería hay acceso a los ajustes de la aplicación para revisar «Sin restricciones», actividad en segundo plano o inicio automático si tu fabricante lo ofrece. La app no concede esas opciones por sí sola ni solicita acceso a notificaciones de otras apps.
+
+Se conserva Android SpeechRecognizer para el dictado de la pregunta: una prueba exploratoria de Vosk con vocabulario libre transcribió mal varias frases sintéticas, incluida «qué hora es», y no se activó esa alternativa. El detector del nombre sí sigue siendo local. El dictado Android puede usar Internet y emitir tonos; los errores incluyen su código en el diagnóstico.
+
+Las pruebas verifican liberación de CPU al pausar/apagar y que un reintento temprano no amplía el plazo. No se comprobó un Android físico ni el ahorro de batería de un fabricante concreto. Pausa JARVIS antes de grabar vídeos y prueba la secuencia sin grabar la pantalla.

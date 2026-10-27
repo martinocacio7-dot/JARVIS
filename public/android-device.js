@@ -14,6 +14,9 @@ export function initAndroidDevice() {
   if ((native().appVersion?.() || 0) >= 9) {
     document.querySelector('.wake-help').textContent = 'Detector español local, sin cuenta ni AccessKey. Activa JARVIS en la barra superior, espera ESCUCHANDO, di «JARVIS» y espera el saludo antes de tu petición. El dictado posterior puede usar Internet. Pausa antes de grabar vídeos.';
   }
+  if ((native().appVersion?.() || 0) >= 10) {
+    document.querySelector('.wake-help').textContent = 'Activa JARVIS en la barra superior y espera ESCUCHANDO y la notificación. Puedes salir con Inicio y decir «JARVIS». Espera el saludo antes de preguntar; tras cuatro segundos sin pregunta vuelve a esperar el nombre. El nombre se detecta localmente y el dictado de la pregunta usa Android. Si el teléfono lo detiene, revisa Permisos → Segundo plano y batería. Pausa antes de grabar vídeos.';
+  }
   const readAloud = document.querySelector('#read-aloud');
   try { readAloud.checked = localStorage.getItem('jarvis.android.read-aloud') !== 'false'; } catch { readAloud.checked = true; }
   readAloud.addEventListener('change', () => { try { localStorage.setItem('jarvis.android.read-aloud', String(readAloud.checked)); } catch {} });

@@ -60,4 +60,18 @@ public class WakeConversationTest {
         assertTrue(flow.silenceExpired(3604000));
         flow.pause();flow.quiet();assertEquals(WakeConversation.Input.NONE,flow.input());
     }
+    @Test public void earlyRecognizerRetryCannotRestartOrExtendTheFourSecondWindow(){
+        WakeConversation flow=new WakeConversation();flow.start();flow.keyword();
+        assertEquals(0,flow.remainingSilence(99999));assertFalse(flow.silenceExpired(99999));
+        flow.greeted();flow.ready(1000);
+        assertEquals(4000,flow.remainingSilence(1000));
+        assertEquals(2000,flow.remainingSilence(3000));
+        flow.ready(3000);
+        assertEquals(2000,flow.remainingSilence(3000));
+        assertEquals(0,flow.remainingSilence(5000));
+        assertTrue(flow.silenceExpired(5000));
+        flow.quiet();assertEquals(WakeConversation.Input.KEYWORD,flow.input());
+        assertEquals(0,flow.remainingSilence(999999));
+        assertFalse(flow.silenceExpired(999999));
+    }
 }
