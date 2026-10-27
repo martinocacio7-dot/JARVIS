@@ -60,7 +60,7 @@ public final class MainActivity extends Activity {
         web.addJavascriptInterface(new Device(),"JarvisAndroid");
         web.setWebViewClient(new WebViewClient(){
             @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){trusted=allowed(url);status.setText("Conectando…");}
-            @Override public void onPageFinished(WebView view,String url){trusted=allowed(url);status.setText(trusted?"Privado · Activa la escucha para hablar sin tocar":"Página no disponible");emit("background-mode",0,String.valueOf(WakeService.running));renderBackgroundStatus();}
+            @Override public void onPageFinished(WebView view,String url){trusted=allowed(url);status.setText(trusted?"JARVIS "+BuildConfig.VERSION_NAME+" · Detector local · Privado":"Página no disponible");emit("background-mode",0,String.valueOf(WakeService.running));renderBackgroundStatus();}
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){
                 if (allowed(request.getUrl().toString())) return false;
                 if (request.isForMainFrame() && "https".equals(request.getUrl().getScheme())) { try { startActivity(new Intent(Intent.ACTION_VIEW,request.getUrl())); } catch (Exception ignored) {} }
@@ -178,13 +178,14 @@ public final class MainActivity extends Activity {
         });
     }
     void permissions(){
-        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Instalar o configurar voz en español", "Privacidad", "Olvidar acceso del modo Fuera de app", "Detector local · clave de Picovoice"},(d,which)->{
+        new AlertDialog.Builder(this).setTitle("Permisos de JARVIS").setItems(new String[]{"Micrófono", "Permitir avisos de recordatorios", "Alarmas y recordatorios a la hora exacta", "Instalar o configurar voz en español", "Privacidad", "Olvidar acceso del modo Fuera de app", "Detector local · clave de Picovoice", "Copiar diagnóstico de voz"},(d,which)->{
             if(which==0)requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO},1);
             if(which==1){if(Build.VERSION.SDK_INT>=33)requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},2);else startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));}
             if(which==2 && Build.VERSION.SDK_INT>=31)startActivity(new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,Uri.parse("package:"+getPackageName())));
             if(which==3){try{startActivity(new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA));}catch(Exception error){new AlertDialog.Builder(this).setMessage("Abre Ajustes → Idioma y entrada → Síntesis de voz e instala una voz en español.").setPositiveButton("Entendido",null).show();}}
             if(which==4)new AlertDialog.Builder(this).setMessage("Esta versión consulta la hora en el teléfono y no puede leer las notificaciones de otras aplicaciones. El detector local del nombre utiliza Porcupine con tu AccessKey. Puede validar la licencia por Internet. Después del saludo, el dictado depende del servicio Android y puede usar Internet. Los pendientes se guardan en tu base de datos y se sincronizan con los avisos del teléfono al abrir o actualizar la app. La escucha de la pantalla se detiene al salir. El modo Fuera de app solo funciona si lo activas; mantiene una notificación para pausarlo y apagarlo. Si fuerzas la detención de la app, abre JARVIS para restaurar sus avisos.").setPositiveButton("Entendido",null).show();
             if(which==6)wakeKeyDialog();
+            if(which==7){android.content.ClipboardManager clipboard=getSystemService(android.content.ClipboardManager.class);clipboard.setPrimaryClip(ClipData.newPlainText("Diagnóstico JARVIS",WakeService.diagnostic()));Toast.makeText(this,"Diagnóstico copiado: versión y estados, sin claves ni conversaciones",Toast.LENGTH_LONG).show();}
             if(which==5){activation.cancel();activationRequest=0;WakeService.report("INACTIVO","Acceso cifrado eliminado. Escucha apagada.");stopService(new Intent(this,WakeService.class));PrivateLogin.clear(this);sessionUser=null;sessionPassword=null;Toast.makeText(this,"Acceso cifrado del modo Fuera de app eliminado",Toast.LENGTH_LONG).show();}
         }).show();
     }
@@ -228,7 +229,7 @@ public final class MainActivity extends Activity {
     }
     final class Device {
         @JavascriptInterface public void activateWake(){runOnUiThread(()->{if(!trusted||!foreground)return;if(WakeService.running){if("PAUSADO".equals(WakeService.status))startService(new Intent(MainActivity.this,WakeService.class).setAction(WakeService.RESUME));}else backgroundMode();});}
-        @JavascriptInterface public int appVersion(){return 7;}
+        @JavascriptInterface public int appVersion(){return BuildConfig.VERSION_CODE;}
         @JavascriptInterface public boolean backgroundMode(){return WakeService.running;}
         @JavascriptInterface public int beginPlayback(){return beginAudio();}
         @JavascriptInterface public void endPlayback(int lease){finishAudio(lease);}

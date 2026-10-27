@@ -1,6 +1,6 @@
 # JARVIS para Android
 
-Aplicación para Android 8.0 o posterior, conectada a `https://jarvis-privado-rmkm.onrender.com`. La versión 1.2.0 sustituye la escucha repetitiva de Android por el detector local Porcupine 4.0.2 con el modelo integrado JARVIS. Requiere una AccessKey propia de Picovoice; no incluye ninguna. Incorpora un modo opcional para oír «JARVIS» desde otras aplicaciones, mediante un servicio de micrófono en primer plano de Android. No accede a las notificaciones de otras aplicaciones.
+Aplicación para Android 8.0 o posterior, conectada a `https://jarvis-privado-rmkm.onrender.com`. La versión 1.2.1 sustituye la escucha repetitiva de Android por el detector local Porcupine 4.0.2 con el modelo integrado JARVIS. Requiere una AccessKey propia de Picovoice; no incluye ninguna. Incorpora un modo opcional para oír «JARVIS» desde otras aplicaciones, mediante un servicio de micrófono en primer plano de Android. No accede a las notificaciones de otras aplicaciones.
 
 ## Instalar
 
@@ -42,7 +42,7 @@ Al forzar la detención, reiniciar el teléfono o morir el proceso, la escucha n
 
 En esta versión Android hay un único control de activación por nombre, en la barra superior nativa. El botón de activación solo dentro de la web se oculta para evitar confundir los dos modos. El dictado manual 🎤 sigue disponible cuando el servicio está apagado. Mientras el servicio está activo, el dictado de la pantalla se deshabilita para evitar dos reconocedores simultáneos. La web abierta en un navegador conserva su propio modo de activación, que no funciona fuera de ese navegador.
 
-Si no aparece la notificación, comprueba la línea **Escucha fuera de la app**: la aplicación ahora mantiene el motivo del fallo visible, incluso cuando Android rechaza el inicio. Si deniegas un permiso, la activación se cancela sin insistir ni entrar en un bucle de solicitudes. Puedes volver a activarla manualmente tras corregir el permiso. La versión se identifica como **1.2.0**, código 7. Usa Porcupine para el nombre y Android para la petición. No incorpora el modelo propietario de Amazon Alexa.
+Si no aparece la notificación, comprueba la línea **Escucha fuera de la app**: la aplicación ahora mantiene el motivo del fallo visible, incluso cuando Android rechaza el inicio. Si deniegas un permiso, la activación se cancela sin insistir ni entrar en un bucle de solicitudes. Puedes volver a activarla manualmente tras corregir el permiso. La versión se identifica como **1.2.1**, código 8. Usa Porcupine para el nombre y Android para la petición. No incorpora el modelo propietario de Amazon Alexa.
 
 La contraseña cifrada se guarda únicamente al activar el modo de segundo plano. Se cifra con AES-GCM y una clave no exportable de Android Keystore, sin incluir valores en el APK ni en registros. Usa **Permisos → Olvidar acceso del modo Fuera de app** para detener el servicio y eliminar ese acceso guardado; eso no equivale a cerrar todas las sesiones web. Las copias de seguridad de datos de la aplicación están excluidas.
 
@@ -61,7 +61,7 @@ cd android
 
 En Windows usa `gradlew.bat`. El archivo entregable sale en `app/build/outputs/apk/release/app-release.apk`. El tipo `release` usa la clave de prueba local (`signingConfigs.debug`) para conservar la firma de las entregas de este entorno, pero `debuggable` está desactivado. Conserva esa clave privada fuera de Git para futuras actualizaciones y configura una firma de lanzamiento propia para distribuir formalmente. GitHub Actions → **Android APK** compila y publica un artefacto descargable.
 
-Las once pruebas JVM verifican la separación entre captura local del nombre y dictado, ausencia de temporizador de reinicio durante el silencio de espera, pausa por cámara/llamadas/silenciamiento, nombre obligatorio, espera de cuatro segundos, inicio de voz dentro del plazo, rechazo de eventos tras pausa/apagado y continuación de la activación tras micrófono/notificaciones/acceso, sin arranques duplicados ni bucles tras denegar permisos. Además se ejecutan Android Lint y pruebas web con puente Android simulado. Compilar y simular no verifica permisos, micrófono, voz, grabación simultánea ni continuidad del servicio en un teléfono real.
+Las catorce pruebas JVM verifican la separación entre captura local del nombre y dictado, ausencia de temporizador de reinicio durante el silencio de espera, pausa por cámara/llamadas/silenciamiento, nombre obligatorio, espera de cuatro segundos, inicio de voz dentro del plazo, rechazo de eventos tras pausa/apagado y continuación de la activación tras micrófono/notificaciones/acceso, sin arranques duplicados ni bucles tras denegar permisos. Además se ejecutan Android Lint y pruebas web con puente Android simulado. Compilar y simular no verifica permisos, micrófono, voz, grabación simultánea ni continuidad del servicio en un teléfono real.
 
 ## Detección de grabación (1.1.2)
 
@@ -74,3 +74,13 @@ La nueva esfera refleja el estado real del servicio (incluido PAUSADO); el botó
 Porcupine y su procesador de audio se resuelven desde Maven Central; la versión directa está fijada en Gradle. El APK incluye el modelo JARVIS, parámetros y bibliotecas nativas para arm64-v8a, armeabi-v7a, x86 y x86_64. Se adjunta la licencia y atribución en assets/licenses. El SDK necesita una cuenta/AccessKey de Picovoice y sus condiciones de uso; no se ha proporcionado ninguna clave en este entorno. No se realizaron llamadas autenticadas ni pruebas de precisión acústica reales.
 
 Para validar en un teléfono: configura la clave, activa JARVIS y espera ESCUCHANDO; permanece 30 segundos en silencio (no debe abrir sesiones de dictado repetitivas); di JARVIS, espera el saludo y pide la hora; repite dejando pasar cuatro segundos sin pedir nada; pausa y comprueba que no responde; prueba fuera de la app, con pantalla bloqueada y tras terminar una llamada. Antes de probar la cámara, pausa JARVIS y verifica que el vídeo tiene sonido. Si falta o falla la clave, debe verse un aviso y el dictado manual debe seguir disponible con el servicio apagado. Las restricciones de batería del fabricante siguen aplicándose.
+
+## Transición y diagnóstico (1.2.1)
+
+El límite de cuatro segundos solo se aplica a la petición después del saludo. Al agotarse vuelve al detector local: no llama a stopSelf ni a pause por el tiempo. La espera del nombre no tiene límite de tres/cuatro segundos.
+
+Después de cerrar una captura propia, Android puede seguir notificándola brevemente como activa. La app ahora consulta cada 100 ms durante un máximo de tres segundos, sin abrir otro micrófono y sin contar ese intervalo como tiempo para dictar. Si se libera, retoma automáticamente la transición al detector o al dictado; no reinicia el reconocedor repetidamente. Cámara, llamadas o captura silenciada siguen causando pausa inmediata. Si la captura continúa ocupada tras el plazo, la app se pausa con un aviso explícito y Retomar sigue siendo manual. No se ignora una grabación real ni se garantiza detectar todos los usos externos del micrófono.
+
+La barra nativa muestra la versión del APK, independientemente de la interfaz descargada del servidor. Permisos → Copiar diagnóstico de voz copia versión, fabricante/modelo, versión Android y los últimos doce estados con sus motivos. Es un registro temporal en memoria, sin audio, textos del chat, contraseña ni AccessKey; no se sube automáticamente. Si falla, pega ese diagnóstico para identificar la fase exacta. Denegar o revocar micrófono/notificaciones ahora deja un ERROR visible.
+
+Se verifican la espera limitada tras cierre propio y la pausa inmediata ante conflictos, además de la ausencia de vencimiento durante una hora simulada esperando el nombre. No se ha validado todavía esta transición con micrófono físico y una AccessKey real en este entorno.

@@ -26,6 +26,7 @@ window.addEventListener('jarvis:android', ({ detail }) => {
   status.textContent = ({
     ESCUCHANDO: 'Di «Jarvis». Te escucho.',
     PREPARANDO: 'Preparando el micrófono…',
+    'LIBERANDO MICRÓFONO': 'Preparando el regreso a la escucha…',
     'ESPERANDO PETICIÓN': 'Sí, dígame, señor.',
     RESPONDIENDO: 'Aquí tienes mi respuesta…',
     CONSULTANDO: 'Preparando tu respuesta…',

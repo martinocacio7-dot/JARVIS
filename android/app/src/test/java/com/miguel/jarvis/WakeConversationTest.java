@@ -47,4 +47,17 @@ public class WakeConversationTest {
         flow.quiet();assertEquals(WakeConversation.Input.KEYWORD,flow.input());
         flow.stop();assertEquals(WakeConversation.Input.NONE,flow.input());
     }
+    @Test public void expiredCommandDeadlineCannotStopNextWakeOrShortenTheNextRequest() {
+        WakeConversation flow=new WakeConversation();flow.start();flow.keyword();flow.greeted();flow.ready(1000);
+        assertTrue(flow.silenceExpired(5000));flow.quiet();
+        for(long now=5000;now<=3600000;now+=1000){
+            assertEquals(WakeConversation.Input.KEYWORD,flow.input());
+            assertFalse(flow.silenceExpired(now));
+        }
+        assertTrue(flow.keyword());assertTrue(flow.greeted());
+        flow.ready(3600000);
+        assertFalse(flow.silenceExpired(3603999));
+        assertTrue(flow.silenceExpired(3604000));
+        flow.pause();flow.quiet();assertEquals(WakeConversation.Input.NONE,flow.input());
+    }
 }

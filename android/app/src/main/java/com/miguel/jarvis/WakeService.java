@@ -26,14 +26,22 @@ public final class WakeService extends Service {
     static volatile boolean running=false,listeningConfirmed=false;
     static volatile long activationAttempt=0;
     static volatile String status="INACTIVO",statusText="Pulsa Activar JARVIS y completa los permisos para escuchar el nombre.";
-    static void report(String value,String detail){status=value;statusText=detail;MainActivity.backgroundStatusChanged();}
+    static void report(String value,String detail){status=value;statusText=detail;remember(value,detail);MainActivity.backgroundStatusChanged();}
+    static final ArrayDeque<String> recentStatus=new ArrayDeque<>();
+    static synchronized void remember(String value,String detail){
+        if(recentStatus.size()>=12)recentStatus.removeFirst();
+        recentStatus.addLast(DateFormat.getTimeInstance(DateFormat.MEDIUM).format(new Date())+" · "+value+" · "+detail);
+    }
+    static synchronized String diagnostic(){
+        return "JARVIS "+BuildConfig.VERSION_NAME+" ("+BuildConfig.VERSION_CODE+")\nAndroid "+Build.VERSION.RELEASE+" / SDK "+Build.VERSION.SDK_INT+"\n"+Build.MANUFACTURER+" "+Build.MODEL+"\nServicio activo: "+running+" · Inicio confirmado: "+listeningConfirmed+"\n"+String.join("\n",recentStatus);
+    }
     private static final int NOTICE=20;
     final WakeConversation flow=new WakeConversation();
     final Handler main=new Handler(Looper.getMainLooper());
     final ExecutorService worker=Executors.newSingleThreadExecutor();
     PorcupineManager wakeDetector;
     boolean wakeListening=false,wakePreparing=false;
-    long detectorSession=0;
+    long detectorSession=0,releaseDeadline=0;
     SpeechRecognizer recognizer; TextToSpeech tts; AudioManager audio; AudioFocusRequest focus;
     AudioManager.AudioRecordingCallback recordings;
     boolean ready=false, initialized=false, speaking=false, pendingStart=false, focused=false, startupFatal=false, recordingMonitorRegistered=false;
@@ -87,7 +95,7 @@ public final class WakeService extends Service {
     void watchPermissions(){
         if(!running)return;
         NotificationManager notices=getSystemService(NotificationManager.class);NotificationChannel channel=notices.getNotificationChannel("jarvis_listening");
-        if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED || (Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) || !notices.areNotificationsEnabled() || (channel!=null&&channel.getImportance()==NotificationManager.IMPORTANCE_NONE)){stopSelf();return;}
+        if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED || (Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) || !notices.areNotificationsEnabled() || (channel!=null&&channel.getImportance()==NotificationManager.IMPORTANCE_NONE)){report("ERROR","Android retiró el permiso de micrófono o bloqueó la notificación. Revisa Permisos y activa JARVIS de nuevo.");stopSelf();return;}
         main.postDelayed(()->watchPermissions(),1000);
     }
     Notification notification(String text){
@@ -100,12 +108,20 @@ public final class WakeService extends Service {
         return new Notification.Builder(this,"jarvis_listening").setSmallIcon(com.miguel.jarvis.R.drawable.jarvis).setContentTitle(paused?"JARVIS · Escucha pausada":"JARVIS · Micrófono en segundo plano").setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text)).setContentIntent(open).setOngoing(true).setOnlyAlertOnce(true).setVisibility(Notification.VISIBILITY_PRIVATE).addAction(new Notification.Action.Builder(null,paused?"Retomar":"Pausar",toggle).build()).addAction(new Notification.Action.Builder(null,"Apagar",stop).build()).build();
     }
     void notice(String text){if(running)getSystemService(NotificationManager.class).notify(NOTICE,notification(text));}
-    void destroyRecognizer(){SpeechRecognizer old=recognizer;recognizer=null;if(old!=null)old.destroy();}
+    void destroyRecognizer(){SpeechRecognizer old=recognizer;recognizer=null;if(old!=null){old.destroy();releaseDeadline=SystemClock.elapsedRealtime()+MicrophoneHandoff.GRACE_MS;}}
     void releaseFocus(){if(focused){focused=false;audio.abandonAudioFocusRequest(focus);}}
     void resetAudio(){stopWakeDetector();wakePreparing=false;voiceSequence++;afterSpeech=null;speaking=false;destroyRecognizer();if(tts!=null)tts.stop();releaseFocus();}
-    boolean occupied(){
-        if(audio.getMode()==AudioManager.MODE_IN_CALL||audio.getMode()==AudioManager.MODE_IN_COMMUNICATION)return true;
-        return !audio.getActiveRecordingConfigurations().isEmpty();
+    boolean microphoneReady(Runnable retry){
+        boolean conflict=audio.getMode()==AudioManager.MODE_IN_CALL||audio.getMode()==AudioManager.MODE_IN_COMMUNICATION;
+        List<AudioRecordingConfiguration> configs=audio.getActiveRecordingConfigurations();
+        for(AudioRecordingConfiguration config:configs)conflict|=RecordingPolicy.interrupts(config.getClientAudioSource(),Build.VERSION.SDK_INT>=29&&config.isClientSilenced());
+        MicrophoneHandoff.Decision decision=MicrophoneHandoff.decide(!configs.isEmpty(),conflict,SystemClock.elapsedRealtime(),releaseDeadline);
+        if(decision==MicrophoneHandoff.Decision.READY){releaseDeadline=0;if("LIBERANDO MICRÓFONO".equals(status))report("PREPARANDO","Micrófono liberado. Preparando la siguiente etapa de escucha…");return true;}
+        if(decision==MicrophoneHandoff.Decision.PAUSE){pause("El micrófono está ocupado por otra captura o Android no liberó la anterior. Detén grabaciones o llamadas y toca Retomar.");return false;}
+        if(!"LIBERANDO MICRÓFONO".equals(status))report("LIBERANDO MICRÓFONO","Esperando a que Android cierre la captura anterior. La espera no apaga la escucha.");
+        final int expected=generation;
+        main.postDelayed(()->{if(expected==generation&&running&&flow.input()!=WakeConversation.Input.NONE)retry.run();},100);
+        return false;
     }
     void activate(){
         if(!running||!ready)return;
@@ -127,7 +143,7 @@ public final class WakeService extends Service {
         if(flow.input()==WakeConversation.Input.KEYWORD){startWakeDetector();return;}
         if(flow.input()!=WakeConversation.Input.COMMAND)return;
         if(flow.silenceExpired(SystemClock.elapsedRealtime())){returnToWake();return;}
-        if(occupied()){pause("El micrófono está ocupado. Retoma la escucha cuando termines de grabar.");return;}
+        if(!microphoneReady(()->listen()))return;
         final SpeechRecognizer current=SpeechRecognizer.createSpeechRecognizer(this);recognizer=current;
         final boolean[] listeningReady={false};
         main.postDelayed(()->{if(recognizer==current&&!listeningReady[0])pause("El micrófono no se preparó a tiempo. Toca Retomar para volver a intentar.");},10000);
@@ -135,7 +151,7 @@ public final class WakeService extends Service {
             boolean begun=false;
             boolean valid(){return recognizer==current;}
             public void onReadyForSpeech(Bundle data){
-                if(!valid())return;listeningReady[0]=true;listeningConfirmed=true;report(flow.state()==WakeConversation.State.WAKE?"ESCUCHANDO":"ESPERANDO PETICIÓN",flow.state()==WakeConversation.State.WAKE?"Di JARVIS. La notificación permite pausar y apagar la escucha.":"Sí, dígame, señor. Espero hasta cuatro segundos por tu petición.");
+                if(!valid())return;listeningReady[0]=true;report(flow.state()==WakeConversation.State.WAKE?"ESCUCHANDO":"ESPERANDO PETICIÓN",flow.state()==WakeConversation.State.WAKE?"Di JARVIS. La notificación permite pausar y apagar la escucha.":"Sí, dígame, señor. Espero hasta cuatro segundos por tu petición.");
                 if(flow.state()==WakeConversation.State.COMMAND){flow.ready(SystemClock.elapsedRealtime());scheduleSilenceCheck(generation);}
             }
             public void onBeginningOfSpeech(){if(valid()&&flow.state()==WakeConversation.State.COMMAND){begun=flow.speechBegan(SystemClock.elapsedRealtime());if(begun){int expected=generation;main.postDelayed(()->{if(expected==generation&&recognizer==current)returnToWake();},30000);}}}
@@ -155,8 +171,9 @@ public final class WakeService extends Service {
         try{current.startListening(request);}catch(Exception error){pause("No se pudo iniciar el micrófono. Abre JARVIS para revisar permisos.");}
     }
     void stopWakeDetector(){
-        wakeListening=false;
+        boolean wasListening=wakeListening;wakeListening=false;
         if(wakeDetector!=null)try{wakeDetector.stop();}catch(PorcupineException ignored){}
+        if(wasListening)releaseDeadline=SystemClock.elapsedRealtime()+MicrophoneHandoff.GRACE_MS;
     }
     void deleteWakeDetector(){
         detectorSession++;
@@ -164,7 +181,7 @@ public final class WakeService extends Service {
         if(wakeDetector!=null){wakeDetector.delete();wakeDetector=null;}
     }
     void startWakeDetector(){
-        if(occupied()){pause("El micrófono está ocupado. Retoma cuando termines de grabar.");return;}
+        if(!microphoneReady(()->startWakeDetector()))return;
         if(wakeDetector!=null){startLocalCapture();return;}
         final String key;
         try{key=WakeAccessKey.load(this);}catch(Exception error){pause("No se pudo leer la clave cifrada. Configura el detector desde Permisos.");return;}
@@ -198,7 +215,7 @@ public final class WakeService extends Service {
         });
     }
     void startLocalCapture(){
-        if(occupied()){pause("El micrófono está ocupado. Retoma cuando termines de grabar.");return;}
+        if(!microphoneReady(()->startLocalCapture()))return;
         try{
             wakeDetector.start();wakeListening=true;listeningConfirmed=true;
             report("ESCUCHANDO","Detector local activo. Di JARVIS y espera el saludo antes de tu petición.");
