@@ -13,6 +13,7 @@ import { validateDocument, isDocumentRequest } from './public/document-data.js';
 import { validateTasks } from './public/task-data.js';
 import { parseTaskConversation, executeTaskCommand } from './assistant/commands.js';
 import { calendarReply } from './assistant/calendar.js';
+import { reasoningReply } from './assistant/reasoning.js';
 import { createVoiceService } from './voice/elevenlabs.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
@@ -139,6 +140,8 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
           try { return json(200, await executeTaskCommand(command, database, now())); }
           catch (error) { return json(error instanceof RevisionConflict ? 409 : 503, { error: error instanceof RevisionConflict ? error.message : 'No pude guardar o consultar el pendiente. Revisa la conexión a la base de datos y el límite de 200 pendientes; no asumas que quedó guardado.' }); }
         }
+        const reasoning = reasoningReply(messages);
+        if (reasoning) return json(200, reasoning);
         if (isDocumentRequest(messages.at(-1).content)) return json(200, { mode: 'local', intent: 'documentos', documentDraft: true, reply: 'Puedo preparar Word, PDF, PowerPoint y Excel con el contenido que proporciones. Para informes uso formato base APA 7 estudiantil y texto negro. Abre «Preparar mi documento» y completa título, autor, texto y fuentes reales. No investigo ni redacto un informe completo a partir de un título.' });
         if (isDevelopmentRequest(messages.at(-1).content)) {
           if (!apiKey && !/\b(app|aplicacion|pagina|inventario|tareas|calculadora|sistema|web)\b/i.test(normalize(messages.at(-1).content))) {

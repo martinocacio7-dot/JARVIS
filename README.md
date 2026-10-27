@@ -300,3 +300,16 @@ El APK 1.4.0 permite solicitar aplicaciones instaladas por su nombre: «abre Wha
 ### Conversación de voz continua en Android 1.5.0
 
 En el modo nativo «Activar JARVIS» basta decir el nombre una vez: después de cada respuesta deja ocho segundos para comenzar otro turno, manteniendo el historial reciente. El silencio o «eso es todo» vuelven al detector del nombre. Si el dictado detecta voz sin entenderla, permite una petición de repetición. El modo local pide detalles cuando no reconoce una intención; sigue limitado a las funciones y contenidos implementados. Esto no modifica el dictado manual web ni garantiza resolver restricciones del micrófono en segundo plano.
+
+### Cálculo local con contexto
+
+El servidor incluye herramientas deterministas propias, sin proveedor de IA ni ejecución de código del usuario:
+
+- «Cuánto es (25 + 5) por 3»: paréntesis, signos, potencias enteras de −12 a 12 y prioridad de operaciones.
+- «Cuánto es el 15 por ciento de 200»: porcentaje y explicación del procedimiento.
+- «Convierte 2,5 kilómetros a metros»: unidades métricas de longitud, masa, duración y volumen.
+- «25 por 4» → «y por 3» → «y súmale 20»: reutiliza el último resultado calculado a partir de los turnos del usuario.
+
+Un mensaje de otro tema corta el contexto numérico; los mensajes del asistente no pueden establecer un resultado. Una continuación sin resultado pide el número inicial. Rechaza división entre cero, unidades incompatibles y resultados de magnitud superior a 10¹⁵. Limita cada expresión a 250 caracteres, 100 tokens y 20 niveles de paréntesis; muestra hasta diez decimales y no ofrece aritmética financiera exacta. No convierte monedas ni datos que requieran una cotización externa.
+
+Esto amplía las funciones del motor local sin cambiar los pesos ni la cantidad de neuronas del clasificador. Funciona en el servidor de JARVIS: el teléfono necesita llegar al servidor para estos cálculos, aunque no se use otra IA. No necesita un nuevo APK; despliega el servidor y recarga la app. Las pruebas verifican resultados conocidos, contexto aislado, entradas de código rechazadas y convivencia con recordatorios/proyectos.
