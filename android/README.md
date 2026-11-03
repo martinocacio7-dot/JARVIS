@@ -1,4 +1,6 @@
-# JARVIS para Android · 2.0.0
+# JARVIS para Android · 2.0.1
+
+**Edición actual 2.0.1:** no incluye acceso a notificaciones de otras aplicaciones. Las instrucciones históricas de 1.6.0/2.0.0 sobre ese acceso ya no se aplican a esta edición.
 
 Aplicación nativa para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits. El lanzador abre NativeChatActivity: mensajes, esfera, clasificador y conocimiento se ejecutan en el teléfono. No abre la página de Render ni le solicita las respuestas. Esta entrega no incluye bibliotecas x86 de emulador. Las secciones de versiones 1.x describen el comportamiento histórico de la interfaz web; la sección 2.0 al final detalla el nuevo flujo.
 
@@ -7,7 +9,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Abre la aplicación y comprueba **JARVIS 2.0.0** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
+2. Abre la aplicación y comprueba **JARVIS 2.0.1** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. La activación no solicita credenciales ni conexión a tu servidor.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -161,3 +163,12 @@ El nombre se detecta con Vosk local. Para transcribir la pregunta se prefiere el
 Validación: compilación firmada, Android Lint, pruebas JVM de paridad con el modelo Node, definiciones/contexto, fechas de recordatorios y cálculo sin ejecución de código; guardas de arquitectura impiden reintroducir llamadas a Render en el lanzador y el servicio. No se ha probado esta UI en un teléfono físico ni se garantiza dictado/batería de un fabricante. En el teléfono: abrir sin Wi-Fi/datos y escribir «qué significa guapo», crear un recuerdo y consultarlo, programar un aviso corto con permiso de notificaciones, alternar redes y comprobar que el historial no recarga, y probar la voz española local.
 
 El manifiesto 2.0 no solicita INTERNET para la aplicación: su código no puede hacer peticiones propias a Render. Esto no impide abrir YouTube/navegador ni usar un reconocedor de voz de otro proceso; esas aplicaciones/proveedores pueden usar su propia conexión. La consulta de notificaciones continúa siendo un permiso separado. La selección de otro chat reinicia el contexto activo de la guía; los mensajes guardados siguen visibles y los recuerdos explícitos permanecen en el teléfono.
+
+
+## Edición reducida y Play Protect (2.0.1)
+
+Se retiraron el componente NotificationListenerService, su declaración BIND_NOTIFICATION_LISTENER_SERVICE y el acceso a sus ajustes. El método de consulta responde que esta edición no lee notificaciones ajenas. Se eliminaron también MainActivity/WebView y PrivateLogin, que eran componentes heredados sin uso en el lanzador nativo. No se añadió otro mecanismo para leer mensajes o notificaciones. No se solicitan SMS, accesibilidad, Internet ni superposición. Se mantiene el paquete com.miguel.jarvis y la misma firma de prueba; no se cambia la identidad para eludir una detección.
+
+Permisos que permanecen: micrófono bajo activación explícita; notificaciones propias para avisos y control del servicio; alarmas exactas opcionales con alternativa aproximada; servicio visible de micrófono y bloqueo parcial de CPU; restauración de avisos tras reiniciar. Reiniciar no enciende el micrófono. Las preferencias y chats móviles usan el mismo almacenamiento local y no se eliminan con esta actualización.
+
+El aviso mostrado por Play Protect solo indica posible acceso sensible; no identifica la regla exacta ni permite certificar que este cambio resolverá el bloqueo. La compilación y las pruebas no equivalen a aprobación de Google. Mantén Play Protect activo. Si sigue bloqueado, solicita revisión mediante el formulario oficial descrito en [PLAY_PROTECT_REVIEW.md](PLAY_PROTECT_REVIEW.md).

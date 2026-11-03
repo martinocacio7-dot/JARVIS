@@ -365,3 +365,8 @@ Las lecciones de programación aceptan «resúmelo» sin perder el lenguaje o av
 La aplicación móvil abre una pantalla Android con esfera animada, mensajes y conversaciones locales. Sus respuestas soportadas usan el clasificador propio, conocimiento revisado y herramientas Java instaladas en el APK; no carga la web ni consulta /api/chat de Render. Escribir, guardar recuerdos y programar recordatorios locales no requiere conectividad. La nueva memoria y los chats no se sincronizan automáticamente con los de la web.
 
 El reconocimiento de «Jarvis» es local; transcribir preguntas sigue dependiendo del proveedor Android y de que tenga disponible español offline. La voz de respuesta necesita una voz local instalada, y YouTube requiere su propia conexión. Documentos, biblioteca del servidor y generación de proyectos no se migraron al nuevo motor del teléfono. [Detalles y prueba sin conexión](android/README.md).
+
+
+### Android 2.0.1: edición sin lectura de notificaciones ajenas
+
+La edición actual conserva el chat nativo, esfera, voz, memoria y recordatorios del teléfono, y retira por completo el lector y permiso especial de notificaciones ajenas. También elimina la pantalla web y el acceso a Render heredados del APK. Conserva el paquete y firma para actualizar los datos locales existentes. No se ha validado si Play Protect acepta este archivo en el teléfono; si persiste el bloqueo, corresponde una revisión oficial, no desactivar la protección. [Permisos y revisión](android/PLAY_PROTECT_REVIEW.md).

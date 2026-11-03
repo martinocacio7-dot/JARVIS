@@ -11,11 +11,7 @@
         <activity android:name=".NativeChatActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
-        <activity android:name=".MainActivity" android:exported="false" android:windowSoftInputMode="adjustResize" />
         <service android:name=".WakeService" android:foregroundServiceType="microphone" android:exported="false" android:stopWithTask="false" />
-        <service android:name=".NotificationReader" android:label="Resumen de avisos de JARVIS" android:exported="true" android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
-            <intent-filter><action android:name="android.service.notification.NotificationListenerService" /></intent-filter>
-        </service>
         <receiver android:name=".ReminderReceiver" android:exported="false" />
         <receiver android:name=".BootReceiver" android:exported="true"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/><action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/></intent-filter></receiver>
     </application>

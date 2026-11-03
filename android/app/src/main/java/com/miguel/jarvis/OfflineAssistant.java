@@ -34,7 +34,7 @@ final class OfflineAssistant {
         if(music.matches()||(pendingMusic&&key.matches("(?:de|para) .+"))){String query=music.matches()?music.group(1):key.replaceFirst("^(?:de|para) ","");if(query==null)query=memory.optString("musica favorita",memory.optString("musica",""));pendingMusic=query.isEmpty();if(pendingMusic)return "¿Qué artista o género prefieres? Puedes decir de salsa o para estudiar.";externalAction=true;return AppLauncher.music(context,query,visible);}pendingMusic=false;
         String app=DeviceCommands.appTarget(text);if(app!=null){externalAction=true;return AppLauncher.open(context,app,visible);}
         String calculation=PhoneMath.answer(text);if(calculation!=null)return calculation;
-        if(key.equals("ayuda"))return "Puedo conversar con mi conocimiento instalado, explicar programación, decir hora y fecha, calcular, guardar recuerdos y crear recordatorios del teléfono. También puedo abrir apps, buscar música y resumir notificaciones con permiso. El chat no usa Render.";
+        if(key.equals("ayuda"))return "Puedo conversar con mi conocimiento instalado, explicar programación, decir hora y fecha, calcular, guardar recuerdos y crear recordatorios del teléfono. También puedo abrir apps y buscar música. El chat no usa Render.";
         return brain(context).answer(text);
     }
 }

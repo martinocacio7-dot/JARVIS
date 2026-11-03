@@ -25,7 +25,7 @@ public final class WakeService extends Service {
     static volatile boolean running=false,listeningConfirmed=false;
     static volatile long activationAttempt=0;
     static volatile String status="INACTIVO",statusText="Pulsa Activar JARVIS y completa los permisos para escuchar el nombre.";
-    static void report(String value,String detail){status=value;statusText=detail;remember(value,detail);MainActivity.backgroundStatusChanged();NativeChatActivity.refresh();}
+    static void report(String value,String detail){status=value;statusText=detail;remember(value,detail);NativeChatActivity.refresh();}
     static final ArrayDeque<String> recentStatus=new ArrayDeque<>();
     static synchronized void remember(String value,String detail){
         if(recentStatus.size()>=12)recentStatus.removeFirst();
@@ -105,7 +105,7 @@ public final class WakeService extends Service {
             if(Build.VERSION.SDK_INT>=30)startForeground(NOTICE,notification("Preparando escucha…"),ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
             else startForeground(NOTICE,notification("Preparando escucha…"));
         }catch(Exception error){report("ERROR",error instanceof SecurityException?"Android rechazó el micrófono en segundo plano. Revisa permisos y vuelve a activar con JARVIS abierto.":"Android no pudo mostrar la notificación de escucha. Revisa las notificaciones de JARVIS en Ajustes.");stopSelf();return START_NOT_STICKY;}
-        boolean firstStart=!running;running=true;MainActivity.backgroundModeChanged(true);
+        boolean firstStart=!running;running=true;NativeChatActivity.refresh();
         if(firstStart)watchPermissions();
         if(intent!=null&&PAUSE.equals(intent.getAction()))pause("Escucha pausada. Toca Retomar para escuchar JARVIS.");
         else if(ready)activate();
@@ -346,7 +346,7 @@ public final class WakeService extends Service {
         say(text,()->{if(close||DeviceCommands.endsConversation(command)||DeviceCommands.appTarget(command)!=null)returnToWake();else continueConversation();});
     }
     @Override public void onDestroy(){
-        running=false;updateCpuLock();if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");MainActivity.backgroundModeChanged(false);generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();deleteWakeDetector();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
+        running=false;updateCpuLock();if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");NativeChatActivity.refresh();generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();deleteWakeDetector();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
 }
