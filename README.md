@@ -338,3 +338,6 @@ El catálogo local responde «qué es astetic/aesthetic», minimalismo y vintage
 «Pon música de salsa», «pon música para estudiar» o «pon música» preparan búsquedas en YouTube. El último comando usa el gusto guardado explícitamente (por ejemplo, «recuerda que mi música favorita es salsa») o pregunta qué prefieres. El APK abre resultados y el usuario elige qué reproducir; desde segundo plano requiere tocar una notificación. No consulta recomendaciones privadas de YouTube ni confirma reproducción automática.
 
 El resumen opcional de notificaciones cuenta avisos activos por aplicación dentro del teléfono, sin leer contenidos ni enviarlos al servidor. Requiere autorización manual en Permisos → Resumen de notificaciones. No equivale a contar mensajes sin leer. La web sola no puede leer los avisos del teléfono. Más detalles y límites en [Android](android/README.md).
+
+
+El catálogo distingue también «play», Google Play/Play Store y Play Protect. Ante «qué significa pley» pide aclarar entre palabra inglesa y tienda; conserva esa pregunta para interpretar «la palabra» o «la tienda» en el siguiente turno. «Sí» por sí solo no confirma cuál era la intención. La aclaración no se reconstruye de mensajes del asistente y se descarta al cambiar de tema. Es una corrección explícita de ese término, no una comprensión universal de errores ortográficos.

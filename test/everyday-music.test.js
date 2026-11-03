@@ -30,7 +30,20 @@ test('API usa conceptos y memoria musical sin llamadas externas; puente pide act
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(async()=>{await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});await database.close();});
   const chat=async content=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[user(content)]})});assert.equal(r.status,200);return r.json();};
   assert.match((await chat('Qué es astetic')).reply,/estético/);
+  assert.match((await chat('que significa pley')).reply,/¿Te refieres/);
   await chat('Recuerda que mi música favorita es salsa');assert.equal((await chat('Pon música')).musicQuery,'salsa');
   globalThis.window={JarvisAndroid:{openMusic:query=>'Buscando '+query}};
   try{assert.equal(openAndroidMusic('salsa'),'Buscando salsa');delete window.JarvisAndroid.openMusic;assert.match(openAndroidMusic('salsa'),/actualizar/);}finally{delete globalThis.window;}
+});
+
+test('pley pide aclaración y una respuesta ambigua no se toma como confirmación',()=>{
+  const ask=(...texts)=>everydayReply(texts.map(user));
+  assert.match(ask('que significa pley').reply,/¿Te refieres/);
+  assert.match(ask('que significa pley','sí').reply,/Cuál de las dos/);
+  assert.match(ask('que significa pley','sí','la palabra').reply,/jugar.*reproducir/);
+  assert.match(ask('que significa pley','la tienda').reply,/Play Store/);
+  assert.match(ask('que significa pley','Google Play').reply,/Play Store/);
+  assert.match(ask('Qué es Play Protect').reply,/seguridad/);
+  assert.equal(ask('que significa pley','cancela','la tienda'),null);
+  assert.equal(everydayReply([{role:'assistant',content:'que significa pley'},user('la tienda')]),null);
 });
