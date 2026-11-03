@@ -99,7 +99,7 @@ function solve(text, previous) {
   if (!/[+*/^()-]/.test(expression) || !/^[\d\s.+*/^()-]+$/.test(expression)) return null;
   const steps = [];
   const value = arithmetic(expression, steps);
-  return value === null ? null : { value, explanation: 'Estos son los pasos de cálculo, en el orden en que se aplicaron:\n' + steps.join('\n') + '\nResultado: ' + format(value) + '. Los paréntesis se resuelven primero y multiplicar/dividir tiene prioridad sobre sumar/restar.', reply: `${expression.trim()} = ${format(value)}. Respeto paréntesis, potencias, multiplicación/división y después suma/resta.` };
+  return value === null ? null : { value, explanation: 'Estos son los pasos de cálculo, en el orden en que se aplicaron:\n' + steps.join('\n') + '\nResultado: ' + format(value) + '. Los paréntesis se resuelven primero y multiplicar/dividir tiene prioridad sobre sumar/restar.', reply: `${expression.trim()} = ${format(value)}.` };
 }
 
 export function reasoningReply(messages) {

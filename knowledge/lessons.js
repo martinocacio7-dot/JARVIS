@@ -17,7 +17,8 @@ export function answerLesson(input, previous = null) {
   const bare = text.replace(/\b(en|python|javascript|un|una|el|la|las|los)\b/g, ' ').replace(/\s+/g, ' ').trim();
   const explicit = matches.length && (hasCue(text) || matches.some(item => (item.aliases.includes(text) || item.aliases.includes(bare))) || /^(y |ahora |sobre )/.test(text));
   const current = lessons.find(item => item.id === previous?.id);
-  const follow = current && (argumentCue(text) || /^(?:y )?(?:python|javascript|en python|en javascript|un ejemplo|otro ejemplo|dame (?:un )?ejemplo|muestra(?:me)? (?:un )?ejemplo|dame (?:un )?ejercicio|ponme (?:un )?ejercicio|ejercicio|solucion|dame la solucion|muestra(?:me)? la solucion|mas facil|explicamelo mas facil|explica(?:lo|melo)? mejor|continua|sigue|siguiente)(?: por favor)?$/.test(text));
+  const summaryCue = /^(resumelo|en resumen|en pocas palabras|dame un resumen|no entendi)$/.test(text);
+  const follow = current && (argumentCue(text) || summaryCue || /^(?:y )?(?:python|javascript|en python|en javascript|un ejemplo|otro ejemplo|dame (?:un )?ejemplo|muestra(?:me)? (?:un )?ejemplo|dame (?:un )?ejercicio|ponme (?:un )?ejercicio|ejercicio|solucion|dame la solucion|muestra(?:me)? la solucion|mas facil|explicamelo mas facil|explica(?:lo|melo)? mejor|continua|sigue|siguiente)(?: por favor)?$/.test(text));
   if (!explicit && !follow) return null;
   if (explicit && matches.length > 1) {
     const compare = /\b(diferencia|comparar|compara)\b/.test(text);
@@ -31,6 +32,10 @@ export function answerLesson(input, previous = null) {
   if (unsupportedLanguage(input) || !lesson.examples[language]) return {
     intent: 'programacion', state: { id: lesson.id, language: Object.keys(lesson.examples)[0], stage: 0 },
     reply: 'Para ' + lesson.title + ' tengo ejemplos revisados en ' + Object.keys(lesson.examples).join(' y ') + '. Dime cuál prefieres; todavía no puedo adaptar este ejemplo al lenguaje solicitado.'
+  };
+  if (summaryCue) return {
+    intent: 'programacion', state: { id: lesson.id, language, stage: previous?.id === lesson.id ? previous.stage : 0 },
+    reply: (lesson.explanation?.[language]?.split(/(?<=\.)\s+/)[0] || lesson.simple) + '\n\nSi quieres verlo aplicado, pídeme un ejemplo.'
   };
   let stage = explicit ? 0 : previous.stage;
   if (/\b(solucion)\b/.test(text)) stage = 3;

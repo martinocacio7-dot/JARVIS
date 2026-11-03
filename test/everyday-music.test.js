@@ -60,3 +60,18 @@ test('define guapo con contexto y amplía vocabulario sin interpretar palabras d
   assert.equal(ask('Me llamo Guapo'),null);
   assert.equal(ask('Qué significa una variable aleatoria'),null);
 });
+
+test('adapta definiciones al turno: ejemplo distinto, resumen y referencia bajo petición',()=>{
+ const ask=(...texts)=>everydayReply(texts.map(user)).reply;
+ const start='Qué significa guapo';
+ const first=ask(start,'Dame un ejemplo');const second=ask(start,'Dame otro ejemplo');
+ assert.match(first,/camisa/);assert.match(second,/foto/);assert.notEqual(first,second);
+ const full=ask(start),brief=ask(start,'En resumen');assert(brief.length<full.length);assert.match(brief,/atractiva/);
+ assert.doesNotMatch(full,/https:\/\//);assert.match(ask(start,'Dame la fuente'),/dle\.rae\.es/);
+ assert.match(ask(start,'En resumen','Dame otro ejemplo'),/foto/);
+ assert.equal(everydayReply([user(start),user('cancela'),user('En resumen')]),null);
+});
+
+test('entiende peticiones corteses sin cambiar el significado solicitado',()=>{
+ for(const text of ['¿Puedes decirme qué significa guapo, por favor?','Jarvis explícame qué es guapo','Qué significa ser guapo'])assert.match(everydayReply([user(text)]).reply,/atractiva/);
+});

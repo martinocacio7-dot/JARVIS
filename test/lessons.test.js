@@ -66,7 +66,7 @@ test('chat HTTP entrega fragmentos sin usar IA externa y preserva generador de p
 test('pide aclaración sin inventar y conserva el tema para la siguiente pregunta', () => {
   const unknown = chat('zqxv blorf zqxv');
   assert.equal(unknown.intent, 'desconocido');
-  assert.match(unknown.reply, /¿Qué quieres hacer/);
+  assert.match(unknown.reply, /¿Quieres una explicación, un cálculo o realizar una acción/);
   const contextual = chat('Explícame funciones en Python', 'zqxv blorf zqxv');
   assert.equal(contextual.intent, 'desconocido');
   assert.match(contextual.reply, /¿Quieres una explicación, un ejemplo/);
@@ -88,4 +88,11 @@ test('fundamenta recomendaciones del tema activo sin perder la continuidad', () 
   const explained = chat('Quiero organizar mi día', '¿Por qué recomiendas eso?');
   assert.equal(explained.kind, 'argument');assert.match(explained.reply, /prioridades|tiempo/);
   assert.match(chat('Quiero organizar mi día', '¿Por qué recomiendas eso?', 'Continúa').reply, /Paso 1/);
+});
+
+test('resume sin perder el lenguaje ni avanzar la lección y retoma ejemplos',()=>{
+ const start='Explícame variables en Python';
+ const short=chat(start,'En resumen');assert.equal(short.kind,'lesson');assert.match(short.reply,/Python/);assert.doesNotMatch(short.reply,/JavaScript|\bconst\b|\blet\b/);
+ assert.match(chat(start,'Dame un ejemplo','Resúmelo','Dame un ejemplo').reply,/print\(/);
+ assert.notEqual(chat('En resumen').kind,'lesson');
 });

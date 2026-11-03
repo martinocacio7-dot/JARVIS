@@ -352,3 +352,9 @@ Se verificaron en Chromium el compositor visible en escritorio y móvil, un view
 
 
 El vocabulario cotidiano revisado también incluye guapo/guapa, bonito, elegante, carisma, humildad, empatía, respeto y resiliencia, con ejemplos, matices y enlaces de consulta al DLE. Las definiciones son paráfrasis locales, no citas obtenidas en directo. `knowledge/vocabulary.json` permite ampliar este catálogo sin cambiar el clasificador. Si una pregunta «qué significa …» llega al fallback local, reconoce que se trata de una definición y pide el contexto en vez de afirmar que no entendió qué quería hacer el usuario. Este reconocimiento de la petición no aporta una definición de palabras que todavía no estén cubiertas.
+
+### Respuestas adaptadas a lo que pides
+
+Las definiciones cotidianas empiezan con la respuesta, un ejemplo y el matiz relevante. No repiten enlaces y avisos de consulta en cada turno: «dame la fuente» o «en qué te basas» muestran la referencia sin afirmar una consulta web en directo. «Dame un ejemplo» devuelve el ejemplo, «otro ejemplo» usa un segundo ejemplo revisado y «en resumen» reduce la respuesta al significado principal. También admite «más fácil», «no entendí», «más detalles» y formulaciones como «¿puedes decirme qué significa guapo, por favor?».
+
+Las lecciones de programación aceptan «resúmelo» sin perder el lenguaje o avanzar de paso. Un cálculo devuelve primero el resultado; «por qué» conserva los pasos verificados. No se añaden hechos o explicaciones generadas fuera del contenido revisado. Si no reconoce una petición, ofrece opciones de aclaración más concretas. Las mejoras son del servidor y no requieren otro APK.

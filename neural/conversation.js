@@ -77,7 +77,7 @@ export function respond(model, messages) {
       if (result.intent === 'desconocido') {
         result.reply = topic
           ? `No entendí qué necesitas sobre ${lessonTitle(lesson) || topics[topic].name}. ¿Quieres una explicación, un ejemplo o ayuda con algo concreto?`
-          : 'No entendí bien lo que necesitas. ¿Qué quieres hacer y con qué necesitas ayuda? Puedes darme un ejemplo. Mi modo local todavía no responde cualquier tema.';
+          : 'No pude identificar la petición. ¿Quieres una explicación, un cálculo o realizar una acción? Dime qué necesitas en una frase concreta.';
       }
       if (result.intent === 'cancelar') {
         lesson = null;
