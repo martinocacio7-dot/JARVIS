@@ -1,4 +1,4 @@
-# JARVIS para Android · 1.5.0
+# JARVIS para Android · 1.6.0
 
 Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
 
@@ -7,7 +7,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.5.0** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
+2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.6.0** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -23,7 +23,7 @@ El vocabulario incluye el nombre, distractores y [unk]. Solo la palabra final ex
 
 Tras detectar el nombre se libera la captura local antes del saludo y se abre el dictado Android, que puede enviar audio al proveedor, necesitar Internet y emitir sus tonos normales. Los cuatro segundos solo limitan la espera para empezar la petición; si empiezas a tiempo, hay hasta 30 segundos para terminar. Si el reconocedor termina antes por falta de voz, se permite un solo reintento dentro del mismo plazo original; no se reinician los cuatro segundos. El silencio vuelve al detector local sin despedida ni sesiones de dictado continuas mientras espera el nombre.
 
-La hora se consulta en el teléfono. Las demás peticiones se envían por HTTPS con autenticación al servidor privado, sin seguir redirecciones. El servicio responde con una voz española local instalada. La voz de ElevenLabs de la interfaz web conserva su configuración independiente.
+Hora, fecha y el resumen opcional de cantidades de notificaciones se consultan en el teléfono. Las demás peticiones se envían por HTTPS con autenticación al servidor privado, sin seguir redirecciones. El servicio responde con una voz española local instalada. La voz de ElevenLabs de la interfaz web conserva su configuración independiente.
 
 ## Vídeos y segundo plano
 
@@ -37,7 +37,7 @@ Al forzar la detención, reiniciar el teléfono o morir el proceso no se reactiv
 
 ## Privacidad y diagnóstico
 
-No se solicitan SMS ni acceso a notificaciones ajenas. El micrófono manual sigue disponible con el servicio apagado; mientras lo controla el servicio se deshabilita para evitar dos capturas. El modo de voz del navegador es distinto y no funciona fuera de su pestaña.
+No se solicitan SMS. Desde 1.6.0 el acceso a notificaciones ajenas es opcional y se autoriza por separado para resumir cantidades por aplicación. El micrófono manual sigue disponible con el servicio apagado; mientras lo controla el servicio se deshabilita para evitar dos capturas. El modo de voz del navegador es distinto y no funciona fuera de su pestaña.
 
 **Permisos → Detector local · sin cuenta** explica el motor. **Copiar diagnóstico de voz** copia versión, fabricante/modelo, Android y los últimos doce estados. No incluye claves, conversaciones ni audio y no se envía automáticamente. Pégalo si falla.
 
@@ -80,7 +80,7 @@ La secuencia es: detector local → «Sí, dígame, señor.» → preparar dicta
 
 El servicio solicita un bloqueo parcial de CPU con duración limitada y renovación mientras está activado, incluida la preparación, el saludo, el dictado y la respuesta. Se libera al pausar o apagar. No enciende la pantalla ni arranca tras reiniciar/forzar detención; requiere activación explícita y conserva la notificación. Esta continuidad consume batería y las restricciones del fabricante pueden seguir deteniendo el proceso.
 
-Para usarlo desde otra app: activa desde la barra superior nativa con JARVIS abierto, espera ESCUCHANDO y la notificación, luego sal con Inicio. En Permisos → Segundo plano y batería hay acceso a los ajustes de la aplicación para revisar «Sin restricciones», actividad en segundo plano o inicio automático si tu fabricante lo ofrece. La app no concede esas opciones por sí sola ni solicita acceso a notificaciones de otras apps.
+Para usarlo desde otra app: activa desde la barra superior nativa con JARVIS abierto, espera ESCUCHANDO y la notificación, luego sal con Inicio. En Permisos → Segundo plano y batería hay acceso a los ajustes de la aplicación para revisar «Sin restricciones», actividad en segundo plano o inicio automático si tu fabricante lo ofrece. La app no concede esas opciones por sí sola. Desde 1.6.0 ofrece por separado el acceso opcional a notificaciones para resumir cantidades.
 
 Se conserva Android SpeechRecognizer para el dictado de la pregunta: una prueba exploratoria de Vosk con vocabulario libre transcribió mal varias frases sintéticas, incluida «qué hora es», y no se activó esa alternativa. El detector del nombre sí sigue siendo local. El dictado Android puede usar Internet y emitir tonos; los errores incluyen su código en el diagnóstico.
 
@@ -131,3 +131,16 @@ Activa el modo nativo y di «Jarvis» una vez. El saludo conserva los cuatro seg
 Un NO_MATCH/SPEECH_TIMEOUT después de detectar voz permite pedir una repetición, como máximo una vez sin una frase válida entre medias. Si solo hay silencio no insiste. Las preguntas de aclaración semánticas provienen del modo local: conserva las aclaraciones de recordatorios y lecciones; cuando no reconoce una intención pide concretar qué necesitas. No añade generación libre ni una comprensión general comparable a una persona.
 
 Cinco pruebas JVM verifican encadenamiento de turnos, los plazos, retorno al nombre, cierre explícito y rechazo de callbacks de continuación después de pausa/apagado. Todavía falta probar el micrófono y el proveedor de dictado del teléfono real, en especial las restricciones de segundo plano.
+
+
+## Conceptos cotidianos, música y avisos (1.6.0)
+
+El servidor explica los conceptos revisados aesthetic (también «astetic» y «aestetic»), minimalismo y vintage, con ejemplo, matiz y referencia de consulta. Es un catálogo acotado; no realiza búsquedas web en directo ni pretende responder cualquier concepto.
+
+«Pon música de salsa» o «pon música para estudiar» preparan una búsqueda en YouTube. «Pon música» pregunta artista/género/ambiente si no hay gusto guardado; puedes contestar «de salsa». Con «recuerda que mi música favorita es salsa», una petición posterior usa ese dato. También admite las etiquetas música, género musical y artista favorito. No consulta la cuenta de YouTube ni sus recomendaciones privadas. Con JARVIS visible solicita abrir resultados en YouTube (o navegador); desde segundo plano publica una notificación para tocar. El usuario elige un resultado para reproducir: no hay garantía de reproducción automática. La apertura cierra el turno de escucha para no interpretar el audio de YouTube como una continuación.
+
+Para «mis notificaciones» o «cuántas notificaciones tengo», abre **Permisos → Resumen de notificaciones**, lee el alcance y autoriza a JARVIS en los ajustes especiales de Android. El sistema concede un acceso amplio, pero el código solo consulta paquetes y flags de avisos activos cuando lo pides; no utiliza títulos, textos, extras ni contenidos de mensajes. Excluye JARVIS, avisos permanentes y resúmenes de grupos para no contarlos dos veces. Cuenta entradas de notificación, no mensajes sin leer, y muestra hasta diez aplicaciones en el resumen. Un permiso no concedido o un lector aún desconectado produce una explicación, nunca un número inventado. Puedes retirar el acceso en los mismos ajustes.
+
+Los resúmenes de notificaciones se procesan y hablan localmente. No se añaden al historial del servicio enviado al servidor; los eventos de interfaz se marcan deviceOnly y se excluyen tanto de las peticiones posteriores como de localStorage. El listener no guarda una copia de notificaciones, no cancela avisos ni responde mensajes. No se solicitan accesibilidad, SMS, root ni superposición. Android no ofrece un permiso de acceso total.
+
+La compilación, Lint, las pruebas de recuento y las pruebas de comandos/servidor no sustituyen validar autorización, notificaciones y YouTube en un teléfono real. Si Play Protect bloquea este APK de prueba, usa la web mientras se gestiona su revisión; no desactives la protección.

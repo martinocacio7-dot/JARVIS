@@ -4,10 +4,28 @@ import android.app.*;
 import android.content.*;
 import android.content.pm.*;
 import android.os.Build;
+import android.net.Uri;
 import java.util.*;
 
 /** Resolve only installed launcher activities; background opening requires the user's tap. */
 final class AppLauncher {
+    static String music(Context context,String query,boolean foreground){
+        if(query==null||query.trim().isEmpty()||query.length()>140)return "Dime un artista, género o ambiente para buscar música.";
+        Uri url=new Uri.Builder().scheme("https").authority("www.youtube.com").path("results").appendQueryParameter("search_query",query+" música").build();
+        Intent intent=new Intent(Intent.ACTION_VIEW,url).setPackage("com.google.android.youtube").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if(intent.resolveActivity(context.getPackageManager())==null)intent.setPackage(null);
+        if(intent.resolveActivity(context.getPackageManager())==null)return "No encontré YouTube ni un navegador para abrir la búsqueda.";
+        try{
+            if(foreground){context.startActivity(intent);return "Solicité abrir YouTube con música de «"+query+"». Elige un resultado para reproducir; no he confirmado reproducción automática.";}
+            NotificationManager manager=context.getSystemService(NotificationManager.class);
+            if(!manager.areNotificationsEnabled()||(Build.VERSION.SDK_INT>=33&&context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED))return "Permite las notificaciones de JARVIS o vuelve a la app para abrir YouTube.";
+            manager.createNotificationChannel(new NotificationChannel("jarvis_open_apps","Abrir aplicaciones",NotificationManager.IMPORTANCE_DEFAULT));
+            if(manager.getNotificationChannel("jarvis_open_apps").getImportance()==NotificationManager.IMPORTANCE_NONE)return "Activa el canal Abrir aplicaciones en los ajustes de notificaciones de JARVIS.";
+            PendingIntent tap=PendingIntent.getActivity(context,23,intent,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+            manager.notify(23,new Notification.Builder(context,"jarvis_open_apps").setSmallIcon(com.miguel.jarvis.R.drawable.jarvis).setContentTitle("Música en YouTube").setContentText("Toca para buscar «"+query+"» y elegir qué reproducir.").setContentIntent(tap).setAutoCancel(true).build());
+            return "Toca la notificación de JARVIS para buscar «"+query+"» en YouTube y elegir una canción. No he confirmado reproducción automática.";
+        }catch(RuntimeException error){return "Android no permitió abrir la búsqueda de música.";}
+    }
     static String open(Context context,String target,boolean foreground) {
         if(target==null||target.length()>60)return "Dime el nombre de la aplicación que quieres abrir.";
         PackageManager pm=context.getPackageManager();

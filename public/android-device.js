@@ -77,7 +77,7 @@ export function deviceReply(text, now = new Date()) {
   if (/^(?:que dia es(?: hoy)?|que dia estamos|en que dia estamos|que fecha es(?: hoy)?|cual es la fecha(?: de hoy)?|dime la fecha(?: de hoy)?|fecha de hoy|que dia de la semana es(?: hoy)?)$/.test(phrase)) return `Hoy es ${new Intl.DateTimeFormat('es-EC', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }).format(now)}.`;
   const open = phrase.match(/^(?:abre|abrir|abreme|entra a|entra en|inicia|ejecuta) (?:la (?:aplicacion|app) |el )?([a-z0-9 ]{1,60})$/);
   if (open) return native().openApp ? native().openApp(open[1]) : 'Para abrir aplicaciones necesitas actualizar el APK de JARVIS.';
-  if (/^(?:lee |leeme |dime |muestra |que |cuales son |tengo |hay )?(?:mis |las )?notificaciones(?: tengo)?$/.test(phrase) || /^(?:que|cuales) notificaciones tengo$/.test(phrase)) return native().notifications();
+  if (/^(?:lee |leeme |dime |muestra |que |cuantas |cuales son |tengo |hay )?(?:mis |las )?notificaciones(?: tengo)?$/.test(phrase) || /^(?:que|cuales) notificaciones tengo$/.test(phrase)) return native().notifications();
   return null;
 }
 export function syncAndroidReminders(items) {
@@ -98,4 +98,9 @@ export function beginAndroidPlayback() {
 export function endAndroidPlayback(lease) {
   if (typeof lease !== 'number' || lease < 0) return;
   try { native()?.endPlayback?.(lease); } catch { /* Audio is also released by Android lifecycle cleanup. */ }
+}
+
+export function openAndroidMusic(query) {
+  if (!native()?.openMusic) return 'Para abrir música en YouTube necesitas actualizar el APK de JARVIS.';
+  try { return native().openMusic(query); } catch { return 'Android no confirmó la apertura de YouTube.'; }
 }

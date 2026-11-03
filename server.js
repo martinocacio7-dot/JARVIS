@@ -15,6 +15,8 @@ import { parseTaskConversation, executeTaskCommand } from './assistant/commands.
 import { calendarReply } from './assistant/calendar.js';
 import { MemoryValidationError } from './knowledge/memory-data.js';
 import { parseMemoryCommand, executeMemoryCommand } from './assistant/memory.js';
+import { everydayReply } from './assistant/everyday.js';
+import { musicReply } from './assistant/music.js';
 import { reasoningReply } from './assistant/reasoning.js';
 import { createVoiceService } from './voice/elevenlabs.js';
 
@@ -144,6 +146,10 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
           try { return json(200, await executeMemoryCommand(memory, database, now())); }
           catch (error) { return json(error instanceof RevisionConflict ? 409 : error instanceof MemoryValidationError ? 400 : 503, { error: error instanceof RevisionConflict || error instanceof MemoryValidationError ? error.message : 'No pude confirmar la memoria en la base de datos. No asumas que el cambio quedó guardado; consulta «mis recuerdos» antes de repetirlo.' }); }
         }
+        const music = await musicReply(messages, database);
+        if (music) return json(200, music);
+        const everyday = everydayReply(messages);
+        if (everyday) return json(200, everyday);
         const calendar = calendarReply(messages.at(-1).content, now());
         if (calendar) return json(200, { mode: 'assistant', reply: calendar });
         const command = parseTaskConversation(messages, now());

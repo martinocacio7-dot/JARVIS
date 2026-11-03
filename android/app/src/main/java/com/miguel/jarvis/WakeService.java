@@ -332,7 +332,7 @@ public final class WakeService extends Service {
         if(calendar!=null){finishAnswer(command,calendar,expected);return;}
         String app=DeviceCommands.appTarget(command);
         if(app!=null){MainActivity activity=MainActivity.active.get();finishAnswer(command,AppLauncher.open(this,app,activity!=null&&activity.foreground&&activity.windowFocused),expected);return;}
-        if(key.contains("notificacion")){finishAnswer(command,"Esta versión no puede leer las notificaciones de otras aplicaciones.",expected);return;}
+        if(DeviceCommands.notificationQuery(command)){finishAnswer(command,NotificationReader.summary(this),expected,false,true);return;}
         worker.execute(()->{
             try{
                 if(expected!=generation)return;
@@ -343,15 +343,17 @@ public final class WakeService extends Service {
                     JSONObject tasks=request("/api/tasks",null);String alarms=Reminders.sync(this,tasks.getJSONArray("items").toString());
                     reply=reply.replace("Esta web no emite alarmas automáticas; puedes exportarlo a tu calendario para usar sus avisos.",alarms);
                 }
-                final String result=reply;main.post(()->finishAnswer(command,result,expected));
+                final String result=reply;final String music=response.optString("musicQuery","");
+                main.post(()->{if(expected!=generation)return;if(!music.isEmpty()){MainActivity activity=MainActivity.active.get();finishAnswer(command,AppLauncher.music(this,music,activity!=null&&activity.foreground&&activity.windowFocused),expected,true,false);}else finishAnswer(command,result,expected);});
             }catch(Exception error){main.post(()->{if(expected==generation&&flow.state()==WakeConversation.State.THINKING)finishAnswer(command,"No pude confirmar la respuesta. Revisa la conexión y tu acceso privado en JARVIS. No he reintentado la petición.",expected);});}
         });
     }
-    void finishAnswer(String command,String text,int expected){
+    void finishAnswer(String command,String text,int expected){finishAnswer(command,text,expected,false,false);}
+    void finishAnswer(String command,String text,int expected,boolean close,boolean deviceOnly){
         if(expected!=generation||!flow.answer())return;
-        try{history.put(new JSONObject().put("role","user").put("content",command));history.put(new JSONObject().put("role","assistant").put("content",text));while(history.length()>12)history.remove(0);}catch(JSONException ignored){}
-        MainActivity.backgroundReply(command,text);
-        say(text,()->{if(DeviceCommands.endsConversation(command)||DeviceCommands.appTarget(command)!=null)returnToWake();else continueConversation();});
+        if(!deviceOnly)try{history.put(new JSONObject().put("role","user").put("content",command));history.put(new JSONObject().put("role","assistant").put("content",text));while(history.length()>12)history.remove(0);}catch(JSONException ignored){}
+        MainActivity.backgroundReply(command,text,deviceOnly);
+        say(text,()->{if(close||DeviceCommands.endsConversation(command)||DeviceCommands.appTarget(command)!=null)returnToWake();else continueConversation();});
     }
     JSONObject request(String path,JSONObject body)throws Exception{
         HttpsURLConnection current=(HttpsURLConnection)new URL(MainActivity.HOME+path).openConnection();connection=current;

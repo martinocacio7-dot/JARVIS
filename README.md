@@ -329,3 +329,12 @@ La tabla `jarvis_memories` se crea de forma aditiva al iniciar la base de datos;
 Después de una explicación de programación puedes preguntar «por qué», «justifica tu respuesta» o «dame argumentos». Las doce lecciones incluyen razón, ejemplo, limitación y referencia de consulta. Las guías de proyectos, organización y aprendizaje también pueden explicar su recomendación. Los cálculos pueden mostrar los pasos numéricos que realmente ejecutaron: «2 + 3 por 4» → «por qué». No se apoya en afirmaciones arbitrarias del asistente para fabricar contexto ni afirma haber consultado fuentes en directo. Esto amplía respuestas revisadas y herramientas propias; no incorpora un modelo generativo ni equivale a las capacidades completas de Alexa.
 
 Las pruebas cubren persistencia al reabrir, revisiones concurrentes, escritura/lectura/corrección/borrado, autenticación, errores de almacenamiento, aislamiento de mensajes del asistente, continuidad tras justificaciones y pasos aritméticos. Las comprobaciones PostgreSQL requieren `JARVIS_TEST_DATABASE_URL`; sin ella se omiten explícitamente. La mejora funciona en el servidor y no requiere reinstalar el APK Android 1.5.0: tras desplegar, recarga la app. El audio del teléfono sigue requiriendo validación física.
+
+
+### Conceptos cotidianos, música y notificaciones en Android 1.6.0
+
+El catálogo local responde «qué es astetic/aesthetic», minimalismo y vintage con ejemplos y límites. No es conocimiento general ilimitado ni una consulta web en directo.
+
+«Pon música de salsa», «pon música para estudiar» o «pon música» preparan búsquedas en YouTube. El último comando usa el gusto guardado explícitamente (por ejemplo, «recuerda que mi música favorita es salsa») o pregunta qué prefieres. El APK abre resultados y el usuario elige qué reproducir; desde segundo plano requiere tocar una notificación. No consulta recomendaciones privadas de YouTube ni confirma reproducción automática.
+
+El resumen opcional de notificaciones cuenta avisos activos por aplicación dentro del teléfono, sin leer contenidos ni enviarlos al servidor. Requiere autorización manual en Permisos → Resumen de notificaciones. No equivale a contar mensajes sin leer. La web sola no puede leer los avisos del teléfono. Más detalles y límites en [Android](android/README.md).

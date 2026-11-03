@@ -1,4 +1,4 @@
-import { initAndroidDevice, deviceReply } from './android-device.js';
+import { initAndroidDevice, deviceReply, openAndroidMusic } from './android-device.js';
 import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
 import { projectView } from './project-ui.js';
 import { initFeedback, reportMisunderstanding } from './feedback-ui.js';
@@ -87,6 +87,7 @@ async function send(event) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
     if (data.deviceOnly) messages[messages.length - 1].deviceOnly = true;
+    if (typeof data.musicQuery === 'string') data.reply = openAndroidMusic(data.musicQuery);
     if (data.openTasks) { const alarmStatus = await refreshTasks(); if (alarmStatus) data.reply = data.reply.replace(/Esta web no emite alarmas automáticas; puedes exportarlo a tu calendario para usar sus avisos\./g, alarmStatus); }
     messages.push({ role: 'assistant', ...(data.deviceOnly ? { deviceOnly: true } : {}), content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
@@ -107,9 +108,9 @@ async function send(event) {
 }
 $('#composer').addEventListener('submit', send);
 document.addEventListener('jarvis:background-reply', event => {
-  const { command, reply } = event.detail || {};
+  const { command, reply, deviceOnly } = event.detail || {};
   if (busy || typeof command !== 'string' || typeof reply !== 'string' || command.length > 8000 || reply.length > 16000) return;
-  messages.push({ role: 'user', content: command }, { role: 'assistant', content: reply });
+  messages.push({ role: 'user', content: command, ...(deviceOnly ? { deviceOnly: true } : {}) }, { role: 'assistant', content: reply, ...(deviceOnly ? { deviceOnly: true } : {}) });
   messages = messages.slice(-40); render(); refreshTasks();
 });
 document.addEventListener('jarvis:awake', event => { messages.push({ role: 'assistant', content: event.detail.text, activation: true }); messages = messages.slice(-40); render(); });
