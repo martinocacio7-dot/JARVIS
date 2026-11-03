@@ -63,3 +63,51 @@ header{border-color:#282134}main{isolation:isolate}
 .reply-code-bar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;background:#21172e;padding:9px 12px;font-size:11px;color:#cdb8e7}
 .reply-code-bar button{font:inherit;background:#39254e;color:#eee2ff;border:1px solid #745591;border-radius:6px;padding:7px 10px;min-height:36px}
 .reply-code pre{white-space:pre;overflow:auto;margin:0;padding:16px;background:#100d17;font:13px/1.7 ui-monospace,monospace;tab-size:4}
+
+/* The conversation scrolls independently; the composer stays in the viewport. */
+body{height:var(--app-height,100dvh);min-height:0;overflow:hidden}
+main{height:var(--app-height,100dvh);min-height:0;overflow:hidden}
+main>header,main>.mobile-bar,main>#install-notice{flex-shrink:0}
+#chat-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding-bottom:28px}
+.composer-wrap{flex-shrink:0;width:min(900px,100%);margin:0 auto;padding:10px 28px max(10px,env(safe-area-inset-bottom));background:#0b0912;max-height:48%;overflow-y:auto;border-top:1px solid #292132}
+#composer{gap:12px;padding:12px 16px;border-radius:24px;box-shadow:0 8px 32px #0003}
+#composer textarea{resize:none;min-height:40px;max-height:120px}
+#composer-options{margin:0 0 8px;color:#a69ab8;font-size:12px}
+#composer-options>summary{cursor:pointer;width:max-content;padding:5px 0}
+#composer-options .mode-picker{margin:8px 0;font-size:12px;flex-wrap:wrap}
+#composer-options .wake-help,#composer-options #voice-notice{font-size:11px;line-height:1.5}
+#composer-options .voice-options{margin:8px 0}
+.fine-print{margin:7px 0 0;font-size:10px}
+#notice:empty{display:none}#notice{margin:6px 0}
+body.has-messages .voice-home{display:none}
+#messages{width:min(900px,100%);margin-top:24px}
+.message.user{margin:14px 0 12px 10%;border-radius:20px;background:#21192c}
+.message.assistant{padding:22px 8px 30px;border-color:#292132}
+aside{padding:28px 18px;z-index:30;min-height:0;background:#100d17}
+#new-chat{margin-top:30px;text-align:left;border-radius:12px;padding:14px 16px;background:#221a2d;border-color:#44324f;color:#eee6fa}
+.history-heading{font-size:11px;font-weight:500;letter-spacing:1px;color:#9a8ba9;margin:30px 12px 12px}
+#chat-list{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:20px}
+.chat-row{flex-shrink:0;width:100%;padding:12px;border:0;border-radius:10px;background:transparent;color:#bdb0cb;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.chat-row:hover{background:#21192d;color:#fff}.chat-row[aria-current=true]{background:#30223f;color:#f2e8ff}
+aside footer{padding:12px;color:#a193b0}#history-notice{font-size:11px;line-height:1.5;color:#ffd499}
+#toggle-history,#close-history{display:none}
+#history-backdrop{position:fixed;inset:0;z-index:25;border:0;background:#0008}
+header #chat-title{display:inline-block;max-width:44vw;overflow:hidden;text-overflow:ellipsis;vertical-align:bottom;white-space:nowrap}
+@media(max-width:800px){
+ aside{display:flex;width:min(300px,85vw);inset:0 auto 0 0;transform:translateX(-105%);transition:transform .18s ease;padding:25px 18px;height:var(--app-height,100dvh)}
+ body.history-open aside{transform:translateX(0)}aside .brand{justify-content:flex-start}aside .brand span,aside footer{display:block}
+ #new-chat{font-size:14px;padding:14px 16px}#new-chat::after{content:none}
+ #close-history{display:block;position:absolute;right:12px;top:17px;background:transparent;border:0;color:#cbb7de;font-size:26px}
+ #toggle-history{display:block;flex-shrink:0;background:transparent;border:1px solid #45334f;color:#ded0f1;border-radius:9px;padding:7px 10px;font-size:16px}
+ main{margin-left:0;width:100%;padding-bottom:0}header{padding:12px 16px;gap:10px}header>span:first-of-type{flex:1}header #chat-title{display:none}
+ .mobile-bar{margin-top:0;padding:8px 16px}.mobile-bar button{min-height:38px}#install-notice:empty{display:none}
+ .composer-wrap{padding:7px 14px max(8px,env(safe-area-inset-bottom));max-height:48%}#chat-scroll{padding-bottom:16px}
+ #messages{padding:0 16px}.message.user{margin-left:7%;padding:16px}.message.assistant{padding:18px 0 24px}
+ #composer{padding:10px 12px;gap:10px}#send,#microphone{flex-shrink:0}.fine-print span{display:none}
+}
+@media(prefers-reduced-motion:reduce){aside{transition:none}}
+#tools-panels{display:none}body.tools-open #tools-panels{display:block}
+#mobile-tools{display:block}.mobile-bar{flex-shrink:0}
+#composer textarea{min-width:0;width:0;flex:1 1 0}
+.mobile-bar button{min-width:0}
+@media(max-width:800px){.mobile-bar{width:100%;margin-left:0;margin-right:0}.mobile-bar button{overflow-wrap:anywhere}header #status{max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}

@@ -341,3 +341,11 @@ El resumen opcional de notificaciones cuenta avisos activos por aplicación dent
 
 
 El catálogo distingue también «play», Google Play/Play Store y Play Protect. Ante «qué significa pley» pide aclarar entre palabra inglesa y tienda; conserva esa pregunta para interpretar «la palabra» o «la tienda» en el siguiente turno. «Sí» por sí solo no confirma cuál era la intención. La aclaración no se reconstruye de mensajes del asistente y se descarta al cambiar de tema. Es una corrección explícita de ese término, no una comprensión universal de errores ortográficos.
+
+### Interfaz de conversaciones
+
+La barra de mensajes permanece abajo mientras el historial de la conversación se desplaza de forma independiente. «Nuevo chat» abre una conversación sin borrar la anterior; la barra lateral permite regresar a los chats guardados. En móvil, el botón ☰ abre esa lista y permite cerrarla con ×, fuera del panel o Escape. Funciones y Opciones y voz agrupan los controles secundarios.
+
+Los chats se conservan únicamente en este navegador/dispositivo, no se sincronizan con PostgreSQL ni con otros dispositivos. El historial antiguo `jarvis.messages` se migra al formato `jarvis.chats.v1` al abrir la interfaz. Se conservan hasta 50 chats y los 40 mensajes recientes por chat, excluyendo respuestas privadas deviceOnly. Un fallo de almacenamiento muestra un aviso y no sobrescribe el historial anterior. No se borran chats automáticamente al llegar al límite. Los recuerdos explícitos de la base de datos siguen separados de esta lista de conversaciones.
+
+Se verificaron en Chromium el compositor visible en escritorio y móvil, un viewport reducido, cambio de chat, persistencia al recargar, migración y texto sin ejecutar HTML. Los controles de Android siguen dependiendo del APK instalado; estos cambios web no requieren otro APK.

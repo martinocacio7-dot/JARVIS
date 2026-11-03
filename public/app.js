@@ -1,3 +1,4 @@
+import { loadHistory, freshHistory, updateHistory, newHistoryChat, saveHistory } from './chat-history.js';
 import { initAndroidDevice, deviceReply, openAndroidMusic } from './android-device.js';
 import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
 import { projectView } from './project-ui.js';
@@ -13,12 +14,29 @@ const $ = selector => document.querySelector(selector);
 let messages = [];
 let busy = false;
 let storageAvailable = true;
-try {
-  const saved = JSON.parse(localStorage.getItem('jarvis.messages') || '[]');
-  if (Array.isArray(saved)) messages = saved.filter(m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string').slice(-40);
-} catch { storageAvailable = false; }
+let history = freshHistory();
+try { history = loadHistory(localStorage); } catch { storageAvailable = false; }
+messages = history.chats.find(chat => chat.id === history.activeId).messages.slice();
+function closeHistory() {
+  document.body.classList.remove('history-open');$('#history-backdrop').hidden = true;
+  $('#toggle-history').setAttribute('aria-expanded', 'false');$('#chat-sidebar').inert = window.innerWidth <= 800;document.querySelector('main').inert = false;
+}
+function renderHistory() {
+  $('#chat-title').textContent = '/ ' + history.chats.find(chat => chat.id === history.activeId).title;
+  $('#chat-list').replaceChildren(...history.chats.slice().sort((a,b) => b.updatedAt-a.updatedAt).map(chat => {
+    const button = document.createElement('button');button.type = 'button';button.className = 'chat-row';
+    button.textContent = chat.title;button.title = chat.title;button.setAttribute('aria-current', String(chat.id === history.activeId));button.disabled = busy;
+    button.addEventListener('click', () => {
+      if (busy || isDictating()) return;
+      stopSpeaking();document.dispatchEvent(new Event('jarvis:new-chat'));
+      history.activeId = chat.id;messages = chat.messages.slice();$('#prompt').value = '';$('#notice').textContent = '';
+      closeHistory();render();requestAnimationFrame(() => $('#chat-scroll').scrollTo({ top: $('#chat-scroll').scrollHeight }));if (window.innerWidth > 800) $('#prompt').focus();else $('#toggle-history').focus();
+    });return button;
+  }));
+  $('#history-notice').textContent = storageAvailable ? '' : 'No se pudo guardar el historial. Conserva esta pestaña abierta; los chats anteriores no se sobrescribieron.';
+}
 function render() {
-  $('#welcome').hidden = messages.length > 0;
+  $('#welcome').hidden = messages.length > 0;document.body.classList.toggle('has-messages', messages.length > 0);
   $('#messages').replaceChildren(...messages.map((message, index) => {
     const article = document.createElement('article');
     article.className = `message ${message.role}`;
@@ -63,7 +81,9 @@ function render() {
     }
     return article;
   }));
-  try { localStorage.setItem('jarvis.messages', JSON.stringify(messages.filter(message => !message.deviceOnly))); } catch { storageAvailable = false; }
+  updateHistory(history, messages);
+  if (storageAvailable) try { saveHistory(localStorage, history); } catch { storageAvailable = false; }
+  renderHistory();
 }
 async function send(event) {
   event.preventDefault();
@@ -103,7 +123,7 @@ async function send(event) {
     $('#new-chat').disabled = false;
     render();
     $('#prompt').focus();
-    $('#composer').scrollIntoView({ behavior: 'smooth', block: 'end' });
+    $('#chat-scroll').scrollTo({ top: $('#chat-scroll').scrollHeight, behavior: 'smooth' });
   }
 }
 $('#composer').addEventListener('submit', send);
@@ -115,7 +135,19 @@ document.addEventListener('jarvis:background-reply', event => {
 });
 document.addEventListener('jarvis:awake', event => { messages.push({ role: 'assistant', content: event.detail.text, activation: true }); messages = messages.slice(-40); render(); });
 $('#prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('#composer').requestSubmit(); } });
-$('#new-chat').addEventListener('click', () => { if (busy || isDictating()) return; stopSpeaking(); document.dispatchEvent(new Event('jarvis:new-chat')); messages = []; render(); $('#notice').textContent = ''; $('#prompt').focus(); });
+$('#new-chat').addEventListener('click', () => {
+  if (busy || isDictating()) return;
+  try { newHistoryChat(history); } catch (error) { $('#notice').textContent = error.message;return; }
+  stopSpeaking();document.dispatchEvent(new Event('jarvis:new-chat'));messages = [];$('#prompt').value = '';
+  closeHistory();render();$('#notice').textContent = '';$('#prompt').focus();$('#chat-scroll').scrollTop = 0;
+});
+$('#toggle-history').addEventListener('click', () => { document.body.classList.add('history-open');$('#chat-sidebar').inert = false;document.querySelector('main').inert = true;$('#history-backdrop').hidden = false;$('#toggle-history').setAttribute('aria-expanded', 'true');$('#close-history').focus(); });
+$('#close-history').addEventListener('click', () => { closeHistory();$('#toggle-history').focus(); });
+$('#history-backdrop').addEventListener('click', closeHistory);
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && document.body.classList.contains('history-open')) { closeHistory();$('#toggle-history').focus(); } });
+function fitViewport() { document.documentElement.style.setProperty('--app-height', `${window.visualViewport?.height || window.innerHeight}px`);if (window.innerWidth > 800) closeHistory();else $('#chat-sidebar').inert = !document.body.classList.contains('history-open'); }
+window.visualViewport?.addEventListener('resize', fitViewport);window.addEventListener('resize', fitViewport);fitViewport();
+
 document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => { $('#prompt').value = button.dataset.prompt; $('#prompt').focus(); }));
 initLibrary();
 initFeedback();
@@ -124,7 +156,8 @@ initVoice();
 initTasks();
 initMobile();
 render();
+if (messages.length) requestAnimationFrame(() => $('#chat-scroll').scrollTo({ top: $('#chat-scroll').scrollHeight }));
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
-  $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : `● Red local v${data.neural.version} · ${data.neural.intents} intenciones`;
-  if (data.mode === 'local') $('#notice').textContent = `Red propia: ${data.neural.hiddenSize} neuronas ocultas y ${data.neural.examples} ejemplos. Prueba «Qué recuerdas de mí», «Cómo puedo entrenarte» o «Cuáles son tus límites». Todavía uso respuestas programadas.`;
+  $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : '● Motor propio';
+
 }).catch(() => { $('#status').textContent = 'Sin conexión'; });
