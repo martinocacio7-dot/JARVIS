@@ -10,7 +10,7 @@ public final class ReminderReceiver extends BroadcastReceiver {
         manager.createNotificationChannel(new NotificationChannel("reminders","Recordatorios de JARVIS",NotificationManager.IMPORTANCE_HIGH));
         if (Build.VERSION.SDK_INT>=33 && context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED) return;
         String text=intent.getStringExtra("text"); if (text==null) return;
-        PendingIntent open=PendingIntent.getActivity(context,0,new Intent(context,MainActivity.class),PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent open=PendingIntent.getActivity(context,0,new Intent(context,NativeChatActivity.class),PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         Notification notification=new Notification.Builder(context,"reminders").setSmallIcon(com.miguel.jarvis.R.drawable.jarvis).setContentTitle("JARVIS · Recordatorio").setContentText(text).setStyle(new Notification.BigTextStyle().bigText(text)).setContentIntent(open).setAutoCancel(true).build();
         manager.notify(intent.getDataString(),1,notification);
     }

@@ -62,3 +62,5 @@ export function definitionFallback(text) {
   const match = normalizeQuestion(text).match(/^que significa (?:la palabra |el termino )?([a-z0-9]+(?: [a-z0-9]+){0,3})$/);
   return match ? `Entendí que buscas el significado de «${match[1]}». Todavía no tengo una definición revisada en mi vocabulario local. ¿En qué frase o situación lo viste?` : null;
 }
+
+export { entries as mobileEntries };

@@ -1,14 +1,14 @@
-# JARVIS para Android · 1.6.0
+# JARVIS para Android · 2.0.0
 
-Aplicación para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits, conectada a https://jarvis-privado-rmkm.onrender.com. Esta entrega no incluye bibliotecas x86 de emulador.
+Aplicación nativa para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits. El lanzador abre NativeChatActivity: mensajes, esfera, clasificador y conocimiento se ejecutan en el teléfono. No abre la página de Render ni le solicita las respuestas. Esta entrega no incluye bibliotecas x86 de emulador. Las secciones de versiones 1.x describen el comportamiento histórico de la interfaz web; la sección 2.0 al final detalla el nuevo flujo.
 
 La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-small-es-0.42**. No requiere Picovoice, AccessKey, cuenta externa ni validación de licencia por Internet. El APK incluye el modelo: no lo descarga el teléfono. La actualización elimina las preferencias y la clave Keystore usadas para la AccessKey antigua.
 
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Entra con tu usuario y contraseña de JARVIS. Comprueba **JARVIS 1.6.0** en la barra nativa; la interfaz web puede actualizarse sin actualizar el APK.
-3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. El acceso privado se guarda cifrado para consultar tu servidor desde el servicio.
+2. Abre la aplicación y comprueba **JARVIS 2.0.0** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
+3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. La activación no solicita credenciales ni conexión a tu servidor.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
 6. La notificación permite **Pausar**, **Retomar** y **Apagar**. La esfera refleja el estado real, incluido PAUSADO.
@@ -23,7 +23,7 @@ El vocabulario incluye el nombre, distractores y [unk]. Solo la palabra final ex
 
 Tras detectar el nombre se libera la captura local antes del saludo y se abre el dictado Android, que puede enviar audio al proveedor, necesitar Internet y emitir sus tonos normales. Los cuatro segundos solo limitan la espera para empezar la petición; si empiezas a tiempo, hay hasta 30 segundos para terminar. Si el reconocedor termina antes por falta de voz, se permite un solo reintento dentro del mismo plazo original; no se reinician los cuatro segundos. El silencio vuelve al detector local sin despedida ni sesiones de dictado continuas mientras espera el nombre.
 
-Hora, fecha y el resumen opcional de cantidades de notificaciones se consultan en el teléfono. Las demás peticiones se envían por HTTPS con autenticación al servidor privado, sin seguir redirecciones. El servicio responde con una voz española local instalada. La voz de ElevenLabs de la interfaz web conserva su configuración independiente.
+El motor 2.0 resuelve las peticiones soportadas con código y datos del teléfono. Hora, fecha y el resumen opcional de notificaciones también son locales. El servicio responde con una voz española local instalada. El dictado Android sigue siendo una dependencia separada y puede necesitar Internet. YouTube requiere su propia conexión. La configuración de voz de la web es independiente y no participa en el chat nativo.
 
 ## Vídeos y segundo plano
 
@@ -144,3 +144,20 @@ Para «mis notificaciones» o «cuántas notificaciones tengo», abre **Permisos
 Los resúmenes de notificaciones se procesan y hablan localmente. No se añaden al historial del servicio enviado al servidor; los eventos de interfaz se marcan deviceOnly y se excluyen tanto de las peticiones posteriores como de localStorage. El listener no guarda una copia de notificaciones, no cancela avisos ni responde mensajes. No se solicitan accesibilidad, SMS, root ni superposición. Android no ofrece un permiso de acceso total.
 
 La compilación, Lint, las pruebas de recuento y las pruebas de comandos/servidor no sustituyen validar autorización, notificaciones y YouTube en un teléfono real. Si Play Protect bloquea este APK de prueba, usa la web mientras se gestiona su revisión; no desactives la protección.
+
+
+## Chat nativo y motor del teléfono (2.0.0)
+
+La pantalla de inicio ya no es un WebView. NativeChatActivity presenta mensajes, compositor inferior, conversaciones guardadas y una esfera Canvas que se anima al preparar o reproducir respuestas. El servicio de activación usa OfflineAssistant: no hay transporte HTTP al servidor, credenciales ni una espera de Render. Un cambio entre Wi-Fi y datos no reinicia ni recarga el chat móvil por una navegación web. Esto no garantiza que Android conserve el proceso; las restricciones de batería y de micrófono siguen aplicándose.
+
+El APK incorpora el modelo MLP propio y sus pesos, las definiciones cotidianas y las lecciones revisadas. MobileBrain implementa la misma extracción de características, corrección de palabras y umbrales del clasificador JavaScript; se compara su intención con fixtures generadas por el motor Node. Esta es una comprobación de paridad de implementación, no una nueva medida de inteligencia. No se entrena ni incorpora un LLM de terceros. El conocimiento instalado cambia al actualizar el APK.
+
+Funciones locales iniciales: hora y fecha, definiciones incluidas, explicaciones y ejemplos de programación, cálculo básico con paréntesis y + − × ÷, recuerdos explícitos de hasta 50 datos, y recordatorios de una fecha/hora o intervalo. La agenda usa la zona horaria del teléfono, no UTC−5 fijo, y programa AlarmManager con avisos aproximados si no se permiten alarmas exactas. Las repeticiones no están soportadas. Se conservan hasta 200 recordatorios locales y 50 chats con los últimos 40 mensajes cada uno. El resumen opcional de notificaciones permanece privado y se excluye de los chats guardados. La apertura de aplicaciones/YouTube continúa usando intents y toque en notificación cuando Android lo exige.
+
+Los recuerdos y chats del teléfono son nuevos almacenes privados locales, separados de PostgreSQL, la web y otros dispositivos. No se descargan ni sincronizan automáticamente conversaciones o recuerdos desde Render. Los antiguos avisos que ya estaban sincronizados pueden restaurarse desde su caché local anterior; la nueva agenda móvil muestra los creados por el motor móvil. La generación de documentos, proyectos arbitrarios y biblioteca del servidor no se trasladó a esta pantalla y se informa como no disponible.
+
+El nombre se detecta con Vosk local. Para transcribir la pregunta se prefiere el reconocedor instalado en el dispositivo (Android 12+ si está disponible) y se solicita preferencia offline al proveedor predeterminado. Esa preferencia **no garantiza** dictado offline: depende del servicio Android y sus paquetes de idioma. No se incluyó el dictado libre Vosk explorado anteriormente porque transcribía mal las frases evaluadas. Escribir sí funciona sin conexión; para responder en voz se necesita una voz española local instalada. YouTube y otras apps necesitan su propia conectividad.
+
+Validación: compilación firmada, Android Lint, pruebas JVM de paridad con el modelo Node, definiciones/contexto, fechas de recordatorios y cálculo sin ejecución de código; guardas de arquitectura impiden reintroducir llamadas a Render en el lanzador y el servicio. No se ha probado esta UI en un teléfono físico ni se garantiza dictado/batería de un fabricante. En el teléfono: abrir sin Wi-Fi/datos y escribir «qué significa guapo», crear un recuerdo y consultarlo, programar un aviso corto con permiso de notificaciones, alternar redes y comprobar que el historial no recarga, y probar la voz española local.
+
+El manifiesto 2.0 no solicita INTERNET para la aplicación: su código no puede hacer peticiones propias a Render. Esto no impide abrir YouTube/navegador ni usar un reconocedor de voz de otro proceso; esas aplicaciones/proveedores pueden usar su propia conexión. La consulta de notificaciones continúa siendo un permiso separado. La selección de otro chat reinicia el contexto activo de la guía; los mensajes guardados siguen visibles y los recuerdos explícitos permanecen en el teléfono.

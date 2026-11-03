@@ -108,3 +108,5 @@ export function respond(model, messages) {
   }
   return result;
 }
+
+export { topics as mobileTopics };

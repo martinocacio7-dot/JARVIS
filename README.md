@@ -358,3 +358,10 @@ El vocabulario cotidiano revisado también incluye guapo/guapa, bonito, elegante
 Las definiciones cotidianas empiezan con la respuesta, un ejemplo y el matiz relevante. No repiten enlaces y avisos de consulta en cada turno: «dame la fuente» o «en qué te basas» muestran la referencia sin afirmar una consulta web en directo. «Dame un ejemplo» devuelve el ejemplo, «otro ejemplo» usa un segundo ejemplo revisado y «en resumen» reduce la respuesta al significado principal. También admite «más fácil», «no entendí», «más detalles» y formulaciones como «¿puedes decirme qué significa guapo, por favor?».
 
 Las lecciones de programación aceptan «resúmelo» sin perder el lenguaje o avanzar de paso. Un cálculo devuelve primero el resultado; «por qué» conserva los pasos verificados. No se añaden hechos o explicaciones generadas fuera del contenido revisado. Si no reconoce una petición, ofrece opciones de aclaración más concretas. Las mejoras son del servidor y no requieren otro APK.
+
+
+### Android 2.0.0: chat nativo independiente de Render
+
+La aplicación móvil abre una pantalla Android con esfera animada, mensajes y conversaciones locales. Sus respuestas soportadas usan el clasificador propio, conocimiento revisado y herramientas Java instaladas en el APK; no carga la web ni consulta /api/chat de Render. Escribir, guardar recuerdos y programar recordatorios locales no requiere conectividad. La nueva memoria y los chats no se sincronizan automáticamente con los de la web.
+
+El reconocimiento de «Jarvis» es local; transcribir preguntas sigue dependiendo del proveedor Android y de que tenga disponible español offline. La voz de respuesta necesita una voz local instalada, y YouTube requiere su propia conexión. Documentos, biblioteca del servidor y generación de proyectos no se migraron al nuevo motor del teléfono. [Detalles y prueba sin conexión](android/README.md).

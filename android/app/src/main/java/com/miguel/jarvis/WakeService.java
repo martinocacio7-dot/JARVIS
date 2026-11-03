@@ -10,9 +10,9 @@ import android.os.*;
 import android.speech.*;
 import android.speech.tts.*;
 import org.json.*;
-import javax.net.ssl.HttpsURLConnection;
+
 import java.io.*;
-import java.net.URL;
+
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.text.DateFormat;
@@ -21,11 +21,11 @@ import java.util.concurrent.*;
 
 /** Explicitly enabled microphone foreground service. No notification-reading access. */
 public final class WakeService extends Service {
-    static final String STOP="com.miguel.jarvis.STOP_WAKE", PAUSE="com.miguel.jarvis.PAUSE_WAKE", RESUME="com.miguel.jarvis.RESUME_WAKE";
+    static final String TEXT="com.miguel.jarvis.LOCAL_TEXT", STOP="com.miguel.jarvis.STOP_WAKE", PAUSE="com.miguel.jarvis.PAUSE_WAKE", RESUME="com.miguel.jarvis.RESUME_WAKE";
     static volatile boolean running=false,listeningConfirmed=false;
     static volatile long activationAttempt=0;
     static volatile String status="INACTIVO",statusText="Pulsa Activar JARVIS y completa los permisos para escuchar el nombre.";
-    static void report(String value,String detail){status=value;statusText=detail;remember(value,detail);MainActivity.backgroundStatusChanged();}
+    static void report(String value,String detail){status=value;statusText=detail;remember(value,detail);MainActivity.backgroundStatusChanged();NativeChatActivity.refresh();}
     static final ArrayDeque<String> recentStatus=new ArrayDeque<>();
     static synchronized void remember(String value,String detail){
         if(recentStatus.size()>=12)recentStatus.removeFirst();
@@ -51,8 +51,8 @@ public final class WakeService extends Service {
     boolean ready=false, initialized=false, speaking=false, pendingStart=false, focused=false, startupFatal=false, recordingMonitorRegistered=false;
     int voiceSequence=0;
     volatile int generation=0;
-    Runnable afterSpeech;
-    volatile HttpsURLConnection connection;
+    Runnable afterSpeech;String pendingText;
+
     JSONArray history=new JSONArray();
 
     @Override public void onCreate(){
@@ -89,12 +89,17 @@ public final class WakeService extends Service {
                 public void onDone(String id){main.post(()->speechDone(id));}
                 public void onError(String id){main.post(()->{if(id.equals(String.valueOf(voiceSequence)))pause("No se pudo reproducir la voz. Revisa la síntesis de voz.");});}
             });
-            if(pendingStart){pendingStart=false;activate();}
+            if(pendingText!=null){String text=pendingText;pendingText=null;pendingStart=false;answerTyped(text);}else if(pendingStart){pendingStart=false;activate();}
         });
         }catch(Exception error){startupFatal=true;report("ERROR","Android no pudo preparar el audio. Revisa los permisos de micrófono y el motor de voz desde Permisos.");stopSelf();}
     }
     @Override public int onStartCommand(Intent intent,int flags,int startId){
         if(startupFatal){stopSelf();return START_NOT_STICKY;}
+        if(intent!=null&&TEXT.equals(intent.getAction())&&running){
+            String text=intent.getStringExtra("text");
+            if(text!=null&&!text.trim().isEmpty()&&text.length()<=4000){if(ready)answerTyped(text);else{pendingText=text;pendingStart=true;report("PREPARANDO","Preparando la voz para responder tu mensaje del teléfono…");}}
+            return START_NOT_STICKY;
+        }
         if(intent!=null&&STOP.equals(intent.getAction())){stopSelf();return START_NOT_STICKY;}
         try{
             if(Build.VERSION.SDK_INT>=30)startForeground(NOTICE,notification("Preparando escucha…"),ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE);
@@ -128,7 +133,7 @@ public final class WakeService extends Service {
     Notification notification(String text){
         NotificationManager notices=getSystemService(NotificationManager.class);
         notices.createNotificationChannel(new NotificationChannel("jarvis_listening","Escucha de JARVIS",NotificationManager.IMPORTANCE_LOW));
-        PendingIntent open=PendingIntent.getActivity(this,0,new Intent(this,MainActivity.class),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent open=PendingIntent.getActivity(this,0,new Intent(this,NativeChatActivity.class),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         boolean paused=flow.state()==WakeConversation.State.PAUSED;
         PendingIntent toggle=PendingIntent.getService(this,1,new Intent(this,WakeService.class).setAction(paused?RESUME:PAUSE),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent stop=PendingIntent.getService(this,2,new Intent(this,WakeService.class).setAction(STOP),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
@@ -171,7 +176,7 @@ public final class WakeService extends Service {
         repairPrompts=0;commandRetries=0;commandDefault=false;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
     }
     void pause(String message){
-        pendingStart=false;generation++;flow.pause();updateCpuLock();report("PAUSADO",message);resetAudio();HttpsURLConnection current=connection;if(current!=null)current.disconnect();notice(message);
+        pendingStart=false;pendingText=null;generation++;flow.pause();updateCpuLock();report("PAUSADO",message);resetAudio();notice(message);
     }
     void returnToWake(){
         if(flow.state()==WakeConversation.State.PAUSED||flow.state()==WakeConversation.State.STOPPED)return;
@@ -233,7 +238,7 @@ public final class WakeService extends Service {
                 }else pause("El dictado Android se detuvo (código "+error+"). Revisa su servicio de voz, Internet y permisos; copia el diagnóstico desde Permisos.");
             }
         });
-        Intent request=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE,"es-EC").putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1);
+        Intent request=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE,"es-EC").putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1).putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,true);
         try{current.startListening(request);}catch(Exception error){pause("No se pudo iniciar el micrófono. Abre JARVIS para revisar permisos.");}
     }
     void stopWakeDetector(){
@@ -323,51 +328,25 @@ public final class WakeService extends Service {
         if(!id.equals(String.valueOf(voiceSequence))||!speaking)return;
         speaking=false;releaseFocus();Runnable done=afterSpeech;afterSpeech=null;if(done!=null)done.run();
     }
+    void answerTyped(String text){generation++;resetAudio();flow.start();flow.keyword();flow.greeted();if(flow.command(text,SystemClock.elapsedRealtime()))answer(text);}
     void answer(String command){
-        report("CONSULTANDO","Preparando la respuesta a tu petición…");notice("Consultando tu petición…");final int expected=generation;
-        String key=Normalizer.normalize(command.toLowerCase(Locale.ROOT),Normalizer.Form.NFD).replaceAll("\\p{M}","").replaceAll("[^a-z0-9 ]","").trim();
-        if(key.matches("(?:que hora es|dime la hora|la hora|hora actual)")){finishAnswer(command,"Son las "+DateFormat.getTimeInstance(DateFormat.SHORT,new Locale("es")).format(new Date())+".",expected);return;}
-        if(DeviceCommands.endsConversation(command)){finishAnswer(command,"De acuerdo. Cuando me necesites, di JARVIS.",expected);return;}
-        String calendar=DeviceCommands.calendarReply(command,java.time.ZonedDateTime.now());
-        if(calendar!=null){finishAnswer(command,calendar,expected);return;}
-        String app=DeviceCommands.appTarget(command);
-        if(app!=null){MainActivity activity=MainActivity.active.get();finishAnswer(command,AppLauncher.open(this,app,activity!=null&&activity.foreground&&activity.windowFocused),expected);return;}
-        if(DeviceCommands.notificationQuery(command)){finishAnswer(command,NotificationReader.summary(this),expected,false,true);return;}
+        report("CONSULTANDO","Preparando respuesta con el motor del teléfono…");notice("Pensando en el teléfono…");final int expected=generation;
         worker.execute(()->{
-            try{
-                if(expected!=generation)return;
-                JSONArray messages=new JSONArray(history.toString());messages.put(new JSONObject().put("role","user").put("content",command));
-                JSONObject response=request("/api/chat",new JSONObject().put("messages",messages));String reply=response.getString("reply");
-                if(response.optBoolean("openTasks")){
-                    if(expected!=generation)return;
-                    JSONObject tasks=request("/api/tasks",null);String alarms=Reminders.sync(this,tasks.getJSONArray("items").toString());
-                    reply=reply.replace("Esta web no emite alarmas automáticas; puedes exportarlo a tu calendario para usar sus avisos.",alarms);
-                }
-                final String result=reply;final String music=response.optString("musicQuery","");
-                main.post(()->{if(expected!=generation)return;if(!music.isEmpty()){MainActivity activity=MainActivity.active.get();finishAnswer(command,AppLauncher.music(this,music,activity!=null&&activity.foreground&&activity.windowFocused),expected,true,false);}else finishAnswer(command,result,expected);});
-            }catch(Exception error){main.post(()->{if(expected==generation&&flow.state()==WakeConversation.State.THINKING)finishAnswer(command,"No pude confirmar la respuesta. Revisa la conexión y tu acceso privado en JARVIS. No he reintentado la petición.",expected);});}
+            OfflineAssistant.Reply reply;
+            try{if(expected!=generation)return;reply=OfflineAssistant.reply(this,command,NativeChatActivity.foreground());}
+            catch(Exception error){reply=new OfflineAssistant.Reply("No pude procesar esa petición en el teléfono. No he confirmado ninguna acción.",false,false);}
+            final OfflineAssistant.Reply result=reply;main.post(()->{if(expected==generation)finishAnswer(command,result.text,expected,result.close,result.privateReply);});
         });
     }
     void finishAnswer(String command,String text,int expected){finishAnswer(command,text,expected,false,false);}
     void finishAnswer(String command,String text,int expected,boolean close,boolean deviceOnly){
         if(expected!=generation||!flow.answer())return;
         if(!deviceOnly)try{history.put(new JSONObject().put("role","user").put("content",command));history.put(new JSONObject().put("role","assistant").put("content",text));while(history.length()>12)history.remove(0);}catch(JSONException ignored){}
-        MainActivity.backgroundReply(command,text,deviceOnly);
+        NativeChatActivity.reply(this,command,text,deviceOnly);
         say(text,()->{if(close||DeviceCommands.endsConversation(command)||DeviceCommands.appTarget(command)!=null)returnToWake();else continueConversation();});
     }
-    JSONObject request(String path,JSONObject body)throws Exception{
-        HttpsURLConnection current=(HttpsURLConnection)new URL(MainActivity.HOME+path).openConnection();connection=current;
-        try{
-            current.setInstanceFollowRedirects(false);current.setConnectTimeout(15000);current.setReadTimeout(45000);current.setRequestProperty("Authorization",PrivateLogin.authorization(this));current.setRequestProperty("Accept","application/json");
-            if(body!=null){current.setRequestMethod("POST");current.setDoOutput(true);current.setRequestProperty("Content-Type","application/json");try(OutputStream out=current.getOutputStream()){out.write(body.toString().getBytes(StandardCharsets.UTF_8));}}
-            if(current.getResponseCode()!=200)throw new IOException("Private server request was not confirmed");
-            try(InputStream in=current.getInputStream();ByteArrayOutputStream data=new ByteArrayOutputStream()){
-                byte[] buffer=new byte[8192];int n;while((n=in.read(buffer))!=-1){if(data.size()+n>1000000)throw new IOException("Response too large");data.write(buffer,0,n);}return new JSONObject(data.toString(StandardCharsets.UTF_8.name()));
-            }
-        }finally{if(connection==current)connection=null;current.disconnect();}
-    }
     @Override public void onDestroy(){
-        running=false;updateCpuLock();if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");MainActivity.backgroundModeChanged(false);generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();deleteWakeDetector();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();HttpsURLConnection current=connection;if(current!=null)current.disconnect();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
+        running=false;updateCpuLock();if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");MainActivity.backgroundModeChanged(false);generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();deleteWakeDetector();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
 }

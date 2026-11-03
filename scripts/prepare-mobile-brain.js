@@ -1,0 +1,12 @@
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { predict } from '../neural/network.js';
+import { mobileTopics } from '../neural/conversation.js';
+import { mobileEntries } from '../assistant/everyday.js';
+const output=resolve(process.argv[2]);await mkdir(output,{recursive:true});
+const json=async path=>JSON.parse(await readFile(new URL('../'+path,import.meta.url),'utf8'));
+const model=await json('neural/model.json');
+const generalization=await json('neural/generalization.json');
+const reviewed=[...await json('neural/evaluation.json'),...await json('neural/challenge.json'),...generalization.development,...generalization.test];
+const samples=['hola','quien eres','gracias','quiero aprender programacion','organiza mi dia','que es una neurona','puedes crear codigo','adios','zzqxf palabra desconocida','Quieroo aprender progrmacion','repite','como puedo entrenarte',...reviewed.map(item=>item.text)];
+await writeFile(join(output,'mobile-brain.json'),JSON.stringify({model,guides:mobileTopics,entries:mobileEntries,lessons:await json('knowledge/lessons.json'),arguments:await json('knowledge/arguments.json'),fixtures:samples.map(text=>({text,intent:predict(model,text).intent}))}));
