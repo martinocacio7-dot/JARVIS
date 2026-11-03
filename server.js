@@ -15,7 +15,7 @@ import { parseTaskConversation, executeTaskCommand } from './assistant/commands.
 import { calendarReply } from './assistant/calendar.js';
 import { MemoryValidationError } from './knowledge/memory-data.js';
 import { parseMemoryCommand, executeMemoryCommand } from './assistant/memory.js';
-import { everydayReply } from './assistant/everyday.js';
+import { everydayReply, definitionFallback } from './assistant/everyday.js';
 import { musicReply } from './assistant/music.js';
 import { reasoningReply } from './assistant/reasoning.js';
 import { createVoiceService } from './voice/elevenlabs.js';
@@ -169,6 +169,7 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         if (!apiKey) {
           const result = respond(localModel, messages);
+          if (result.intent === 'desconocido') result.reply = definitionFallback(messages.at(-1).content) || result.reply;
           if (result.intent === 'saludo' && result.reply.startsWith('Hola, soy JARVIS')) {
             try {
               const stored = await database.readMemories();

@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { normalize } from '../public/library-data.js';
+const vocabulary = JSON.parse(readFileSync(new URL('../knowledge/vocabulary.json', import.meta.url), 'utf8'));
 const entries = [
+  ...vocabulary.map(({ word, ...entry }) => ({ ...entry, source: 'Referencia de consulta: https://dle.rae.es/' + encodeURIComponent(word) })),
   { aliases: ['play'], title: 'Play', answer: 'En inglés, play suele significar «jugar» o «reproducir», según el contexto.', example: 'Por ejemplo, play a game es jugar a un juego; pulsar play en un vídeo significa iniciar la reproducción.', limit: 'La traducción depende de la frase: también puede referirse a tocar un instrumento o a una obra de teatro. Si me das la frase completa puedo distinguir estos usos.', source: 'Referencia de consulta: https://dictionary.cambridge.org/dictionary/english-spanish/play' },
   { aliases: ['google play', 'play store', 'google play store'], title: 'Google Play', answer: 'Google Play es la plataforma de Google para distribuir aplicaciones y otros contenidos. Play Store es la tienda de aplicaciones de Android.', example: 'Por ejemplo, buscas una aplicación en Play Store y revisas su desarrollador antes de instalarla.', limit: 'Google Play y Play Protect no son lo mismo: Play Protect es la función de seguridad que revisa aplicaciones. No puedo confirmar por qué bloqueó una app sin ver el aviso.', source: 'Referencia de consulta: https://support.google.com/googleplay/' },
   { aliases: ['play protect', 'google play protect'], title: 'Play Protect', answer: 'Google Play Protect es una función de seguridad de Android que revisa aplicaciones y puede advertir o bloquear una instalación sospechosa.', example: 'Por ejemplo, puede mostrar un aviso al instalar un APK descargado fuera de la tienda.', limit: 'Un aviso no permite determinar la causa exacta sin leerlo. Comparte el texto completo para revisarlo; no hace falta desactivar la protección.', source: 'Referencia de consulta: https://support.google.com/googleplay/answer/2812853' },
@@ -22,11 +25,16 @@ export function everydayReply(messages) {
     }
     const choice = pendingPlay && (/^(?:la )?(?:palabra|palabra inglesa|en ingles|jugar|reproducir)$/.test(text) ? 'play' : /^(?:la )?(?:tienda|de android|tienda de android)$/.test(text) ? 'google play' : null);
     pendingPlay = false;
-    const found = entries.find(entry => entry.aliases.some(alias => (choice || text) === alias || new RegExp(`^(?:que es|que significa|explicame|hablame de) (?:el |lo |un estilo )?${alias}$`).test(text)));
+    const found = entries.find(entry => entry.aliases.some(alias => (choice || text) === alias || new RegExp(`^(?:que es|que significa|explicame|hablame de) (?:la palabra |el termino |el |la |lo |un estilo )?${alias}$`).test(text)));
     const follow = current && /^(dame un ejemplo|un ejemplo|por que|explicalo mejor|mas facil|en que te basas)$/.test(text);
     if (found) current = found;
     else if (!follow) { current = null;result = null;continue; }
     result = { mode: 'assistant', intent: 'concepto_cotidiano', reply: `${current.title}: ${current.answer}\n\n${current.example}\n\n${current.limit}\n\n${current.source}. Es una referencia para consultar, no una búsqueda web en directo.` };
   }
   return result;
+}
+
+export function definitionFallback(text) {
+  const match = normalize(text).match(/^que significa (?:la palabra |el termino )?([a-z0-9]+(?: [a-z0-9]+){0,3})$/);
+  return match ? `Entendí que buscas el significado de «${match[1]}». Todavía no tengo una definición revisada en mi vocabulario local. ¿En qué frase o situación lo viste?` : null;
 }

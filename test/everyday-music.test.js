@@ -31,6 +31,9 @@ test('API usa conceptos y memoria musical sin llamadas externas; puente pide act
   const chat=async content=>{const r=await fetch(`http://127.0.0.1:${server.address().port}/api/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:[user(content)]})});assert.equal(r.status,200);return r.json();};
   assert.match((await chat('Qué es astetic')).reply,/estético/);
   assert.match((await chat('que significa pley')).reply,/¿Te refieres/);
+  assert.match((await chat('que significa guapo')).reply,/atractiva/);
+  assert.match((await chat('que significa zqxvpalabra')).reply,/Entendí que buscas el significado/);
+  assert.equal((await chat('que significa zqxvpalabra')).musicQuery,undefined);
   await chat('Recuerda que mi música favorita es salsa');assert.equal((await chat('Pon música')).musicQuery,'salsa');
   globalThis.window={JarvisAndroid:{openMusic:query=>'Buscando '+query}};
   try{assert.equal(openAndroidMusic('salsa'),'Buscando salsa');delete window.JarvisAndroid.openMusic;assert.match(openAndroidMusic('salsa'),/actualizar/);}finally{delete globalThis.window;}
@@ -46,4 +49,14 @@ test('pley pide aclaración y una respuesta ambigua no se toma como confirmació
   assert.match(ask('Qué es Play Protect').reply,/seguridad/);
   assert.equal(ask('que significa pley','cancela','la tienda'),null);
   assert.equal(everydayReply([{role:'assistant',content:'que significa pley'},user('la tienda')]),null);
+});
+
+test('define guapo con contexto y amplía vocabulario sin interpretar palabras de otro tema',()=>{
+  const ask=(...texts)=>everydayReply(texts.map(user));
+  assert.match(ask('que significa guapo').reply,/atractiva/);
+  assert.match(ask('¿Qué significa la palabra guapa?').reply,/cumplido/);
+  for(const word of ['bonito','elegante','carismático','humilde','empatía','respeto','resiliencia'])assert.ok(ask('Qué significa '+word));
+  assert.match(ask('Qué significa guapo','Dame un ejemplo').reply,/camisa/);
+  assert.equal(ask('Me llamo Guapo'),null);
+  assert.equal(ask('Qué significa una variable aleatoria'),null);
 });
