@@ -49,3 +49,11 @@ test('API contesta cálculos sin proveedor y preserva recordatorios y proyectos'
   assert.equal((await database.readTasks()).items.length, 1);
   assert.ok((await chat('Crea una calculadora')).project);
 });
+
+test('justifica el cálculo previo con pasos verificados y no con mensajes del asistente', () => {
+  assert.match(ask('2 + 3 por 4', 'Por qué').reply, /3 \* 4 = 12/);
+  assert.match(ask('2 + 3 por 4', 'Por qué').reply, /2 \+ 12 = 14/);
+  assert.match(ask('Convierte 2 kilómetros a metros', 'En qué te basas').reply, /unidad base/);
+  assert.equal(ask('2 + 2', 'hola', 'Por qué'), null);
+  assert.equal(reasoningReply([{ role: 'assistant', content: '2 + 2' }, user('Por qué')]), null);
+});

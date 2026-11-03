@@ -1,6 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { normalize } from '../public/library-data.js';
 export const lessons = JSON.parse(readFileSync(new URL('./lessons.json', import.meta.url), 'utf8'));
+const argumentsById = JSON.parse(readFileSync(new URL('./arguments.json', import.meta.url), 'utf8'));
+const argumentCue = text => /^(?:y )?(?:por que|por que es util|por que recomiendas eso|por que dices eso|explicame por que|justifica tu respuesta|dame argumentos|en que te basas)(?: por favor)?$/.test(text);
 const fence = String.fromCharCode(96).repeat(3);
 const word = (text, alias) => (' ' + text + ' ').includes(' ' + alias + ' ');
 const hasCue = text => /\b(explica|explicame|explicarme|ejemplo|ejemplos|ejercicio|ejercicios|codigo|que es|que son|como funciona|como funcionan|como uso|como usar|como se usa|que significa|que hace|muestr[a-z]*|para que|diferencia|comparar|ensen[a-z]*|aprend[a-z]*|entiend[a-z]*|entender)\b/.test(text);
@@ -15,7 +17,7 @@ export function answerLesson(input, previous = null) {
   const bare = text.replace(/\b(en|python|javascript|un|una|el|la|las|los)\b/g, ' ').replace(/\s+/g, ' ').trim();
   const explicit = matches.length && (hasCue(text) || matches.some(item => (item.aliases.includes(text) || item.aliases.includes(bare))) || /^(y |ahora |sobre )/.test(text));
   const current = lessons.find(item => item.id === previous?.id);
-  const follow = current && /^(?:y )?(?:python|javascript|en python|en javascript|un ejemplo|otro ejemplo|dame (?:un )?ejemplo|muestra(?:me)? (?:un )?ejemplo|dame (?:un )?ejercicio|ponme (?:un )?ejercicio|ejercicio|solucion|dame la solucion|muestra(?:me)? la solucion|mas facil|explicamelo mas facil|explica(?:lo|melo)? mejor|continua|sigue|siguiente)(?: por favor)?$/.test(text);
+  const follow = current && (argumentCue(text) || /^(?:y )?(?:python|javascript|en python|en javascript|un ejemplo|otro ejemplo|dame (?:un )?ejemplo|muestra(?:me)? (?:un )?ejemplo|dame (?:un )?ejercicio|ponme (?:un )?ejercicio|ejercicio|solucion|dame la solucion|muestra(?:me)? la solucion|mas facil|explicamelo mas facil|explica(?:lo|melo)? mejor|continua|sigue|siguiente)(?: por favor)?$/.test(text));
   if (!explicit && !follow) return null;
   if (explicit && matches.length > 1) {
     const compare = /\b(diferencia|comparar|compara)\b/.test(text);
@@ -36,6 +38,11 @@ export function answerLesson(input, previous = null) {
   else if (/\b(ejemplo|ejemplos|codigo)\b/.test(text) || /^(?:y )?(?:en )?(python|javascript)/.test(text)) stage = 1;
   else if (/^(continua|sigue|siguiente)/.test(text)) stage = Math.min(4, stage + 1);
   else if (/\b(facil|mejor)\b/.test(text)) stage = 0;
+  if (argumentCue(text) || /\b(con argumentos|justifica|por que)\b/.test(text)) {
+    const detail = argumentsById[lesson.id];
+    return { intent: 'programacion', state: { id: lesson.id, language, stage: previous?.id === lesson.id ? previous.stage : 0 },
+      reply: lesson.title + ': ' + (lesson.explanation?.[language] || lesson.summary) + '\n\nLa razón: ' + detail.reason + '\n\nPor ejemplo: ' + detail.example + '\n\nLímite: ' + detail.limit + '\n\nReferencia para consultar: ' + (language === 'python' ? 'https://docs.python.org/es/3/tutorial/' : lesson.reference) };
+  }
   const example = lesson.examples[language];
   const code = value => fence + language + '\n' + value + '\n' + fence;
   const content = stage === 0 ? (/\b(facil)\b/.test(text) ? lesson.simple : (lesson.explanation?.[language] || lesson.summary))

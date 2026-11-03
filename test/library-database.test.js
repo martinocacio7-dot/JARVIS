@@ -10,6 +10,7 @@ async function exercise(options) {
   const saved = { version: 1, documents: [{ id: 'a', title: 'Privado', content: 'Datos guardados por el usuario.' }], corrections: [{ question: '¿Qué estudio?', answer: 'Informática' }] };
   const feedback = [{ id: 'db-feedback', text: 'Quiero comenzar a estudiar código', intent: 'programacion', predictedIntent: 'desconocido', status: 'pending' }];
   const tasks = [{ id: 'db-task', text: 'Pendiente persistente', kind: 'list', dueAt: null, completed: false }];
+  const memories = [{ label: 'objetivo', value: 'Aprender Python', updatedAt: '2026-11-03T12:00:00.000Z' }];
   const voice = { voiceId: 'voice_test_123', name: 'Voz de prueba' };
   try {
     const initial = await first.read();
@@ -21,6 +22,8 @@ async function exercise(options) {
     await assert.rejects(first.writeFeedback([], previous.revision), RevisionConflict);
     const beforeTasks = await first.readTasks(); await first.writeTasks(tasks, beforeTasks.revision);
     await assert.rejects(first.writeTasks([], beforeTasks.revision), RevisionConflict);
+    const beforeMemory = await first.readMemories(); await first.writeMemories(memories, beforeMemory.revision);
+    await assert.rejects(first.writeMemories([], beforeMemory.revision), RevisionConflict);
     const beforeVoice = await first.readVoice(); await first.writeVoice(voice, beforeVoice.revision);
     await assert.rejects(first.writeVoice({ voiceId: null, name: '' }, beforeVoice.revision), RevisionConflict);
   } finally { await first.close(); }
@@ -30,6 +33,7 @@ async function exercise(options) {
     assert.deepEqual((await second.readFeedback()).feedback, feedback);
     assert.deepEqual((await second.readTasks()).items, tasks);
     assert.deepEqual((await second.readVoice()).voice, voice);
+    assert.deepEqual((await second.readMemories()).items, memories);
     const revision = (await second.read()).revision;
     const writes = await Promise.allSettled([second.write({ ...saved, corrections: [] }, revision), second.write({ ...saved, documents: [] }, revision)]);
     assert.equal(writes.filter(r => r.status === 'fulfilled').length, 1);

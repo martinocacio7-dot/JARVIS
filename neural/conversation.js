@@ -4,6 +4,7 @@ import { answerLesson, lessonTitle } from '../knowledge/lessons.js';
 const topics = {
   programacion: {
     name: 'programación',
+    argument: 'Practicar con un ejemplo pequeño permite observar qué cambia cuando modificas una instrucción. Por ejemplo, cambiar el valor de una variable y ejecutar de nuevo permite comparar el resultado. Esto ayuda a comprobar una idea; no sustituye aprender a probar casos distintos ni convierte un ejemplo correcto en un programa completo.',
     steps: [
       'Una variable guarda un dato. Prueba en la consola del navegador: const nombre = "Miguel"; console.log(nombre); Cambia el nombre y observa el resultado.',
       'Una condición permite decidir: const tareas = 3; if (tareas > 0) { console.log("Hay pendientes"); } Cambia tareas a 0 y observa qué ocurre.',
@@ -12,6 +13,7 @@ const topics = {
   },
   proyecto: {
     name: 'tu proyecto',
+    argument: 'Empezar con una función pequeña permite comprobar pronto si el flujo completo funciona antes de invertir en más pantallas. Por ejemplo, añadir y completar una tarea comprueba la entrada, el guardado y la visualización. La primera versión no cubre todos los requisitos: después debes revisar permisos, errores y necesidades reales.',
     steps: [
       'Define una primera versión con una sola función útil. Por ejemplo: añadir una tarea y verla en una lista. Deja las cuentas y las notificaciones para después.',
       'Dibuja la pantalla en papel: un campo para escribir, un botón para añadir y una lista. Ese boceto te servirá para construir la interfaz.',
@@ -20,6 +22,7 @@ const topics = {
   },
   organizacion: {
     name: 'organizar tu día',
+    argument: 'Elegir pocas prioridades facilita decidir dónde dedicar el tiempo disponible. Reservar descansos y revisar lo pendiente permite ajustar el plan cuando una tarea tarda más de lo esperado. Por ejemplo, puedes dividir un informe en investigar, redactar y revisar. No hay un horario ideal para todos: adapta la duración a tus obligaciones y a cómo trabajas.',
     steps: [
       'Elige hasta tres prioridades. Separa lo urgente de lo importante y comienza por una tarea concreta que puedas terminar hoy.',
       'Reserva bloques realistas de tiempo y pequeños descansos. Por ejemplo: 25 minutos para una tarea, seguidos de 5 minutos de descanso.',
@@ -28,6 +31,7 @@ const topics = {
   },
   aprendizaje_ia: {
     name: 'inteligencia artificial',
+    argument: 'Medir aciertos con frases nuevas permite comprobar si el modelo generaliza y no solo recuerda los ejemplos usados al entrenar. Por ejemplo, puedes reservar preguntas que no se usen para ajustar los pesos y registrar los errores. Una evaluación pequeña no demuestra comprensión general ni garantiza que una respuesta sea cierta.',
     steps: [
       'Ejemplo: «hola» activa características de palabras, pares de palabras y fragmentos de texto. Mi capa oculta combina esas entradas con una función tanh. La capa de salida usa softmax para puntuar las intenciones.',
       'Entrenar consiste en comparar la intención predicha con la etiqueta correcta y ajustar los pesos mediante descenso de gradiente. Aquí usamos ejemplos escritos en neural/intents.json.',
@@ -62,7 +66,9 @@ export function respond(model, messages) {
       result = { intent: 'guardar_nombre', reply: `Encantado, ${name}. Usaré tu nombre mientras esté en el historial reciente de esta conversación.` };
     } else {
       const taught = answerLesson(text, lesson);
-      if (taught) {
+      if (!taught && topic && !lesson && /^(por que|explicame por que|por que recomiendas eso|justifica tu respuesta|dame argumentos|en que te basas)$/.test(normalized)) {
+        result = { kind: 'argument', intent: topic, reply: topics[topic].argument };
+      } else if (taught) {
         lesson = taught.state;
         result = { kind: 'lesson', intent: taught.intent, reply: taught.reply };
         topic = lesson ? 'programacion' : null;
@@ -79,7 +85,7 @@ export function respond(model, messages) {
         step = 0;
       } else if (result.intent === 'memoria') {
         result.reply = `En el historial reciente: ${name ? `tu nombre es ${name}` : 'no tengo un nombre guardado'}; ${topic ? `el tema es ${(lessonTitle(lesson) || topics[topic].name)}` : 'no hay un tema activo'}. La biblioteca guarda documentos por separado cuando su base de datos está conectada. Conversar no cambia mis pesos.`;
-      } else if (topics[result.intent] && !taught) {
+      } else if (topics[result.intent] && !taught && result.kind !== 'argument') {
         lesson = null;
         topic = result.intent;
         step = 0;

@@ -13,6 +13,8 @@ import { validateDocument, isDocumentRequest } from './public/document-data.js';
 import { validateTasks } from './public/task-data.js';
 import { parseTaskConversation, executeTaskCommand } from './assistant/commands.js';
 import { calendarReply } from './assistant/calendar.js';
+import { MemoryValidationError } from './knowledge/memory-data.js';
+import { parseMemoryCommand, executeMemoryCommand } from './assistant/memory.js';
 import { reasoningReply } from './assistant/reasoning.js';
 import { createVoiceService } from './voice/elevenlabs.js';
 
@@ -133,6 +135,15 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
+        const memory = parseMemoryCommand(messages.at(-1).content) || (/^(como me llamo|recuerdas mi nombre)$/.test(normalize(messages.at(-1).content)) ? { action: 'read', label: 'nombre' } : null);
+        if (memory) {
+          if (memory.action === 'read' && normalize(memory.label || '') === 'nombre') {
+            const current = respond(localModel, messages);
+            if (current.intent === 'consultar_nombre' && current.reply.startsWith('Me dijiste')) return json(200, { mode: 'local', ...current });
+          }
+          try { return json(200, await executeMemoryCommand(memory, database, now())); }
+          catch (error) { return json(error instanceof RevisionConflict ? 409 : error instanceof MemoryValidationError ? 400 : 503, { error: error instanceof RevisionConflict || error instanceof MemoryValidationError ? error.message : 'No pude confirmar la memoria en la base de datos. No asumas que el cambio quedó guardado; consulta «mis recuerdos» antes de repetirlo.' }); }
+        }
         const calendar = calendarReply(messages.at(-1).content, now());
         if (calendar) return json(200, { mode: 'assistant', reply: calendar });
         const command = parseTaskConversation(messages, now());
@@ -152,6 +163,13 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         if (!apiKey) {
           const result = respond(localModel, messages);
+          if (result.intent === 'saludo' && result.reply.startsWith('Hola, soy JARVIS')) {
+            try {
+              const stored = await database.readMemories();
+              const name = stored.items.find(item => normalize(item.label) === 'nombre');
+              if (name) result.reply = `Hola, ${name.value}. ¿En qué te ayudo?`;
+            } catch { /* Normal conversation remains available without a memory database. */ }
+          }
           return json(200, { mode: 'local', ...result, ...(result.intent === 'documentos' ? { documentDraft: true } : {}) });
         }
         const upstream = await request('https://api.openai.com/v1/responses', {

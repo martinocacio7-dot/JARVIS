@@ -72,3 +72,20 @@ test('pide aclaración sin inventar y conserva el tema para la siguiente pregunt
   assert.match(contextual.reply, /¿Quieres una explicación, un ejemplo/);
   assert.match(chat('Explícame funciones en Python', 'zqxv blorf zqxv', 'Dame un ejemplo').reply, /def |print\(/);
 });
+
+test('justifica las doce lecciones con razón, ejemplo, límite y referencia sin inventar otro tema', () => {
+  for (const lesson of lessons) {
+    const result = chat('Explícame ' + lesson.aliases[0], '¿Por qué?');
+    assert.equal(result.kind, 'lesson', lesson.id);
+    assert.match(result.reply, /La razón:/);assert.match(result.reply, /Por ejemplo:/);
+    assert.match(result.reply, /Límite:/);assert.match(result.reply, /https:\/\//);
+  }
+  assert.match(chat('Explícame funciones', 'Justifica tu respuesta', 'Dame un ejemplo').reply, /function|def /);
+  assert.equal(chat('¿Por qué?').intent, 'desconocido');
+});
+
+test('fundamenta recomendaciones del tema activo sin perder la continuidad', () => {
+  const explained = chat('Quiero organizar mi día', '¿Por qué recomiendas eso?');
+  assert.equal(explained.kind, 'argument');assert.match(explained.reply, /prioridades|tiempo/);
+  assert.match(chat('Quiero organizar mi día', '¿Por qué recomiendas eso?', 'Continúa').reply, /Paso 1/);
+});
