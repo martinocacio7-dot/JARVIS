@@ -1,6 +1,6 @@
-# JARVIS para Android · 2.0.1
+# JARVIS para Android · 2.0.2
 
-**Edición actual 2.0.1:** no incluye acceso a notificaciones de otras aplicaciones. Las instrucciones históricas de 1.6.0/2.0.0 sobre ese acceso ya no se aplican a esta edición.
+**Edición actual 2.0.2:** no incluye acceso a notificaciones de otras aplicaciones. Las instrucciones históricas de 1.6.0/2.0.0 sobre ese acceso ya no se aplican a esta edición.
 
 Aplicación nativa para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits. El lanzador abre NativeChatActivity: mensajes, esfera, clasificador y conocimiento se ejecutan en el teléfono. No abre la página de Render ni le solicita las respuestas. Esta entrega no incluye bibliotecas x86 de emulador. Las secciones de versiones 1.x describen el comportamiento histórico de la interfaz web; la sección 2.0 al final detalla el nuevo flujo.
 
@@ -9,7 +9,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Abre la aplicación y comprueba **JARVIS 2.0.1** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
+2. Abre la aplicación y comprueba **JARVIS 2.0.2** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. La activación no solicita credenciales ni conexión a tu servidor.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -172,3 +172,16 @@ Se retiraron el componente NotificationListenerService, su declaración BIND_NOT
 Permisos que permanecen: micrófono bajo activación explícita; notificaciones propias para avisos y control del servicio; alarmas exactas opcionales con alternativa aproximada; servicio visible de micrófono y bloqueo parcial de CPU; restauración de avisos tras reiniciar. Reiniciar no enciende el micrófono. Las preferencias y chats móviles usan el mismo almacenamiento local y no se eliminan con esta actualización.
 
 El aviso mostrado por Play Protect solo indica posible acceso sensible; no identifica la regla exacta ni permite certificar que este cambio resolverá el bloqueo. La compilación y las pruebas no equivalen a aprobación de Google. Mantén Play Protect activo. Si sigue bloqueado, solicita revisión mediante el formulario oficial descrito en [PLAY_PROTECT_REVIEW.md](PLAY_PROTECT_REVIEW.md).
+
+
+## Selección de español y errores 12/13 (2.0.2)
+
+El registro 2.0.1 mostró que el detector local llegó a ESCUCHANDO y reprodujo el saludo, pero el dictado local y el predeterminado devolvieron 12 al solicitar es-EC. ERROR_LANGUAGE_NOT_SUPPORTED (12) significa idioma solicitado no admitido; ERROR_LANGUAGE_UNAVAILABLE (13) significa que no está disponible en ese momento, por ejemplo por faltar el paquete. No equivalen a permisos de micrófono ni a un error de Render. El bloqueo parcial de CPU se libera al entrar en PAUSADO; su valor false en ese estado no demuestra un fallo de batería.
+
+El dictado del servicio y el botón Mic comparten SpanishRecognition. En Android 13+ consultan RecognitionSupport antes de capturar; eligen español instalado en el dispositivo y, para el proveedor predeterminado, pueden elegir español online si no hay uno instalado. Si no se puede consultar la disponibilidad en dos segundos, usan es-ES como primera opción en lugar de exigir es-EC. Solo se conserva como preferencia un idioma que llegó a devolver un resultado. No seleccionan inglés para transcribir español.
+
+Ante 12/13 se permite un intento de español genérico por proveedor y un cambio del motor local al predeterminado, con un máximo de cuatro configuraciones. No hay reintentos ilimitados. Solo se reinicia la preparación temporal si todavía no ha empezado la voz del usuario; la ventana completa comienza otra vez cuando la nueva configuración confirma disponibilidad. Una pausa, apagado, pérdida de ventana o cambio de sesión invalida los callbacks pendientes. Si no funciona ninguna configuración, se pausa con el mensaje específico del idioma, en vez de culpar genéricamente a Internet/permisos.
+
+Permisos → Idioma del dictado Android explica cómo revisar el proveedor y abre los ajustes de entrada de voz. Instalar una voz de síntesis no instala reconocimiento de español. La app no fuerza descargas, cambia el idioma del sistema ni añade permisos; el servicio predeterminado puede usar su propia conexión si el idioma se eligió de su lista online.
+
+Las pruebas JVM cubren preferencia de idiomas instalados, códigos de idioma frente a permisos, y conservación del temporizador ante pausa/apagado o voz ya iniciada. La consulta de paquetes y el resultado real siguen necesitando prueba en el dispositivo Infinix; no se dispone de ese teléfono aquí.

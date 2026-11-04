@@ -370,3 +370,8 @@ El reconocimiento de «Jarvis» es local; transcribir preguntas sigue dependiend
 ### Android 2.0.1: edición sin lectura de notificaciones ajenas
 
 La edición actual conserva el chat nativo, esfera, voz, memoria y recordatorios del teléfono, y retira por completo el lector y permiso especial de notificaciones ajenas. También elimina la pantalla web y el acceso a Render heredados del APK. Conserva el paquete y firma para actualizar los datos locales existentes. No se ha validado si Play Protect acepta este archivo en el teléfono; si persiste el bloqueo, corresponde una revisión oficial, no desactivar la protección. [Permisos y revisión](android/PLAY_PROTECT_REVIEW.md).
+
+
+### Android 2.0.2: español compatible con el motor del teléfono
+
+El dictado deja de exigir es-EC: consulta las variantes españolas disponibles y prefiere una instalada. Si el motor no permite consultar compatibilidad, usa es-ES; los errores 12/13 activan un intento genérico y, cuando procede, un cambio de proveedor, con límites y cancelación por pausa. La app distingue idioma no admitido de paquete no disponible. Permisos → Idioma del dictado Android abre la configuración pertinente, separada de la voz que lee respuestas. Mantiene el chat nativo sin Render y la edición sin lector de notificaciones ajenas.

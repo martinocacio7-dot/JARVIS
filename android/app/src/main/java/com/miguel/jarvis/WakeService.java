@@ -43,7 +43,7 @@ public final class WakeService extends Service {
     final ExecutorService worker=Executors.newSingleThreadExecutor();
     LocalWakeDetector wakeDetector;
     boolean wakeListening=false,wakePreparing=false;
-    int repairPrompts=0;int commandRetries=0;boolean commandDefault=false;
+    int repairPrompts=0;int commandRetries=0;boolean commandDefault=false,languageRetry=false;
     long detectorSession=0,releaseDeadline=0;
     PowerManager.WakeLock cpuLock;long cpuLeaseUntil=0;
     SpeechRecognizer recognizer;TextToSpeech tts; AudioManager audio; AudioFocusRequest focus;
@@ -173,7 +173,7 @@ public final class WakeService extends Service {
         if(!running||!ready)return;
         if(checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){pause("Falta permitir el micrófono. Abre JARVIS → Permisos.");return;}
         if(!SpeechRecognizer.isRecognitionAvailable(this)){pause("Este teléfono no tiene un servicio de reconocimiento disponible para tu pregunta.");return;}
-        repairPrompts=0;commandRetries=0;commandDefault=false;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
+        repairPrompts=0;commandRetries=0;commandDefault=false;languageRetry=false;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
     }
     void pause(String message){
         pendingStart=false;pendingText=null;generation++;flow.pause();updateCpuLock();report("PAUSADO",message);resetAudio();notice(message);
@@ -199,7 +199,7 @@ public final class WakeService extends Service {
         final boolean onDevice=!commandDefault&&Build.VERSION.SDK_INT>=31&&SpeechRecognizer.isOnDeviceRecognitionAvailable(this);
         recognizer=current;
         report("PREPARANDO PETICIÓN","Preparando el micrófono para tu pregunta…");notice("Preparando el micrófono para tu pregunta…");
-        final boolean[] listeningReady={false};
+        final boolean[] listeningReady={false};final String[] selectedLanguage={"es-ES"};
         main.postDelayed(()->{if(recognizer==current&&!listeningReady[0]){
             remember("DICTADO SIN INICIO","Android no confirmó el micrófono en diez segundos; regreso al detector del nombre.");
             returnToWake();
@@ -215,12 +215,25 @@ public final class WakeService extends Service {
             public void onRmsChanged(float value){}public void onBufferReceived(byte[] value){}public void onEndOfSpeech(){}public void onPartialResults(Bundle value){}public void onEvent(int type,Bundle value){}
             public void onResults(Bundle data){
                 if(!valid())return;ArrayList<String> values=data.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);String text=values==null||values.isEmpty()?"":values.get(0).trim();destroyRecognizer();
-                if(flow.command(text,SystemClock.elapsedRealtime())){repairPrompts=0;answer(text);}else returnToWake();
+                if(flow.command(text,SystemClock.elapsedRealtime())){SpanishRecognition.remember(WakeService.this,onDevice,selectedLanguage[0]);repairPrompts=0;answer(text);}else returnToWake();
             }
             public void onError(int error){
                 if(!valid())return;destroyRecognizer();
+                if(SpeechLanguagePolicy.languageError(error)){
+                    remember("IDIOMA NO DISPONIBLE","Android "+error+" · "+selectedLanguage[0]+" · "+(onDevice?"local":"predeterminado"));
+                    if(!begun&&!languageRetry&&flow.reprepareLanguage()){
+                        languageRetry=true;int expected=generation;
+                        report("PREPARANDO PETICIÓN","Comprobando español genérico; no necesitas volver a decir JARVIS.");
+                        main.postDelayed(()->{if(expected==generation&&flow.input()==WakeConversation.Input.COMMAND)listen();},250);return;
+                    }
+                    if(onDevice&&!begun&&flow.reprepareLanguage()){
+                        commandDefault=true;languageRetry=false;int expected=generation;
+                        main.postDelayed(()->{if(expected==generation&&flow.input()==WakeConversation.Input.COMMAND)listen();},250);return;
+                    }
+                    pause(SpeechLanguagePolicy.message(error));return;
+                }
                 if(onDevice&&!listeningReady[0]&&error!=SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS){
-                    commandDefault=true;remember("DICTADO","Motor local no preparado (código "+error+"); un intento con el predeterminado.");
+                    commandDefault=true;languageRetry=false;remember("DICTADO","Motor local no preparado (código "+error+"); un intento con el predeterminado.");
                     int expected=generation;main.postDelayed(()->{if(expected==generation&&flow.input()==WakeConversation.Input.COMMAND)listen();},250);return;
                 }
                 if(error==SpeechRecognizer.ERROR_NO_MATCH||error==SpeechRecognizer.ERROR_SPEECH_TIMEOUT){
@@ -238,8 +251,10 @@ public final class WakeService extends Service {
                 }else pause("El dictado Android se detuvo (código "+error+"). Revisa su servicio de voz, Internet y permisos; copia el diagnóstico desde Permisos.");
             }
         });
-        Intent request=new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE,"es-EC").putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1).putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,true);
-        try{current.startListening(request);}catch(Exception error){pause("No se pudo iniciar el micrófono. Abre JARVIS para revisar permisos.");}
+        SpanishRecognition.start(this,current,onDevice,languageRetry?"es":"",()->recognizer==current&&flow.input()==WakeConversation.Input.COMMAND,
+            (language,offline)->{selectedLanguage[0]=language;remember("IDIOMA",language+" · "+(onDevice?"motor local":offline?"predeterminado, preferencia local":"predeterminado, puede usar Internet"));},
+            request->{try{current.startListening(request);}catch(RuntimeException error){if(recognizer==current)pause("No se pudo iniciar el dictado Android. Revisa sus permisos.");}});
+
     }
     void stopWakeDetector(){
         boolean wasListening=wakeListening;wakeListening=false;detectorSession++;
@@ -284,7 +299,7 @@ public final class WakeService extends Service {
                     stopWakeDetector();
                     if(!flow.keyword())return;
                     say("Sí, dígame, señor.",()->{
-                        if(!flow.greeted())return;repairPrompts=0;commandRetries=0;commandDefault=false;
+                        if(!flow.greeted())return;repairPrompts=0;commandRetries=0;commandDefault=false;languageRetry=false;
                         notice("Dígame: espero hasta cuatro segundos por tu petición.");
                         int turn=generation;main.postDelayed(()->{if(turn==generation)listen();},450);
                     });
@@ -295,7 +310,7 @@ public final class WakeService extends Service {
     }
     void continueConversation(){
         if(!running||!flow.followUp())return;
-        generation++;resetAudio();commandRetries=0;commandDefault=false;
+        generation++;resetAudio();commandRetries=0;commandDefault=false;languageRetry=false;
         report("PREPARANDO PETICIÓN","Puedes seguir hablando después de que el micrófono esté listo, sin decir JARVIS.");
         int expected=generation;main.postDelayed(()->{if(expected==generation&&flow.input()==WakeConversation.Input.COMMAND)listen();},450);
     }

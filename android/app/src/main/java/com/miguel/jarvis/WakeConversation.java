@@ -28,6 +28,7 @@ public final class WakeConversation {
     public boolean keyword() { if (state != State.WAKE) return false; state = State.GREETING; return true; }
     public boolean greeted() { if (state != State.GREETING) return false; state = State.COMMAND; deadline = 0; speech = false; return true; }
     public void ready(long now) { if (state == State.COMMAND && deadline == 0) deadline = now + waitMs; }
+    public boolean reprepareLanguage() { if(state!=State.COMMAND||speech)return false;deadline=0;return true; }
     public boolean speechBegan(long now) { if (state != State.COMMAND || deadline == 0 || now >= deadline) return false; speech = true; return true; }
     public long remainingSilence(long now) { return state == State.COMMAND && deadline != 0 && !speech ? Math.max(0, deadline - now) : 0; }
     public boolean silenceExpired(long now) { return state == State.COMMAND && deadline != 0 && !speech && now >= deadline; }
