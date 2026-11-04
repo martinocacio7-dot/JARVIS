@@ -11,9 +11,13 @@ test('el lanzador y servicio móvil no ejecutan el chat a través de Render ni W
  assert.match(await java('NativeChatActivity'),/NativeSphere/);
 });
 
-test('la edición mínima no declara acceso a notificaciones ni componentes web heredados',async()=>{
+test('el lector es una edición explícita; la edición reducida no contiene su implementación',async()=>{
  const manifest=await readFile(new URL('../android/app/src/main/AndroidManifest.xml',import.meta.url),'utf8');
- assert.doesNotMatch(manifest,/BIND_NOTIFICATION_LISTENER_SERVICE|NotificationListenerService|\.NotificationReader|\.MainActivity|android.permission.(?:READ_SMS|RECEIVE_SMS|INTERNET)/);
- assert.doesNotMatch(await java('NotificationReader'),/extends NotificationListenerService|getActiveNotifications|Settings\.Secure/);
- assert.doesNotMatch(await java('NativeChatActivity'),/ACTION_NOTIFICATION_LISTENER_SETTINGS/);
+ assert.doesNotMatch(manifest,/android.permission.(?:READ_SMS|RECEIVE_SMS|INTERNET)|\.MainActivity/);
+ assert.match(manifest,/android.permission.BIND_NOTIFICATION_LISTENER_SERVICE/);
+ const full=await readFile(new URL('../android/app/src/withNotifications/java/com/miguel/jarvis/NotificationReader.java',import.meta.url),'utf8');
+ const reduced=await readFile(new URL('../android/app/src/withoutNotifications/java/com/miguel/jarvis/NotificationReader.java',import.meta.url),'utf8');
+ assert.match(full,/extends NotificationListenerService/);assert.doesNotMatch(full,/onNotificationPosted|openConnection|FileOutputStream/);
+ assert.doesNotMatch(reduced,/extends NotificationListenerService|getActiveNotifications|Settings\.Secure/);
+ assert.doesNotMatch(await java('ReminderVoiceService'),/createSpeechRecognizer|createOnDeviceSpeechRecognizer|new AudioRecord/);
 });

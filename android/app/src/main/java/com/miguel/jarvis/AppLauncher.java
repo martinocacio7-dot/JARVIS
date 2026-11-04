@@ -28,18 +28,18 @@ final class AppLauncher {
     }
     static String open(Context context,String target,boolean foreground) {
         if(target==null||target.length()>60)return "Dime el nombre de la aplicación que quieres abrir.";
-        PackageManager pm=context.getPackageManager();
-        List<ResolveInfo> matches=new ArrayList<>();Set<String> packages=new HashSet<>();
-        String wanted=DeviceCommands.key(target);
-        String alias=wanted.equals("camara")?"camera":wanted.equals("ajustes")?"settings":wanted.equals("mapas")?"maps":wanted.equals("calculadora")?"calculator":wanted;
-        for(ResolveInfo info:pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),0)) {
-            String label=DeviceCommands.key(info.loadLabel(pm).toString());
-            if((label.equals(wanted)||label.equals(alias))&&packages.add(info.activityInfo.packageName))matches.add(info);
+        PackageManager pm=context.getPackageManager();String wanted=AppNamePolicy.canonical(target),expectedPackage=AppNamePolicy.packageName(wanted);Intent launch;String label;
+        if(!expectedPackage.isEmpty()){
+            launch=pm.getLaunchIntentForPackage(expectedPackage);
+            if(launch==null)return "No encontré "+(wanted.equals("whatsapp")?"WhatsApp":"WhatsApp Business")+" disponible en este perfil del teléfono. No abrí otra app por aproximación.";
+            label=wanted.equals("whatsapp")?"WhatsApp":"WhatsApp Business";launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }else{
+            List<ResolveInfo> matches=new ArrayList<>();Set<String> packages=new HashSet<>();String alias=wanted.equals("camara")?"camera":wanted.equals("ajustes")?"settings":wanted.equals("mapas")?"maps":wanted.equals("calculadora")?"calculator":wanted;
+            for(ResolveInfo info:pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER),0)){String name=DeviceCommands.key(info.loadLabel(pm).toString());if((name.equals(wanted)||name.equals(alias))&&packages.add(info.activityInfo.packageName))matches.add(info);}
+            if(matches.isEmpty())return "No encontré una aplicación instalada llamada «"+target+"». Dime su nombre como aparece en el teléfono.";
+            if(matches.size()>1)return "Hay varias aplicaciones llamadas «"+target+"». Elige la correcta desde el teléfono.";
+            ResolveInfo info=matches.get(0);label=info.loadLabel(pm).toString();launch=new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(new ComponentName(info.activityInfo.packageName,info.activityInfo.name)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         }
-        if(matches.isEmpty())return "No encontré una aplicación instalada con el nombre «"+target+"». Dime su nombre tal como aparece en tu teléfono.";
-        if(matches.size()>1)return "Hay varias aplicaciones llamadas «"+target+"». Ábrela desde el teléfono para elegir la correcta.";
-        ResolveInfo info=matches.get(0);String label=info.loadLabel(pm).toString();
-        Intent launch=new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER).setComponent(new ComponentName(info.activityInfo.packageName,info.activityInfo.name)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try {
             if(foreground){context.startActivity(launch);return "He solicitado abrir "+label+".";}
             NotificationManager manager=context.getSystemService(NotificationManager.class);

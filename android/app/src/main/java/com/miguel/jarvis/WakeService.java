@@ -21,8 +21,8 @@ import java.util.concurrent.*;
 
 /** Explicitly enabled microphone foreground service. No notification-reading access. */
 public final class WakeService extends Service {
-    static final String TEXT="com.miguel.jarvis.LOCAL_TEXT", STOP="com.miguel.jarvis.STOP_WAKE", PAUSE="com.miguel.jarvis.PAUSE_WAKE", RESUME="com.miguel.jarvis.RESUME_WAKE";
-    static volatile boolean running=false,listeningConfirmed=false;
+    static final String REMINDER="com.miguel.jarvis.SPOKEN_REMINDER", TEXT="com.miguel.jarvis.LOCAL_TEXT", STOP="com.miguel.jarvis.STOP_WAKE", PAUSE="com.miguel.jarvis.PAUSE_WAKE", RESUME="com.miguel.jarvis.RESUME_WAKE";
+    static volatile boolean running=false,listeningConfirmed=false,voiceReady=false;
     static volatile long activationAttempt=0;
     static volatile String status="INACTIVO",statusText="Pulsa Activar JARVIS y completa los permisos para escuchar el nombre.";
     static void report(String value,String detail){status=value;statusText=detail;remember(value,detail);NativeChatActivity.refresh();}
@@ -51,7 +51,7 @@ public final class WakeService extends Service {
     boolean ready=false, initialized=false, speaking=false, pendingStart=false, focused=false, startupFatal=false, recordingMonitorRegistered=false;
     int voiceSequence=0;
     volatile int generation=0;
-    Runnable afterSpeech;String pendingText;
+    Runnable afterSpeech;String pendingText,pendingReminderVoice;
 
     JSONArray history=new JSONArray();
 
@@ -83,18 +83,19 @@ public final class WakeService extends Service {
             if(result!=TextToSpeech.SUCCESS){pause("No se pudo iniciar la voz. Configúrala en JARVIS.");return;}
             Voice selected=null;if(tts.getVoices()!=null)for(Voice voice:tts.getVoices())if(voice.getLocale().getLanguage().equals("es")&&!voice.isNetworkConnectionRequired()){selected=voice;break;}
             if(selected==null){pause("Instala una voz española desde Permisos de JARVIS.");return;}
-            tts.setVoice(selected);tts.setAudioAttributes(attributes);ready=true;
+            tts.setVoice(selected);tts.setAudioAttributes(attributes);ready=true;voiceReady=true;
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener(){
                 public void onStart(String id){main.postDelayed(()->watchSpeechCompletion(id,0),500);}
                 public void onDone(String id){main.post(()->speechDone(id));}
                 public void onError(String id){main.post(()->{if(id.equals(String.valueOf(voiceSequence)))pause("No se pudo reproducir la voz. Revisa la síntesis de voz.");});}
             });
-            if(pendingText!=null){String text=pendingText;pendingText=null;pendingStart=false;answerTyped(text);}else if(pendingStart){pendingStart=false;activate();}
+            if(pendingReminderVoice!=null){String text=pendingReminderVoice;pendingReminderVoice=null;pendingStart=false;announceReminder(text);}else if(pendingText!=null){String text=pendingText;pendingText=null;pendingStart=false;answerTyped(text);}else if(pendingStart){pendingStart=false;activate();}
         });
         }catch(Exception error){startupFatal=true;report("ERROR","Android no pudo preparar el audio. Revisa los permisos de micrófono y el motor de voz desde Permisos.");stopSelf();}
     }
     @Override public int onStartCommand(Intent intent,int flags,int startId){
         if(startupFatal){stopSelf();return START_NOT_STICKY;}
+        if(intent!=null&&REMINDER.equals(intent.getAction())&&running){String text=intent.getStringExtra("text");if(text!=null&&text.length()<=700&&ReminderVoiceService.allowed(this)&&flow.state()!=WakeConversation.State.PAUSED){if(ready)announceReminder(text);else{pendingReminderVoice=text;pendingStart=true;}}return START_NOT_STICKY;}
         if(intent!=null&&TEXT.equals(intent.getAction())&&running){
             String text=intent.getStringExtra("text");
             if(text!=null&&!text.trim().isEmpty()&&text.length()<=4000){if(ready)answerTyped(text);else{pendingText=text;pendingStart=true;report("PREPARANDO","Preparando la voz para responder tu mensaje del teléfono…");}}
@@ -176,7 +177,7 @@ public final class WakeService extends Service {
         repairPrompts=0;commandRetries=0;commandDefault=false;languageRetry=false;generation++;resetAudio();flow.start();updateCpuLock();report("PREPARANDO","Iniciando detector local de JARVIS…");notice("Di JARVIS. Pausa esta escucha antes de grabar un vídeo.");main.postDelayed(()->listen(),700);
     }
     void pause(String message){
-        pendingStart=false;pendingText=null;generation++;flow.pause();updateCpuLock();report("PAUSADO",message);resetAudio();notice(message);
+        pendingStart=false;pendingText=null;pendingReminderVoice=null;generation++;flow.pause();updateCpuLock();report("PAUSADO",message);resetAudio();notice(message);
     }
     void returnToWake(){
         if(flow.state()==WakeConversation.State.PAUSED||flow.state()==WakeConversation.State.STOPPED)return;
@@ -343,6 +344,7 @@ public final class WakeService extends Service {
         if(!id.equals(String.valueOf(voiceSequence))||!speaking)return;
         speaking=false;releaseFocus();Runnable done=afterSpeech;afterSpeech=null;if(done!=null)done.run();
     }
+    void announceReminder(String text){if(!ReminderVoiceService.allowed(this)){activate();return;}generation++;resetAudio();flow.start();flow.keyword();flow.greeted();flow.command("Aviso programado",SystemClock.elapsedRealtime());flow.answer();NativeChatActivity.reply(this,"Aviso programado",text,false);say(text,()->continueConversation());}
     void answerTyped(String text){generation++;resetAudio();flow.start();flow.keyword();flow.greeted();if(flow.command(text,SystemClock.elapsedRealtime()))answer(text);}
     void answer(String command){
         report("CONSULTANDO","Preparando respuesta con el motor del teléfono…");notice("Pensando en el teléfono…");final int expected=generation;
@@ -361,7 +363,7 @@ public final class WakeService extends Service {
         say(text,()->{if(close||DeviceCommands.endsConversation(command)||DeviceCommands.appTarget(command)!=null)returnToWake();else continueConversation();});
     }
     @Override public void onDestroy(){
-        running=false;updateCpuLock();if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");NativeChatActivity.refresh();generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();deleteWakeDetector();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
+        running=false;voiceReady=false;updateCpuLock();if(!"ERROR".equals(status))report("INACTIVO","Escucha apagada. Pulsa Activar JARVIS para volver a escuchar.");NativeChatActivity.refresh();generation++;flow.stop();main.removeCallbacksAndMessages(null);resetAudio();deleteWakeDetector();if(recordingMonitorRegistered)audio.unregisterAudioRecordingCallback(recordings);if(tts!=null)tts.shutdown();worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
     }
     @Override public IBinder onBind(Intent intent){return null;}
 }

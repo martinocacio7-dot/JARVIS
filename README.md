@@ -375,3 +375,10 @@ La edición actual conserva el chat nativo, esfera, voz, memoria y recordatorios
 ### Android 2.0.2: español compatible con el motor del teléfono
 
 El dictado deja de exigir es-EC: consulta las variantes españolas disponibles y prefiere una instalada. Si el motor no permite consultar compatibilidad, usa es-ES; los errores 12/13 activan un intento genérico y, cuando procede, un cambio de proveedor, con límites y cancelación por pausa. La app distingue idioma no admitido de paquete no disponible. Permisos → Idioma del dictado Android abre la configuración pertinente, separada de la voz que lee respuestas. Mantiene el chat nativo sin Render y la edición sin lector de notificaciones ajenas.
+
+
+### Android 2.1.0: WhatsApp y recordatorios con seguimiento
+
+Reconoce «ingresa a guassa/wasap» como WhatsApp, verificando el paquete instalado. En segundo plano Android puede exigir tocar una notificación. Los recordatorios nuevos insisten cada cinco minutos hasta Hecho o Detener, según lo solicitado; «todavía no» aplaza cinco minutos. Hay botones en el aviso y opciones de treinta minutos/una hora si prefieres limitar el seguimiento. La lectura hablada usa voz local y respeta llamadas, grabación, silencio y No molestar; el sistema puede impedir la reproducción o retrasar las alarmas. No activa el micrófono si no habías activado JARVIS.
+
+Se distribuyen dos APK de la misma aplicación y firma: edición con lector opcional de notificaciones (conteo y lectura de hasta tres avisos a petición, con autorización de Android) y edición sin lector, compilada sin su servicio ni APIs. El lector puede volver a provocar un bloqueo de Play Protect; no se promete evitarlo. Ambas mantienen el motor móvil sin Render. Consulta [permisos, límites y pruebas](android/README.md).

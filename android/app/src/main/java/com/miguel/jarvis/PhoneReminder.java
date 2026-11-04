@@ -6,10 +6,12 @@ public final class PhoneReminder {
     PhoneReminder(String text,ZonedDateTime time){this.text=text;this.time=time;}
     static String digits(String input){String[] words={"cero","una","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciseis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidos","veintitres","veinticuatro","veinticinco","veintiseis","veintisiete","veintiocho","veintinueve","treinta"};for(int i=words.length-1;i>=0;i--)input=input.replaceAll("\\b"+words[i]+"\\b",String.valueOf(i));return input.replaceAll("\\b(?:un|uno)\\b","1");}
     public static boolean isRequest(String text){return DeviceCommands.key(text).matches("(?:recuerdame|avisame|(?:hazme|hasme|haz|has|pon|crea)(?: un)? recordatorio).* ".trim());}
+    public static String withoutFollowUp(String text){return text.replaceFirst("(?iu)\\s+(?:y\\s+)?(?:repite(?:lo)?\\s+)?cada\\s+(?:5|cinco)\\s+minutos(?:\\s+hasta\\s+que\\s+(?:lo\\s+)?marque\\s+como\\s+hecho)?[.!?]?$","");}
     public static PhoneReminder parse(String text,ZonedDateTime now){
-        String value=DeviceCommands.key(text).replaceFirst("^(?:recuerdame|avisame|(?:hazme|hasme|haz|has|pon|crea)(?: un)? recordatorio)(?: para)? ?","");
+        text=withoutFollowUp(text);
+        String value=DeviceCommands.key(text).replaceFirst("^(?:recuerdame|avisame|(?:hazme|hasme|haz|has|pon|crea)(?: un)? recordatorio)(?: para| de| sobre)? ?","");
         // Preserve clock colon, which normalization would otherwise remove.
-        value=java.text.Normalizer.normalize(text.toLowerCase(java.util.Locale.ROOT),java.text.Normalizer.Form.NFD).replaceAll("\\p{M}","").replaceAll("[¿?¡!]","").replaceFirst("^jarvis[, ]+","").replaceFirst("^(?:recuerdame|avisame|(?:hazme|hasme|haz|has|pon|crea)(?: un)? recordatorio)(?: para)? ?","").trim();
+        value=java.text.Normalizer.normalize(text.toLowerCase(java.util.Locale.ROOT),java.text.Normalizer.Form.NFD).replaceAll("\\p{M}","").replaceAll("[¿?¡!]","").replaceFirst("^jarvis[, ]+","").replaceFirst("^(?:recuerdame|avisame|(?:hazme|hasme|haz|has|pon|crea)(?: un)? recordatorio)(?: para| de| sobre)? ?","").trim();
         Matcher wordNumber=Pattern.compile("\\b(en|dentro de|a las|a la) (\\p{L}+)\\b").matcher(value);StringBuffer converted=new StringBuffer();
         while(wordNumber.find())wordNumber.appendReplacement(converted,Matcher.quoteReplacement(wordNumber.group(1)+" "+digits(wordNumber.group(2))));wordNumber.appendTail(converted);value=converted.toString();
         value=value.replaceAll("(a las? \\d{1,2}) y media", "$1:30").replaceAll("(a las? \\d{1,2}) y cuarto", "$1:15");

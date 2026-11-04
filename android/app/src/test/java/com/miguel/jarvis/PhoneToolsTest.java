@@ -12,6 +12,8 @@ public class PhoneToolsTest {
         assertNull(PhoneReminder.parse("Recuérdame estudiar hoy a las 9",now).time);
         assertNull(PhoneReminder.parse("Recuérdame estudiar a las 29:99",now).time);
         assertNull(PhoneReminder.parse("Recuérdame estudiar",now).time);
+        PhoneReminder chores=PhoneReminder.parse("Hasme un recordatorio de lavar los platos a las ocho de la noche y repite cada cinco minutos",now);
+        assertEquals("lavar los platos",chores.text);assertEquals(now.withHour(20),chores.time);
         assertEquals("entregar un informe",PhoneReminder.parse("Recuérdame entregar un informe en cinco minutos",now).text);
         assertEquals(now.plusDays(1).withHour(9).withMinute(30),PhoneReminder.parse("Recuérdame estudiar mañana a las nueve y media",now).time);
         assertNull(PhoneReminder.parse("Recuérdame estudiar en una hora y media",now).time);

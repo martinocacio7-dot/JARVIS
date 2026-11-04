@@ -1,13 +1,15 @@
 plugins { id 'com.android.application' }
+def withNotifications = providers.gradleProperty('jarvisNotificationReader').getOrElse('true').toBoolean()
 android {
     namespace 'com.miguel.jarvis'
     compileSdk 35
     defaultConfig {
         applicationId 'com.miguel.jarvis'
+        buildConfigField 'boolean', 'NOTIFICATION_READER', withNotifications.toString()
         minSdk 26
         targetSdk 35
-        versionCode 19
-        versionName '2.0.2'
+        versionCode 20
+        versionName '2.1.0'
         ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
     }
     buildFeatures { buildConfig true }
@@ -40,3 +42,21 @@ def prepareMobileBrain = tasks.register('prepareMobileBrain', Exec) {
 }
 tasks.named('preBuild').configure { dependsOn prepareMobileBrain }
 dependencies { testImplementation 'org.json:json:20240303' }
+
+android.sourceSets.main.java.srcDir(withNotifications ? 'src/withNotifications/java' : 'src/withoutNotifications/java')
+if (!withNotifications) {
+    def reduced = layout.buildDirectory.file('generated/reduced-manifest/AndroidManifest.xml')
+    def makeReduced = tasks.register('prepareReducedManifest') {
+        inputs.file('src/main/AndroidManifest.xml')
+        outputs.file(reduced)
+        doLast {
+            def full = file('src/main/AndroidManifest.xml').text
+            def text = full.replaceAll('(?s)\\s*<service android:name="\\.NotificationReader".*?</service>', '')
+            if (text.contains('BIND_NOTIFICATION_LISTENER_SERVICE')) throw new GradleException('Reduced manifest still contains notification access')
+            reduced.get().asFile.parentFile.mkdirs()
+            reduced.get().asFile.text = text
+        }
+    }
+    android.sourceSets.main.manifest.srcFile(reduced)
+    tasks.named('preBuild').configure { dependsOn makeReduced }
+}

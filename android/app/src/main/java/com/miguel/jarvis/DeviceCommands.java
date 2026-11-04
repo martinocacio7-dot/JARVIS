@@ -15,15 +15,17 @@ public final class DeviceCommands {
         if(!key(text).matches("(?:que dia es(?: hoy)?|que dia estamos|en que dia estamos|que fecha es(?: hoy)?|cual es la fecha(?: de hoy)?|dime la fecha(?: de hoy)?|fecha de hoy|que dia de la semana es(?: hoy)?)"))return null;
         return "Hoy es "+now.format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'de' yyyy",new Locale("es","EC")))+".";
     }
+    public static boolean notificationReadQuery(String text){return key(text).matches("(?:lee|leeme)(?: el contenido de)? (?:mis |las )?notificaciones");}
     public static boolean notificationQuery(String text) {
-        return key(text).matches("(?:(?:lee|leeme|dime|muestra|que|cuantas|cuales son|tengo|hay) )?(?:(?:mis|las) )?notificaciones(?: tengo)?");
+        return notificationReadQuery(text)||key(text).matches("(?:(?:lee|leeme|dime|muestra|que|cuantas|cuales son|tengo|hay) )?(?:(?:mis|las) )?notificaciones(?: tengo)?");
     }
     public static boolean endsConversation(String text) {
         return key(text).matches("(?:gracias|gracias eso es todo|eso es todo|termina la conversacion|terminar conversacion|hasta luego|no mas|ya termine|cancela la conversacion)");
     }
     public static String appTarget(String text) {
         if(text.contains(":")||text.contains("/")||text.contains("\\"))return null;
-        Matcher match=Pattern.compile("^(?:abre|abrir|abreme|entra a|entra en|inicia|ejecuta) (?:la (?:aplicacion|app) |el )?([\\p{L}\\p{N} ]{1,60})$").matcher(key(text));
-        return match.matches()?match.group(1):null;
+        String request=key(text).replaceFirst("^(?:me puedes|me podrias|puedes|podrias) ", "");
+        Matcher match=Pattern.compile("^(?:abre|abrir|abreme|(?:entra|entrar|ingresa|ingrese|ingresar) (?:a|en|al)|inicia|ejecuta) (?:(?:la|mi) (?:aplicacion|app) |mi |el |la )?([\\p{L}\\p{N} ]{1,60})$").matcher(request);
+        return match.matches()?AppNamePolicy.canonical(match.group(1)):null;
     }
 }

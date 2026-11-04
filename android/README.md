@@ -1,6 +1,6 @@
-# JARVIS para Android · 2.0.2
+# JARVIS para Android · 2.1.0
 
-**Edición actual 2.0.2:** no incluye acceso a notificaciones de otras aplicaciones. Las instrucciones históricas de 1.6.0/2.0.0 sobre ese acceso ya no se aplican a esta edición.
+**Edición principal 2.1.0:** lector opcional de notificaciones, activado únicamente desde los ajustes de Android. También se distribuye una edición sin lector con las mismas funciones de chat, apps y recordatorios. Las notas de versiones 2.0.x sin lector describen esas ediciones históricas.
 
 Aplicación nativa para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits. El lanzador abre NativeChatActivity: mensajes, esfera, clasificador y conocimiento se ejecutan en el teléfono. No abre la página de Render ni le solicita las respuestas. Esta entrega no incluye bibliotecas x86 de emulador. Las secciones de versiones 1.x describen el comportamiento histórico de la interfaz web; la sección 2.0 al final detalla el nuevo flujo.
 
@@ -9,7 +9,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Abre la aplicación y comprueba **JARVIS 2.0.2** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
+2. Abre la aplicación y comprueba **JARVIS 2.1.0** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. La activación no solicita credenciales ni conexión a tu servidor.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -185,3 +185,34 @@ Ante 12/13 se permite un intento de español genérico por proveedor y un cambio
 Permisos → Idioma del dictado Android explica cómo revisar el proveedor y abre los ajustes de entrada de voz. Instalar una voz de síntesis no instala reconocimiento de español. La app no fuerza descargas, cambia el idioma del sistema ni añade permisos; el servicio predeterminado puede usar su propia conexión si el idioma se eligió de su lista online.
 
 Las pruebas JVM cubren preferencia de idiomas instalados, códigos de idioma frente a permisos, y conservación del temporizador ante pausa/apagado o voz ya iniciada. La consulta de paquetes y el resultado real siguen necesitando prueba en el dispositivo Infinix; no se dispone de ese teléfono aquí.
+
+
+## WhatsApp, seguimiento de tareas y lector opcional (2.1.0)
+
+### Abrir aplicaciones
+
+«Ingresa a guassa», «entra a wasap» y «abre WhatsApp» se normalizan a WhatsApp. Se admite también «ingresa al …» y peticiones corteses. La app verifica los paquetes oficiales com.whatsapp y com.whatsapp.w4b, sin adivinar otra app por una etiqueta parecida; no pide QUERY_ALL_PACKAGES. WhatsApp Business requiere su nombre explícito. Si JARVIS está visible solicita abrir la app; en segundo plano sigue preparando una notificación que debes tocar. No intenta eludir la restricción de inicio de actividades de Android. No lee ni envía chats desde WhatsApp.
+
+### Recordatorios hasta Hecho o Detener
+
+«Hasme un recordatorio de lavar los platos a las ocho de la noche» programa el aviso en la zona horaria del teléfono. La confirmación expresa fecha y hora completas; di mañana/tarde/noche o usa 24 horas para evitar confusión entre 08:00 y 20:00. El seguimiento predeterminado solicitado repite cada cinco minutos hasta que marques Hecho o Detener. También admite terminar la orden con «y repite cada cinco minutos». Las repeticiones diarias/semanales y otros intervalos no están implementados.
+
+El aviso dice «Señor, le recuerdo que debe lavar los platos. ¿Ya lo hizo o todavía no?» y ofrece **Hecho**, **En 5 minutos** y **Detener**. Hecho cancela el próximo aviso; aplazar lo programa cinco minutos desde la confirmación; Detener pausa los avisos manteniendo la tarea pendiente. Deslizar una notificación no equivale a marcar la tarea como hecha. En Permisos → Seguimiento de recordatorios puedes escoger treinta minutos, una hora o hasta Hecho/Detener para los nuevos avisos y aplazamientos. Los registros completados pueden depurarse al crear nuevas tareas; las conversaciones no se borran por ello.
+
+Con Activar JARVIS encendido, un aviso hablado permite continuar escuchando y contestar «ya lo hice» o «todavía no». Esas respuestas solo se aplican a la tarea del aviso reciente, dentro de dos minutos y sin una petición ajena intermedia. Un «sí» o «no» suelto no completa ni aplaza tareas. También puedes decir «marca lavar los platos como hecho» o «cancela los avisos de lavar los platos» con el nombre exacto; si hay varias coincidencias no cambia ninguna.
+
+Si la escucha está apagada, el recordatorio no enciende el micrófono por su cuenta. Puede leer el aviso con una voz española local a través de un servicio de reproducción visible, sujeto a las reglas de inicio en segundo plano de Android. Para contestar usa los botones o abre JARVIS y dicta/escribe la respuesta. Si Android impide arrancar ese servicio, falta voz local, hay una grabación/llamada, modo silencio o No molestar, permanece el aviso de notificación sin forzar audio. La reproducción tiene foco de audio, vigilancia y duración máxima; no crea AudioRecord ni SpeechRecognizer.
+
+Activa notificaciones propias y Alarmas exactas. Aun con esos permisos, Doze, ahorro de batería y restricciones del fabricante pueden retrasar avisos; solicitar cinco minutos no garantiza ese intervalo con pantalla apagada. Un aviso retrasado calcula el siguiente desde su entrega real, evitando ráfagas. Los callbacks de alarmas viejas o de tareas completadas se rechazan. Tras reiniciar o abrir la app se restauran los avisos pendientes, sin arrancar el micrófono; los avisos únicos antiguos ya vencidos no se convierten en bucles.
+
+### Ediciones y notificaciones ajenas
+
+La edición principal contiene NotificationListenerService, desactivado hasta que Android permita el acceso especial solicitado por el usuario. Abre Permisos → Notificaciones de otras apps. «Cuántas notificaciones tengo» resume cantidades por app; «lee mis notificaciones» lee hasta tres avisos recientes, con título y texto disponibles y longitudes limitadas. No equivale a leer toda la bandeja de mensajes ni a conocer el número exacto de mensajes sin leer. Se excluyen JARVIS, avisos permanentes y resúmenes duplicados de grupos.
+
+No lee automáticamente avisos entrantes, no responde mensajes, no persiste el contenido y no lo manda al servidor. Los resúmenes y lecturas se excluyen del historial guardado. Puede anunciar datos personales en voz alta cuando se lo pides. Puedes retirar el acceso en Android. Esta edición puede ser bloqueada por Play Protect: no hay garantía de instalación. Mantén la protección activa y solicita revisión oficial si corresponde.
+
+La edición **sin lector** se genera con `-PjarvisNotificationReader=false`: elimina del manifiesto el servicio y su binding, y compila una implementación sin getActiveNotifications ni herencia NotificationListenerService. No es un permiso oculto: esa función no existe en ese APK. Comparte paquete, firma y formato de datos con la principal; no cambia la identidad para eludir una detección. Ambas conservan el chat sin INTERNET propio ni conexión a Render.
+
+Descargas: `JARVIS-Android-prueba.apk/zip` (lector opcional) y `JARVIS-Android-sin-lector.apk/zip` (permisos reducidos). Las huellas SHA-256 están junto a cada APK. CI compila ambas opciones.
+
+Validación: pruebas JVM de alias y órdenes explícitas, estado de seguimiento con límite opcional o ilimitado, duplicados/entregas tempranas, finalización y aplazamiento, recuentos frente a contenido privado y parsers de fecha. Se auditan manifiesto y código compilado de ambos APK. No se dispone de un teléfono físico para validar AlarmManager, reproducción en segundo plano, Play Protect ni datos reales de notificaciones. Prueba primero un aviso de un minuto, confirma Hecho y verifica que no vuelva a aparecer cinco minutos después.

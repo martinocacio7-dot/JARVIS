@@ -14,4 +14,10 @@ public class NotificationCountsTest {
         assertTrue(DeviceCommands.notificationQuery("Lee mis notificaciones"));
         assertFalse(DeviceCommands.notificationQuery("Cómo funcionan las notificaciones en Android"));
     }
+    @Test public void messageContentsAreSeparateFromCountsAndBounded(){
+        java.util.List<NotificationCounts.Entry> entries=java.util.Arrays.asList(new NotificationCounts.Entry("WhatsApp",false,"Miguel","Mensaje privado"),new NotificationCounts.Entry("Chrome",true,"Excluido","No leer"));
+        assertFalse(NotificationCounts.summarize(entries).contains("Mensaje privado"));assertTrue(NotificationCounts.readContents(entries).contains("Mensaje privado"));assertFalse(NotificationCounts.readContents(entries).contains("No leer"));
+        assertTrue(NotificationCounts.readContents(java.util.Arrays.asList(new NotificationCounts.Entry("App",false,"Título","x".repeat(1000)))).length()<400);
+        assertTrue(DeviceCommands.notificationReadQuery("Lee mis notificaciones"));assertFalse(DeviceCommands.notificationReadQuery("Cuántas notificaciones tengo"));
+    }
 }

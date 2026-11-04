@@ -1,13 +1,18 @@
-# Revisión de instalación: JARVIS Android 2.0.2
+# Revisión de instalación: JARVIS Android 2.1.0
 
-La captura del dispositivo muestra «Se bloqueó la app para proteger tu dispositivo» por posible acceso a datos sensibles. No contiene la regla exacta, el hash del APK ni una certificación de malware. No se ha realizado una comprobación física de Play Protect con 2.0.2.
+La captura anterior del dispositivo mostró un bloqueo genérico de Play Protect por posible acceso a datos sensibles. No identificaba la regla exacta ni el hash del APK. No se ha realizado una comprobación física de Play Protect con 2.1.0.
 
-Esta edición retira funcionalidades y permisos reales: no hay NotificationListenerService, acceso a notificaciones ajenas, SMS, accesibilidad, WebView ni solicitudes HTTP a Render. Mantiene chat nativo, conocimiento incluido, micrófono activado por el usuario, síntesis local, recordatorios y apertura de otras apps mediante intents. Permanece la identidad `com.miguel.jarvis`, con versionCode 19 y la misma firma de prueba de la edición anterior. No se modifica la identidad ni se ofuscan componentes para eludir el bloqueo.
+La versión 2.1.0 (versionCode 20) se distribuye en dos ediciones funcionales con la misma identidad `com.miguel.jarvis`, la misma firma de prueba y datos compatibles:
 
-Los permisos de micrófono, notificaciones propias, alarmas exactas, servicio de micrófono, bloqueo parcial de CPU y restauración de avisos deben explicarse con sus funciones al enviar una revisión. El APK no enciende el micrófono al reiniciar. La reducción de permisos y las pruebas automatizadas no garantizan la aceptación por Google ni sustituyen una auditoría de seguridad independiente.
+- `downloads/JARVIS-Android-prueba.apk`: incluye lector opcional mediante NotificationListenerService. Requiere autorización manual del usuario en Android. Cuenta avisos y, solo al pedirlo, puede leer título/texto de hasta tres notificaciones recientes. No lee automáticamente avisos entrantes ni envía respuestas. Ese acceso es sensible y puede bloquearse al instalar; se debe justificar en una revisión.
+- `downloads/JARVIS-Android-sin-lector.apk`: no declara el servicio ni su permiso de binding; tampoco contiene su implementación de lectura. No puede leer notificaciones de otras apps. Conserva las notificaciones propias de recordatorios y del servicio de micrófono.
 
-Si vuelve a bloquearse el APK exacto de 2.0.2, conserva el aviso completo y presenta el archivo/URL y su SHA-256 al formulario oficial de revisión de Play Protect:
+Ninguna edición solicita INTERNET, SMS, accesibilidad o superposición. Ambas incluyen chat nativo y motor propio, memoria, micrófono explícitamente activado, síntesis española local, recordatorios y apertura de apps mediante intents. El servicio de reproducción foreground se usa para leer un aviso programado sin abrir un micrófono y puede ser rechazado por las reglas de segundo plano; entonces permanece la notificación. El reinicio restaura avisos pendientes, no la escucha. No se renombra el paquete, cambia la identidad ni se ocultan componentes para evitar una clasificación.
+
+Los contenidos del lector se procesan localmente y se excluyen del historial persistente. La autorización permite a Android conceder un acceso más amplio del que este lector utiliza; la interfaz lo explica y permite abrir los ajustes para retirarlo. La app no puede concederse ese acceso ni omitir restricciones del sistema.
+
+Si se bloquea un APK exacto, conserva el aviso y presenta su archivo/URL, versión y SHA-256 al formulario oficial:
 
 https://support.google.com/googleplay/android-developer/contact/protectappeals
 
-No se ha enviado el APK a Google ni solicitado esa revisión desde esta tarea. No desactives Play Protect para probarlo. La huella del archivo distribuido está en `downloads/JARVIS-Android-prueba.apk.sha256`; el ZIP contiene ese mismo APK. Revisa la versión 2.0.2 y evita confundirlo con un APK antiguo reenviado por mensajería.
+No se ha enviado ningún APK a Google ni solicitado esa revisión desde esta tarea. Mantén Play Protect activo. Las pruebas, firma y auditoría de permisos no equivalen a aprobación de Google ni a una auditoría independiente de seguridad. Las huellas están en el `.apk.sha256` correspondiente a cada edición; los ZIP contienen esos mismos APK. Verifica cuál archivo estás revisando, porque los permisos y hashes son distintos.
