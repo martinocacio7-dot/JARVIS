@@ -13,7 +13,8 @@ export function parseMemoryCommand(text) {
     if (name) return { action: 'write', label: 'nombre', value: name[1] };
     const labelled = content.match(/^(?:mi\s+)?(.{1,80}?)\s+(?:es|son|:)\s*(.+)$/iu);
     if (labelled) return { action: 'write', label: labelled[1], value: labelled[2] };
-    return { action: 'clarify' };
+    const partial = content.match(/^(?:mi\s+)(.{1,80}?)(?:\s+(?:es|son|:))?$/iu);
+    return partial ? { action: 'clarify', label: partial[1] } : { action: 'clarify' };
   }
   match = phrase.match(/^(?:qu[eé] recuerdas (?:sobre|de)|cu[aá]l es mi|c[oó]mo se llama mi)\s+(.+)$/iu);
   if (match) return { action: 'read', label: match[1] };
@@ -22,8 +23,20 @@ export function parseMemoryCommand(text) {
   return null;
 }
 
+// Only the immediately preceding explicit, incomplete user request may supply a label.
+export function parseMemoryConversation(messages) {
+  const users = messages.filter(message => message.role === 'user');
+  if (!users.length) return null;
+  const latest = users.at(-1).content;const direct = parseMemoryCommand(latest);if (direct) return direct;
+  const pending = users.length > 1 ? parseMemoryCommand(users.at(-2).content) : null;
+  const key = memoryKey(latest);
+  if (pending?.action !== 'clarify' || !pending.label || /^(que|como|cual|quien|cuando|donde|por que|abre|abrir|entra|ingresa|pon|busca|investiga|reproduce|recuerdame|haz|has|hasme|hazme|avisa|avisame|borra|elimina|marca|completa|lee|leeme|mis|mi agenda|olvida|cancela|no|si|hola|gracias|continua|repite|retoma|retomemos|termina|ya|todavia|aun|hecho|listo|crea|creame|programa|agrega|anade|anota|muestra|apaga|enciende|manda|envia|modifica|edita|cambia|mueve|reprograma|actualiza|guarda|acuerdate|la hora|hora|hora actual|fecha|noticias|notificaciones|ayuda|en resumen|mas facil|dame un ejemplo|centro de control|resumen de mis tareas|resumen de mi dia)(?: |$)/.test(key)) return null;
+  return { action: 'write', label: pending.label, value: latest.trim().replace(/^es\s+/iu, '') };
+}
+
 export async function executeMemoryCommand(command, database, now = new Date()) {
   const response = reply => ({ mode: 'assistant', intent: 'memoria_guardada', reply });
+  if (command.action === 'clarify' && command.label) return response(`¿Qué valor guardo para «${command.label}»? Puedes responder «es aprender Python». Todavía no he guardado nada.`);
   if (command.action === 'clarify') return response('¿Qué dato quieres que guarde? Dime, por ejemplo, «recuerda que mi objetivo es aprender Python». Solo guardo recuerdos cuando me lo pides; no programas recordatorios con esta orden.');
   const saved = await database.readMemories();
   const key = memoryKey(command.label || '');

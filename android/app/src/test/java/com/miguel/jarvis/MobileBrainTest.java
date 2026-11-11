@@ -19,4 +19,12 @@ public class MobileBrainTest {
     @Test public void staleTopicNeverAnswersAnUnrelatedDefinition()throws Exception{
         MobileBrain brain=new MobileBrain(data());brain.answer("Explica variables en Python");assertFalse(brain.answer("Qué es quuxzz").contains("En Python"));
     }
+    @Test public void resumesEachLessonAndDefinitionWithoutReplayingActions()throws Exception{
+        MobileBrain first=new MobileBrain(data());first.answer("Explica variables en Python");JSONObject saved=first.snapshot();
+        MobileBrain second=new MobileBrain(data());second.restore(saved);assertTrue(second.answer("De qué hablábamos").contains("python"));assertTrue(second.answer("Dame un ejemplo").contains("print("));
+        first.reset();first.answer("Qué significa guapo");second.restore(first.snapshot());assertTrue(second.answer("Retomemos").contains("guapo"));assertTrue(second.answer("Dame un ejemplo").contains("camisa"));
+        first.reset();first.answer("Quiero aprender programación");assertTrue(first.answer("Continúa").contains("Paso 1"));second.restore(first.snapshot());assertTrue(second.answer("Continúa").contains("Paso 2"));
+        second.restore(null);assertTrue(second.answer("Retomemos").contains("Todavía no"));
+        saved.put("model",-100);second.restore(saved);assertTrue(second.answer("Retomemos").contains("Todavía no"));
+    }
 }

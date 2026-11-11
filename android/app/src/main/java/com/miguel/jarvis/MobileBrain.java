@@ -38,6 +38,17 @@ public final class MobileBrain {
         return count>0&&(double)known/count>=.6&&scores[best]>=.75&&scores[best]-second>=.2?model.getJSONArray("intents").getJSONObject(best).getString("id"):"desconocido";
     }
     public void reset(){current=null;lesson=null;pendingPlay=false;last="";topic="";step=0;}
+    public JSONObject snapshot()throws JSONException{
+        String definition=current==null?"":current.getJSONArray("aliases").getString(0);
+        return new JSONObject().put("version",1).put("model",model.optInt("version")).put("definition",definition).put("lesson",lesson==null?"":lesson.optString("id")).put("language",language).put("topic",topic).put("step",step).put("last",last.substring(0,Math.min(4000,last.length()))).put("pendingPlay",pendingPlay);
+    }
+    public void restore(JSONObject state)throws JSONException{
+        reset();if(state==null||state.optInt("version")!=1||state.optInt("model",-1)!=model.optInt("version"))return;
+        for(int i=0;i<entries.length();i++)if(entries.getJSONObject(i).getJSONArray("aliases").getString(0).equals(state.optString("definition")))current=entries.getJSONObject(i);
+        for(int i=0;i<lessons.length();i++)if(lessons.getJSONObject(i).optString("id").equals(state.optString("lesson")))lesson=lessons.getJSONObject(i);
+        String guide=state.optString("topic");if(bundle.getJSONObject("guides").has(guide)){topic=guide;step=Math.max(0,Math.min(state.optInt("step"),bundle.getJSONObject("guides").getJSONObject(guide).getJSONArray("steps").length()));}
+        String selected=state.optString("language");language=lesson!=null&&lesson.getJSONObject("examples").has(selected)?selected:"javascript";last=state.optString("last");if(last.length()>4000)last=last.substring(0,4000);pendingPlay=state.optBoolean("pendingPlay");
+    }
     public String answer(String input)throws JSONException{
         String text=DeviceCommands.key(input).replaceFirst("^(?:me puedes|puedes|podrias) (?:decirme|explicarme) ","");
         if(text.matches("olvida el contexto|nueva conversacion|cancela")){reset();return "De acuerdo. Empezamos una conversación nueva; tus recuerdos guardados siguen separados.";}
@@ -45,6 +56,12 @@ public final class MobileBrain {
         String choice=pendingPlay?(text.matches("la palabra|en ingles")?"play":text.matches("la tienda|de android")?"google play":text):text;pendingPlay=false;
         for(int i=0;i<entries.length();i++){JSONObject entry=entries.getJSONObject(i);JSONArray aliases=entry.getJSONArray("aliases");for(int j=0;j<aliases.length();j++){String alias=aliases.getString(j);if(choice.equals(alias)||choice.matches("(?:que es|que significa|explicame|hablame de) (?:la palabra |el |la |ser )?"+java.util.regex.Pattern.quote(alias))){current=entry;lesson=null;last=entry.getString("answer")+"\n\n"+entry.getString("example");return last;}}}
         if(current!=null&&text.matches("dame un ejemplo|un ejemplo|mas facil|en resumen|por que|dame la fuente")){last=text.contains("ejemplo")?current.getString("example"):text.equals("dame la fuente")?current.getString("source"):text.equals("por que")?current.getString("limit"):current.getString("answer");return last;}
+        if(text.matches("de que hablabamos|que estabamos viendo|retoma el tema|retomemos|en que nos quedamos")){
+            if(current!=null)return "Estábamos viendo «"+current.getJSONArray("aliases").getString(0)+"». Puedes pedirme un ejemplo, la fuente o una explicación más sencilla.";
+            if(lesson!=null)return "Estábamos viendo "+lesson.getString("title")+" en "+language+". Puedes decir dame un ejemplo o por qué.";
+            if(!topic.isEmpty())return "Estábamos hablando de "+bundle.getJSONObject("guides").getJSONObject(topic).getString("name")+". Di continúa para seguir con la guía.";
+            return "Todavía no hay un tema para retomar en este chat. ¿Qué quieres aprender o resolver?";
+        }
         current=null;boolean lessonMatched=false;
         for(int i=0;i<lessons.length();i++){JSONObject item=lessons.getJSONObject(i);JSONArray aliases=item.getJSONArray("aliases");for(int j=0;j<aliases.length();j++)if((" "+text+" ").contains(" "+aliases.getString(j)+" ")&&text.matches(".*(?:explica|que es|que son|aprender|ejemplo|funciona|significa).*")){lesson=item;lessonMatched=true;}}
         if(lesson!=null&&!lessonMatched&&!text.matches("dame un ejemplo|un ejemplo|en python|en javascript|python|javascript|en resumen|mas facil|por que|dame argumentos"))lesson=null;

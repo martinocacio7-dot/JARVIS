@@ -16,7 +16,9 @@ final class PhoneReminders {
     static void cancel(Context c,String id){AlarmManager alarms=c.getSystemService(AlarmManager.class);alarms.cancel(intent(c,id,"deliver",0));alarms.cancel(Reminders.pending(c,id,""));c.getSystemService(NotificationManager.class).cancel("phone-"+id,1);}
     static synchronized String save(Context c,PhoneReminder r)throws Exception{
         if(r.text.isEmpty()||r.text.length()>300||r.time==null)return "¿Qué debo recordarte y cuándo? Por ejemplo: recuérdame lavar los platos a las ocho de la noche.";
-        JSONArray previous=read(c),items=new JSONArray();for(int i=0;i<previous.length();i++)if(!previous.getJSONObject(i).optBoolean("completed"))items.put(previous.getJSONObject(i));if(items.length()>=200)return "Tienes 200 recordatorios locales. No he añadido otro.";
+        JSONArray items=TaskHistoryPolicy.retain(read(c));int active=0;
+        for(int i=0;i<items.length();i++){JSONObject existing=items.getJSONObject(i);if(existing.optBoolean("completed"))continue;active++;if(DeviceCommands.key(existing.optString("text")).equals(DeviceCommands.key(r.text))&&existing.optString("dueAt").equals(r.time.toInstant().toString()))return "Ese recordatorio ya está guardado. No lo añadí otra vez.";}
+        if(active>=200)return "Tienes 200 recordatorios locales pendientes. No he añadido otro.";
         JSONObject entry=new JSONObject().put("id",UUID.randomUUID().toString()).put("text",r.text).put("dueAt",r.time.toInstant().toString()).put("pending",true).put("completed",false).put("remaining",maximum(c));items.put(entry);
         if(!write(c,items))return "No pude confirmar el guardado del recordatorio en el teléfono.";
         String result;try{result=schedule(c,entry);}catch(Exception error){result="El dato quedó guardado, pero no pude programar el aviso en Android. Revisa las alarmas y notificaciones.";}

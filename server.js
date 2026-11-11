@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { controlSnapshot, controlReply, isControlQuery } from './assistant/control.js';
 import { createGoogleSearch } from './search/google.js';
 import { readFileSync } from 'node:fs';
 import { respond } from './neural/conversation.js';
@@ -15,7 +16,7 @@ import { validateTasks } from './public/task-data.js';
 import { parseTaskConversation, executeTaskCommand } from './assistant/commands.js';
 import { calendarReply } from './assistant/calendar.js';
 import { MemoryValidationError } from './knowledge/memory-data.js';
-import { parseMemoryCommand, executeMemoryCommand } from './assistant/memory.js';
+import { parseMemoryConversation, executeMemoryCommand } from './assistant/memory.js';
 import { everydayReply, definitionFallback } from './assistant/everyday.js';
 import { musicReply } from './assistant/music.js';
 import { reasoningReply } from './assistant/reasoning.js';
@@ -23,7 +24,7 @@ import { createVoiceService } from './voice/elevenlabs.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
 
-const files = { '/chat-history.js': ['chat-history.js', 'text/javascript'], '/reply-view.js': ['reply-view.js', 'text/javascript'], '/search-data.js': ['search-data.js', 'text/javascript'], '/voice-home.js': ['voice-home.js', 'text/javascript'], '/android-device.js': ['android-device.js', 'text/javascript'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice-profile.js': ['voice-profile.js', 'text/javascript'], '/mobile.js': ['mobile.js', 'text/javascript'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/sw.js': ['sw.js', 'text/javascript'], '/icons/jarvis-180.png': ['icons/jarvis-180.png', 'image/png'], '/icons/jarvis-192.png': ['icons/jarvis-192.png', 'image/png'], '/icons/jarvis-512.png': ['icons/jarvis-512.png', 'image/png'], '/task-data.js': ['task-data.js', 'text/javascript'], '/task-ui.js': ['task-ui.js', 'text/javascript'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
+const files = { '/chat-history.js': ['chat-history.js', 'text/javascript'], '/reply-view.js': ['reply-view.js', 'text/javascript'], '/control-ui.js': ['control-ui.js', 'text/javascript'], '/search-data.js': ['search-data.js', 'text/javascript'], '/voice-home.js': ['voice-home.js', 'text/javascript'], '/android-device.js': ['android-device.js', 'text/javascript'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice-profile.js': ['voice-profile.js', 'text/javascript'], '/mobile.js': ['mobile.js', 'text/javascript'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/sw.js': ['sw.js', 'text/javascript'], '/icons/jarvis-180.png': ['icons/jarvis-180.png', 'image/png'], '/icons/jarvis-192.png': ['icons/jarvis-192.png', 'image/png'], '/icons/jarvis-512.png': ['icons/jarvis-512.png', 'image/png'], '/task-data.js': ['task-data.js', 'text/javascript'], '/task-ui.js': ['task-ui.js', 'text/javascript'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
 const publicInstallAssets = new Set(['/manifest.webmanifest', '/sw.js', '/icons/jarvis-180.png', '/icons/jarvis-192.png', '/icons/jarvis-512.png']);
 const instruction = 'Eres JARVIS, un asistente personal útil, claro y honesto. Responde en español salvo que te pidan otro idioma. Explica tus límites. No afirmes haber realizado acciones que no puedes ejecutar.';
 
@@ -41,6 +42,7 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
       try { const saved = await database.readVoice(); return json(200, { keyConfigured: true, ready: Boolean(saved.voice.voiceId || voice.fallbackVoiceId), canClone: true, name: saved.voice.name || 'Voz personal' }); }
       catch { return json(200, { keyConfigured: true, ready: Boolean(voice.fallbackVoiceId), canClone: false, name: 'Voz personal', needsDatabase: true }); }
     }
+    if (req.method === 'GET' && req.url === '/api/control') return json(200, await controlSnapshot(database, now()));
     if (req.method === 'GET' && req.url === '/api/tasks') {
       try { return json(200, await database.readTasks()); }
       catch { return json(503, { error: 'Configura o revisa DATABASE_URL en Render para guardar tus pendientes.' }); }
@@ -143,7 +145,8 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
         if (desktop) { const action = await desktop(messages.at(-1).content);if (action) return json(200, action); }
-        const memory = parseMemoryCommand(messages.at(-1).content) || (/^(como me llamo|recuerdas mi nombre)$/.test(normalize(messages.at(-1).content)) ? { action: 'read', label: 'nombre' } : null);
+        if (isControlQuery(messages.at(-1).content)) return json(200, { mode: 'assistant', openControl: true, reply: controlReply(await controlSnapshot(database, now()), normalize(messages.at(-1).content).replace(/^jarvis /, '') === 'que tareas he completado') });
+        const memory = parseMemoryConversation(messages) || (/^(como me llamo|recuerdas mi nombre)$/.test(normalize(messages.at(-1).content)) ? { action: 'read', label: 'nombre' } : null);
         if (memory) {
           if (memory.action === 'read' && normalize(memory.label || '') === 'nombre') {
             const current = respond(localModel, messages);

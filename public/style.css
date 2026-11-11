@@ -146,3 +146,5 @@ body.has-messages .voice-home :is(h2,.voice-kicker,.orb-hint,.voice-wave){displa
 
 main>.voice-home{flex-shrink:0;width:min(850px,calc(100% - 48px))}
 @media(max-width:500px){main>.voice-home{width:calc(100% - 32px)}}
+
+#control-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}#control-stats div{padding:14px 10px;background:#102a35;border:1px solid #294855;border-radius:12px}#control-stats strong{display:block;font-size:26px;color:#9eecf6}#control-stats span{font-size:11px;color:#a5bdc9}#control-panel h2{font-size:14px;margin-top:24px}#control-panel li{padding:10px 0;border-bottom:1px solid #1c323f}#control-panel li small{flex-basis:100%;font-size:11px;color:#91a5c2}#control-panel>button{margin:5px 8px 5px 0}

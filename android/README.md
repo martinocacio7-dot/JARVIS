@@ -1,6 +1,6 @@
-# JARVIS para Android · 2.2.0
+# JARVIS para Android · 2.3.0
 
-**Edición principal 2.2.0:** lector opcional de notificaciones, activado únicamente desde los ajustes de Android. También se distribuye una edición sin lector con las mismas funciones de chat, apps y recordatorios. Las notas de versiones 2.0.x sin lector describen esas ediciones históricas.
+**Edición principal 2.3.0:** lector opcional de notificaciones, activado únicamente desde los ajustes de Android. También se distribuye una edición sin lector con las mismas funciones de chat, apps y recordatorios. Las notas de versiones 2.0.x sin lector describen esas ediciones históricas.
 
 Aplicación nativa para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits. El lanzador abre NativeChatActivity: mensajes, esfera, clasificador y conocimiento se ejecutan en el teléfono. No abre la página de Render ni le solicita las respuestas. Esta entrega no incluye bibliotecas x86 de emulador. Las secciones de versiones 1.x describen el comportamiento histórico de la interfaz web; la sección 2.0 al final detalla el nuevo flujo.
 
@@ -9,7 +9,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Abre la aplicación y comprueba **JARVIS 2.2.0** y la pantalla azul del núcleo. El motor móvil no necesita iniciar sesión en Render.
+2. Abre la aplicación y comprueba **JARVIS 2.3.0** y la pantalla azul del núcleo. El motor móvil no necesita iniciar sesión en Render.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. La activación no solicita credenciales ni conexión a tu servidor.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -230,3 +230,13 @@ Validación: pruebas JVM de alias y órdenes explícitas, estado de seguimiento 
 El clasificador no adquiere razonamiento humano por añadir esta interfaz ni al conversar. No se ha instalado un generador de imágenes ni un agente remoto de control del PC. El repositorio sí ofrece `npm run desktop` para abrir un conjunto fijo de apps/páginas desde el navegador del propio computador. La web recibe la misma presentación y consulta opcional; no concede acceso al sistema operativo del computador.
 
 Validación: pruebas de políticas, contexto y tratamiento de fuentes; compilación, lint y tests de ambas ediciones; navegador de escritorio y móvil con Google simulado/no configurado. No hubo credenciales reales de Google para probar cuota, acceso o una búsqueda real, ni dispositivo Android físico para verificar audio/segundo plano en esta entrega.
+
+## Memoria conversacional y centro de control (2.3.0)
+
+El tema instalado de cada chat —definición, lección, idioma, guía y siguiente paso— se guarda con el chat después de responder. Al reiniciar o cambiar de conversación se restaura sin volver a ejecutar mensajes ni acciones. Prueba «Explica variables en Python», vuelve a abrir la app y di «De qué hablábamos» o «Dame un ejemplo». Las conversaciones antiguas, previas a esta versión, no tienen ese estado y comienzan sin tema hasta recibir una nueva pregunta; no se inventa uno leyendo notificaciones o mensajes viejos. Nuevo chat y Olvida el contexto reinician el tema, manteniendo separados los recuerdos explícitos. La restauración se realiza en el trabajador, evitando bloquear la interfaz durante una consulta de Google.
+
+«Recuerda que mi objetivo» pregunta qué valor guardar. La próxima respuesta, por ejemplo «es aprender Python», puede completarlo durante dos minutos; una petición distinta o un chat nuevo descartan la aclaración. Solo se guardan recuerdos con una petición explícita. Los recuerdos anteriores siguen usando el mismo almacenamiento; los nuevos incluyen fecha de actualización. Consultarlos aclara que su fuente es el usuario y no una verificación independiente. Olvida el recuerdo elimina la etiqueta exacta; Borra mis recuerdos no borra chats ni tareas.
+
+En **Acciones → Centro de control** puedes consultar recuerdos, recordatorios pendientes, avisos detenidos y registros marcados como hechos. Preparar olvido solo llena el compositor: hay que enviar la petición. Los botones de tareas cambian su registro por identificador, verificando la escritura antes de confirmarla. Desde ahora crear un recordatorio conserva hasta cincuenta registros completados según su orden de almacenamiento y todos los pendientes (máximo doscientos); no recupera los que versiones anteriores ya habían eliminado. Un recordatorio idéntico por texto y fecha no se añade otra vez. Los contadores describen registros, no prueban que alguien haya lavado platos, abierto una app o recibido un aviso.
+
+También puedes preguntar «Mi centro de control», «Resumen de mis tareas» y «Qué tareas he completado». El panel muestra hasta treinta registros, priorizando pendientes. No se añadieron permisos ni proveedores. El motor sigue siendo un clasificador con conocimiento instalado; guardar contexto no modifica sus pesos ni equivale a razonamiento humano. Las pruebas automatizadas y de navegador no sustituyen probar el APK en un dispositivo físico.

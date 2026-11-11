@@ -1,3 +1,4 @@
+import { initControl, openControl } from './control-ui.js';
 import { loadHistory, freshHistory, updateHistory, newHistoryChat, saveHistory } from './chat-history.js';
 import { initAndroidDevice, deviceReply, openAndroidMusic } from './android-device.js';
 import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
@@ -51,6 +52,7 @@ function render() {
         for (const item of message.sources.slice(0, 3)) { const source = safeSource(item);if (!source) continue;const a = document.createElement('a');a.href = source.url;a.textContent = source.title;a.target = '_blank';a.rel = 'noopener noreferrer';sources.append(a); }
         article.append(sources);
       }
+      if (message.openControl) { const button=document.createElement('button');button.type='button';button.className='correct-answer';button.textContent='Abrir centro de control';button.addEventListener('click',openControl);article.append(button); }
       if (message.openTasks) {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'correct-answer'; button.textContent = message.taskDraft ? 'Completar pendiente' : 'Abrir mis pendientes';
         button.addEventListener('click', () => openTaskEditor(message.taskDraft)); article.append(button);
@@ -117,7 +119,7 @@ async function send(event) {
     if (data.deviceOnly) messages[messages.length - 1].deviceOnly = true;
     if (typeof data.musicQuery === 'string') data.reply = openAndroidMusic(data.musicQuery);
     if (data.openTasks) { const alarmStatus = await refreshTasks(); if (alarmStatus) data.reply = data.reply.replace(/Esta web no emite alarmas automáticas; puedes exportarlo a tu calendario para usar sus avisos\./g, alarmStatus); }
-    messages.push({ role: 'assistant', ...(data.deviceOnly ? { deviceOnly: true } : {}), content: data.reply, ...(Array.isArray(data.sources) ? { sources: data.sources } : {}), ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
+    messages.push({ role: 'assistant', ...(data.deviceOnly ? { deviceOnly: true } : {}), content: data.reply, ...(Array.isArray(data.sources) ? { sources: data.sources } : {}), ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openControl ? { openControl: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
     speakReply(data.reply, { localOnly: Boolean(data.deviceOnly) });
   } catch (error) {
@@ -156,12 +158,14 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && do
 function fitViewport() { document.documentElement.style.setProperty('--app-height', `${window.visualViewport?.height || window.innerHeight}px`);if (window.innerWidth > 800) closeHistory();else $('#chat-sidebar').inert = !document.body.classList.contains('history-open'); }
 window.visualViewport?.addEventListener('resize', fitViewport);window.addEventListener('resize', fitViewport);fitViewport();
 
+document.addEventListener('jarvis:tasks-changed', refreshTasks);
 document.querySelectorAll('[data-prompt]').forEach(button => button.addEventListener('click', () => { $('#prompt').value = button.dataset.prompt; $('#prompt').focus(); }));
 initLibrary();
 initFeedback();
 initDocuments();
 initVoice();
 initTasks();
+initControl();
 initMobile();
 render();
 if (messages.length) requestAnimationFrame(() => $('#chat-scroll').scrollTo({ top: $('#chat-scroll').scrollHeight }));

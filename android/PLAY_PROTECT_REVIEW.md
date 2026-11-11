@@ -1,8 +1,8 @@
-# Revisión de instalación: JARVIS Android 2.2.0
+# Revisión de instalación: JARVIS Android 2.3.0
 
-La captura anterior del dispositivo mostró un bloqueo genérico de Play Protect por posible acceso a datos sensibles. No identificaba la regla exacta ni el hash del APK. No se ha realizado una comprobación física de Play Protect con 2.2.0.
+La captura anterior del dispositivo mostró un bloqueo genérico de Play Protect por posible acceso a datos sensibles. No identificaba la regla exacta ni el hash del APK. No se ha realizado una comprobación física de Play Protect con 2.3.0.
 
-La versión 2.2.0 (versionCode 21) se distribuye en dos ediciones funcionales con la misma identidad `com.miguel.jarvis`, la misma firma de prueba y datos compatibles:
+La versión 2.3.0 (versionCode 22) se distribuye en dos ediciones funcionales con la misma identidad `com.miguel.jarvis`, la misma firma de prueba y datos compatibles:
 
 - `downloads/JARVIS-Android-prueba.apk`: incluye lector opcional mediante NotificationListenerService. Requiere autorización manual del usuario en Android. Cuenta avisos y, solo al pedirlo, puede leer título/texto de hasta tres notificaciones recientes. No lee automáticamente avisos entrantes ni envía respuestas. Ese acceso es sensible y puede bloquearse al instalar; se debe justificar en una revisión.
 - `downloads/JARVIS-Android-sin-lector.apk`: no declara el servicio ni su permiso de binding; tampoco contiene su implementación de lectura. No puede leer notificaciones de otras apps. Conserva las notificaciones propias de recordatorios y del servicio de micrófono.
@@ -18,3 +18,5 @@ https://support.google.com/googleplay/android-developer/contact/protectappeals
 No se ha enviado ningún APK a Google ni solicitado esa revisión desde esta tarea. Mantén Play Protect activo. Las pruebas, firma y auditoría de permisos no equivalen a aprobación de Google ni a una auditoría independiente de seguridad. Las huellas están en el `.apk.sha256` correspondiente a cada edición; los ZIP contienen esos mismos APK. Verifica cuál archivo estás revisando, porque los permisos y hashes son distintos.
 
 Desde 2.2.0 ambas ediciones declaran INTERNET para consultas explícitas de Google configuradas por el usuario. No envían audio, notificaciones ni historial a esa API. La edición sin lector sigue excluyendo de verdad el servicio de notificaciones ajenas; INTERNET no desaparece al retirar el lector. Las claves no están incluidas en los instaladores.
+
+La versión 2.3.0 añade persistencia del tema por chat, aclaraciones de memoria y un panel de registros; no añade permisos respecto a 2.2.0. Su estado completado representa una marca del usuario, no una comprobación del mundo real.
