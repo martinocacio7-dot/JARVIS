@@ -19,20 +19,16 @@ function activate() {
 }
 start.addEventListener('click', activate);
 document.querySelector('#voice-orb').addEventListener('click', activate);
-window.addEventListener('jarvis:android', ({ detail }) => {
-  if (detail.type !== 'wake-status') return;
-  const state = detail.text;
-  document.querySelector('.voice-home').dataset.state = state;
-  status.textContent = ({
-    ESCUCHANDO: 'Di «Jarvis». Te escucho.',
-    PREPARANDO: 'Preparando el micrófono…',
-    'LIBERANDO MICRÓFONO': 'Preparando el regreso a la escucha…',
-    'ESPERANDO PETICIÓN': 'Sí, dígame, señor.',
-    RESPONDIENDO: 'Aquí tienes mi respuesta…',
-    CONSULTANDO: 'Preparando tu respuesta…',
-    PAUSADO: 'Escucha pausada. Toca para retomar.',
-    ERROR: 'Revisa el aviso de audio de la barra superior.',
-    INACTIVO: 'Activa la escucha para empezar.'
-  })[state] || 'Completa la activación en la aplicación.';
-  start.textContent = state === 'PAUSADO' ? 'Retomar escucha ↗' : state === 'ESCUCHANDO' ? 'Escucha activada ✓' : 'Hablar con JARVIS ↗';
-});
+const home = document.querySelector('.voice-home');
+const wave = document.querySelector('.voice-wave');
+for (let i = 0; i < 31; i++) { const bar = document.createElement('i');bar.style.setProperty('--bar', String(i));wave.append(bar); }
+function showState(state, text) {
+  home.dataset.state = state;
+  document.querySelector('#orb-mode').textContent = ({ ESCUCHANDO: 'ESCUCHANDO', PREPARANDO: 'PREPARANDO', CONSULTANDO: 'PREPARANDO RESPUESTA', RESPONDIENDO: 'RESPONDIENDO', PAUSADO: 'PAUSADO', ERROR: 'REVISAR AUDIO', INACTIVO: 'EN REPOSO' })[state] || state;
+  status.textContent = text || ({ ESCUCHANDO: 'Te escucho.', PREPARANDO: 'Preparando el micrófono…', CONSULTANDO: 'Preparando tu respuesta…', RESPONDIENDO: 'Aquí tienes mi respuesta…', PAUSADO: 'Escucha pausada.', INACTIVO: 'Activa la escucha para empezar.' })[state] || 'Revisa el aviso de voz.';
+  start.textContent = state === 'PAUSADO' ? 'Retomar escucha ↗' : state === 'ESCUCHANDO' ? 'Desactivar escucha' : 'Hablar con JARVIS ↗';
+  start.disabled = Boolean(document.querySelector('#wake-mode').disabled);
+}
+window.addEventListener('jarvis:android', ({ detail }) => { if (detail.type === 'wake-status') showState(detail.text); });
+document.addEventListener('jarvis:voice-state', ({ detail }) => { if (!window.JarvisAndroid) showState(detail.state, detail.text); });
+showState('INACTIVO', 'Estoy aquí para ayudarte.');

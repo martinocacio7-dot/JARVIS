@@ -329,7 +329,7 @@ public final class WakeService extends Service {
         for(AudioRecordingConfiguration config:audio.getActiveRecordingConfigurations())if(RecordingPolicy.interrupts(config.getClientAudioSource(), Build.VERSION.SDK_INT>=29 && config.isClientSilenced(),SystemClock.elapsedRealtime(),releaseDeadline)){pause("Grabación detectada. Voz y escucha pausadas.");return;}
         if(audio.requestAudioFocus(focus)!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED){pause("Otra aplicación necesita el audio. Escucha pausada.");return;}
         report("RESPONDIENDO","JARVIS está hablando; después volverá a escuchar.");focused=true;speaking=true;afterSpeech=done;int sequence=++voiceSequence;
-        if(tts.speak(text.substring(0,Math.min(4000,text.length())),TextToSpeech.QUEUE_FLUSH,null,String.valueOf(sequence))==TextToSpeech.ERROR){pause("No se pudo reproducir la voz.");return;}
+        if(tts.speak(GoogleEvidence.spoken(text).substring(0,Math.min(4000,GoogleEvidence.spoken(text).length())),TextToSpeech.QUEUE_FLUSH,null,String.valueOf(sequence))==TextToSpeech.ERROR){pause("No se pudo reproducir la voz.");return;}
         main.postDelayed(()->{if(sequence==voiceSequence&&speaking)pause("La reproducción tardó demasiado. Escucha pausada.");},180000);
     }
     // Some TTS providers omit onDone when the activity is in the background.

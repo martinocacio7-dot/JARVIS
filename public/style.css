@@ -111,3 +111,38 @@ header #chat-title{display:inline-block;max-width:44vw;overflow:hidden;text-over
 #composer textarea{min-width:0;width:0;flex:1 1 0}
 .mobile-bar button{min-width:0}
 @media(max-width:800px){.mobile-bar{width:100%;margin-left:0;margin-right:0}.mobile-bar button{overflow-wrap:anywhere}header #status{max-width:36%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+/* Cyan command center inspired by the reference. No external fonts or video. */
+:root{background:#070e15;color:#e5f4f8}
+body{background:radial-gradient(ellipse at 65% 15%,#0e536b30,transparent 52%),#070e15}
+aside{background:#09131c;border-color:#1c323f}.brand{color:#6de6f4}header{border-color:#1c323f}
+.voice-home{max-width:850px;margin:auto;padding-top:28px}.voice-kicker{color:#7ea5b7;letter-spacing:3px}
+#voice-orb{color:#6de6f4;background:radial-gradient(circle,#21d3ef1c,transparent 68%);width:260px;height:260px}
+#particle-sphere{filter:drop-shadow(0 0 4px #35cce5);animation:none}.orb-ring{fill:none;stroke:#6de6f4;stroke-width:.6;opacity:.3}.orb-ring.outer{stroke-dasharray:100 80 20 80}
+.voice-home[data-state="ESCUCHANDO"] #particle-sphere{color:#6de6f4;animation:orb-breathe 4s ease-in-out infinite}
+.voice-home[data-state="RESPONDIENDO"] #particle-sphere{color:#a2f6ff;animation:orb-breathe 1.2s ease-in-out infinite}
+.voice-home[data-state="CONSULTANDO"] #particle-sphere{animation:orb-turn 9s linear infinite}
+#orb-mode{display:block;font:10px/1.8 ui-monospace,monospace;letter-spacing:3px;color:#6de6f4;margin:10px 0}
+.voice-home h2{font:500 clamp(24px,4vw,34px)/1.25 Inter,ui-sans-serif,system-ui,sans-serif;letter-spacing:-1px}
+#orb-status{color:#a5bdc9;line-height:1.6}#voice-start{background:#163340;border-color:#326274;box-shadow:none}.orb-hint{color:#7a98a8}
+.voice-wave{height:28px;display:flex;align-items:center;justify-content:center;gap:4px}.voice-wave i{width:2px;height:3px;background:#6de6f4;border-radius:4px;opacity:.45}
+.voice-home:is([data-state="RESPONDIENDO"],[data-state="ESCUCHANDO"]) .voice-wave i{animation:voice-bar 900ms ease-in-out infinite alternate;animation-delay:calc(var(--bar)*-91ms);opacity:.8}
+.voice-home[data-state="ESCUCHANDO"] .voice-wave i{animation-duration:1.7s}
+.composer-wrap{background:#070e15;border-color:#1c323f}#composer{background:#101f2b;border-color:#294855}
+#send{background:#6de6f4;color:#082331}#microphone{background:#17333f;border-color:#326274}
+.message.user{background:#102a35;border-color:#244653}.message{border-color:#1c323f}.message strong{color:#85d8e8}
+.suggestions button,.library summary,.mobile-bar button{background:#101f2b;border-color:#294855}.suggestions button:hover{background:#15313f;border-color:#438298}
+#new-chat{background:#132d3b;border-color:#326274}.chat-row[aria-current="true"]{background:#143140}
+.search-sources{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;white-space:normal}.search-sources a{color:#9eecf6;text-decoration:none;border:1px solid #326274;background:#102a35;border-radius:12px;padding:10px 12px;font-size:12px;max-width:100%;overflow-wrap:anywhere}.search-sources a:hover{text-decoration:underline}
+body.has-messages .voice-home{display:grid;grid-template-columns:64px 1fr auto;gap:0 14px;text-align:left;padding:10px 24px;border:1px solid #1c323f;border-radius:18px;margin:12px auto;max-width:calc(100% - 48px)}
+body.has-messages #voice-orb{grid-row:1/3;width:64px;height:64px;margin:0}
+body.has-messages #orb-mode{grid-column:2;margin:0;align-self:end;font-size:9px}
+body.has-messages #orb-status{grid-column:2;margin:4px 0;align-self:start;font-size:12px;min-height:0}
+body.has-messages #voice-start{grid-column:3;grid-row:1/3;font-size:11px;margin:0;padding:10px 12px}
+body.has-messages .voice-home :is(h2,.voice-kicker,.orb-hint,.voice-wave){display:none}
+@keyframes voice-bar{from{transform:scaleY(1)}to{transform:scaleY(7)}}@keyframes orb-turn{to{transform:rotate(360deg)}}
+@media(max-width:500px){#voice-orb{width:210px;height:210px}.voice-home{padding:20px 12px 10px}body.has-messages .voice-home{grid-template-columns:48px 1fr;max-width:calc(100% - 32px);padding:8px 12px}body.has-messages #voice-orb{width:48px;height:48px}body.has-messages #voice-start{display:none}body.has-messages #orb-status{font-size:11px}}
+@media(prefers-reduced-motion:reduce){#particle-sphere,.voice-wave i{animation:none!important}}
+
+main>.voice-home{flex-shrink:0;width:min(850px,calc(100% - 48px))}
+@media(max-width:500px){main>.voice-home{width:calc(100% - 32px)}}

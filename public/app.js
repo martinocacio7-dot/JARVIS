@@ -4,9 +4,10 @@ import { initLibrary, libraryRequest, editCorrection } from './library-ui.js';
 import { projectView } from './project-ui.js';
 import { initFeedback, reportMisunderstanding } from './feedback-ui.js';
 import { initDocuments, openDocuments } from './document-ui.js';
-import { initVoice, isDictating, speakReply, stopSpeaking } from './voice.js';
+import { initVoice, isDictating, speakReply, stopSpeaking, setDesktopVoice } from './voice.js';
 import { initTasks, refreshTasks, openTaskEditor } from './task-ui.js';
 import { initMobile } from './mobile.js';
+import { searchCommand, safeSource } from './search-data.js';
 import { replyView } from './reply-view.js';
 
 initAndroidDevice();
@@ -37,6 +38,7 @@ function renderHistory() {
 }
 function render() {
   $('#welcome').hidden = messages.length > 0;document.body.classList.toggle('has-messages', messages.length > 0);
+  const home = document.querySelector('.voice-home');if (messages.length) document.querySelector('main').insertBefore(home, $('#chat-scroll'));else $('#chat-scroll').prepend(home);
   $('#messages').replaceChildren(...messages.map((message, index) => {
     const article = document.createElement('article');
     article.className = `message ${message.role}`;
@@ -44,6 +46,11 @@ function render() {
     name.textContent = message.role === 'user' ? 'TÚ' : 'JARVIS';
     article.append(name, message.role === 'assistant' ? replyView(message.content) : document.createTextNode(message.content));
     if (message.role === 'assistant') {
+      if (Array.isArray(message.sources)) {
+        const sources = document.createElement('div');sources.className = 'search-sources';
+        for (const item of message.sources.slice(0, 3)) { const source = safeSource(item);if (!source) continue;const a = document.createElement('a');a.href = source.url;a.textContent = source.title;a.target = '_blank';a.rel = 'noopener noreferrer';sources.append(a); }
+        article.append(sources);
+      }
       if (message.openTasks) {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'correct-answer'; button.textContent = message.taskDraft ? 'Completar pendiente' : 'Abrir mis pendientes';
         button.addEventListener('click', () => openTaskEditor(message.taskDraft)); article.append(button);
@@ -67,7 +74,7 @@ function render() {
         article.append(choices);
       }
     }
-    if (message.role === 'assistant' && !message.activation && !message.deviceOnly && messages[index - 1]?.role === 'user') {
+    if (message.role === 'assistant' && !message.activation && !message.deviceOnly && !Array.isArray(message.sources) && messages[index - 1]?.role === 'user') {
       const correction = document.createElement('button');
       correction.type = 'button';
       correction.className = 'correct-answer';
@@ -100,16 +107,17 @@ async function send(event) {
   $('#notice').textContent = 'JARVIS está preparando una respuesta…';
   try {
     const development = $('#work-mode').value === 'development';
-    const knowledge = development ? null : libraryRequest(content);
-    const payload = development ? { prompt: content } : knowledge || { messages: messages.filter(message => !message.deviceOnly).map(({ role, content }) => ({ role, content })) };
+    const search = development ? null : searchCommand(content);
+    const knowledge = development || search ? null : libraryRequest(content);
+    const payload = search ? { query: search.query } : development ? { prompt: content } : knowledge || { messages: messages.filter(message => !message.deviceOnly).map(({ role, content }) => ({ role, content })) };
     const localReply = development ? null : deviceReply(content);
-    const response = localReply === null ? await fetch(development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) }) : { ok: true, json: async () => ({ reply: localReply, deviceOnly: true }) };
+    const response = localReply === null ? await fetch(search ? '/api/search' : development ? '/api/develop' : knowledge ? '/api/knowledge' : '/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: AbortSignal.timeout(55000) }) : { ok: true, json: async () => ({ reply: localReply, deviceOnly: true }) };
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'No se pudo enviar el mensaje.');
     if (data.deviceOnly) messages[messages.length - 1].deviceOnly = true;
     if (typeof data.musicQuery === 'string') data.reply = openAndroidMusic(data.musicQuery);
     if (data.openTasks) { const alarmStatus = await refreshTasks(); if (alarmStatus) data.reply = data.reply.replace(/Esta web no emite alarmas automáticas; puedes exportarlo a tu calendario para usar sus avisos\./g, alarmStatus); }
-    messages.push({ role: 'assistant', ...(data.deviceOnly ? { deviceOnly: true } : {}), content: data.reply, ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
+    messages.push({ role: 'assistant', ...(data.deviceOnly ? { deviceOnly: true } : {}), content: data.reply, ...(Array.isArray(data.sources) ? { sources: data.sources } : {}), ...(data.project ? { project: data.project } : {}), ...(data.suggestions ? { suggestions: data.suggestions } : {}), ...(data.documentDraft ? { documentDraft: true } : {}), ...(data.openTasks ? { openTasks: true, ...(data.taskDraft ? { taskDraft: data.taskDraft } : {}) } : {}), ...(data.mode === 'local' && typeof data.intent === 'string' ? { intent: data.intent } : {}) });
     $('#notice').textContent = storageAvailable ? '' : 'El navegador no permite guardar el historial.';
     speakReply(data.reply, { localOnly: Boolean(data.deviceOnly) });
   } catch (error) {
@@ -158,6 +166,8 @@ initMobile();
 render();
 if (messages.length) requestAnimationFrame(() => $('#chat-scroll').scrollTo({ top: $('#chat-scroll').scrollHeight }));
 fetch('/api/status').then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(data => {
-  $('#status').textContent = data.mode === 'ai' ? '● IA configurada' : '● Motor propio';
+  setDesktopVoice(data.desktop === true);
+  if (data.desktop) document.querySelector('.wake-help').textContent = 'Modo PC local: al activar JARVIS, las peticiones tras el saludo se envían automáticamente y pueden abrir las apps/páginas admitidas. Espera el saludo antes de hablar. El micrófono del navegador puede usar Internet y se detiene al salir de la pestaña. Desactiva la escucha para detenerlo.';
+  $('#status').textContent = data.desktop ? '● PC local' : data.mode === 'ai' ? '● IA configurada' : '● Motor propio';
 
 }).catch(() => { $('#status').textContent = 'Sin conexión'; });

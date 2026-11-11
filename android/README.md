@@ -1,6 +1,6 @@
-# JARVIS para Android · 2.1.0
+# JARVIS para Android · 2.2.0
 
-**Edición principal 2.1.0:** lector opcional de notificaciones, activado únicamente desde los ajustes de Android. También se distribuye una edición sin lector con las mismas funciones de chat, apps y recordatorios. Las notas de versiones 2.0.x sin lector describen esas ediciones históricas.
+**Edición principal 2.2.0:** lector opcional de notificaciones, activado únicamente desde los ajustes de Android. También se distribuye una edición sin lector con las mismas funciones de chat, apps y recordatorios. Las notas de versiones 2.0.x sin lector describen esas ediciones históricas.
 
 Aplicación nativa para Android 8.0 o posterior, con CPU ARM de 32 o 64 bits. El lanzador abre NativeChatActivity: mensajes, esfera, clasificador y conocimiento se ejecutan en el teléfono. No abre la página de Render ni le solicita las respuestas. Esta entrega no incluye bibliotecas x86 de emulador. Las secciones de versiones 1.x describen el comportamiento histórico de la interfaz web; la sección 2.0 al final detalla el nuevo flujo.
 
@@ -9,7 +9,7 @@ La activación por «JARVIS» usa **Vosk 0.3.75 y el modelo español vosk-model-
 ## Instalar y activar
 
 1. Descarga el [APK](../downloads/JARVIS-Android-prueba.apk) o el [ZIP](../downloads/JARVIS-Android-prueba.zip), extrae el APK e instálalo. Mantiene la misma firma de prueba local.
-2. Abre la aplicación y comprueba **JARVIS 2.1.0** y «Chat del teléfono · sin Render». El motor móvil no necesita iniciar sesión en Render.
+2. Abre la aplicación y comprueba **JARVIS 2.2.0** y la pantalla azul del núcleo. El motor móvil no necesita iniciar sesión en Render.
 3. Pulsa **Activar JARVIS** o **Hablar con JARVIS**. Acepta la activación y los permisos de micrófono y notificaciones. La activación no solicita credenciales ni conexión a tu servidor.
 4. Espera **ESCUCHANDO**. La primera activación verifica y prepara unos 58 MiB de archivos privados. Puede tardar varios segundos; la preparación tiene un límite de 45 segundos.
 5. Di **«JARVIS»**, espera **«Sí, dígame, señor.»** y después da tu petición. No se conservan las palabras dichas junto al nombre.
@@ -211,8 +211,22 @@ La edición principal contiene NotificationListenerService, desactivado hasta qu
 
 No lee automáticamente avisos entrantes, no responde mensajes, no persiste el contenido y no lo manda al servidor. Los resúmenes y lecturas se excluyen del historial guardado. Puede anunciar datos personales en voz alta cuando se lo pides. Puedes retirar el acceso en Android. Esta edición puede ser bloqueada por Play Protect: no hay garantía de instalación. Mantén la protección activa y solicita revisión oficial si corresponde.
 
-La edición **sin lector** se genera con `-PjarvisNotificationReader=false`: elimina del manifiesto el servicio y su binding, y compila una implementación sin getActiveNotifications ni herencia NotificationListenerService. No es un permiso oculto: esa función no existe en ese APK. Comparte paquete, firma y formato de datos con la principal; no cambia la identidad para eludir una detección. Ambas conservan el chat sin INTERNET propio ni conexión a Render.
+La edición **sin lector** se genera con `-PjarvisNotificationReader=false`: elimina del manifiesto el servicio y su binding, y compila una implementación sin getActiveNotifications ni herencia NotificationListenerService. No es un permiso oculto: esa función no existe en ese APK. Comparte paquete, firma y formato de datos con la principal; no cambia la identidad para eludir una detección. En 2.1.0 ambas conservaban el chat sin INTERNET propio. Desde 2.2.0 se añade INTERNET solo para búsquedas explícitas de Google configuradas; el chat local sigue sin depender de Render.
 
 Descargas: `JARVIS-Android-prueba.apk/zip` (lector opcional) y `JARVIS-Android-sin-lector.apk/zip` (permisos reducidos). Las huellas SHA-256 están junto a cada APK. CI compila ambas opciones.
 
 Validación: pruebas JVM de alias y órdenes explícitas, estado de seguimiento con límite opcional o ilimitado, duplicados/entregas tempranas, finalización y aplazamiento, recuentos frente a contenido privado y parsers de fecha. Se auditan manifiesto y código compilado de ambos APK. No se dispone de un teléfono físico para validar AlarmManager, reproducción en segundo plano, Play Protect ni datos reales de notificaciones. Prueba primero un aviso de un minuto, confirma Hecho y verifica que no vuelva a aparecer cinco minutos después.
+
+## Centro de voz y fuentes de Google (2.2.0)
+
+- Interfaz nativa azul/cian con esfera de partículas, anillos, ondas y estados de reposo, preparación, escucha, consulta, voz, pausa y error. Las ondas son una ilustración del estado, **no un medidor del micrófono**. No añaden capturas de audio. La animación se detiene al salir, en reposo/pausa y cuando Android desactiva animaciones. Ocultar núcleo deja más espacio al chat; con teclado o ventanas de poca altura se oculta automáticamente y vuelve al recuperar espacio.
+- Acciones permite preparar peticiones de fecha, notificaciones, agenda, apps, música, noticias y Google. El botón prepara texto para revisar/enviar; no afirma completar la acción solo al seleccionarla.
+- «Busca en Google energía solar» y «Noticias sobre Ecuador» utilizan un transporte opcional; las preguntas normales siguen usando el clasificador y el conocimiento instalado. Tras «Qué es la energía solar», «Búscalo en Google» conserva solo ese tema durante cinco minutos en memoria volátil. Otra acción, un chat nuevo o el vencimiento descartan el tema; no copia recuerdos ni notificaciones.
+- Configura **Permisos → Búsqueda opcional de Google**. Introduce únicamente allí una clave de Custom Search JSON API y un identificador de motor (`cx`) de una cuenta con acceso al servicio. La disponibilidad, restricciones y tarifas las determina Google: esta entrega **no incluye cuenta, clave, crédito ni garantiza altas nuevas gratuitas**. Guardar los datos no verifica el acceso. Revisa en tu cuenta las restricciones de clave para esa API.
+- Las credenciales quedan en preferencias privadas del teléfono, con copias de seguridad de Android desactivadas. Desconectar las elimina. No se guardan en los chats ni el diagnóstico ni se incorporan al APK. La app ahora declara INTERNET en ambas ediciones; únicamente GoogleSearchClient realiza HTTP para esta función, con host HTTPS fijo, sin redirecciones, tiempos/límites de respuesta y hasta diez consultas por minuto. Envía el tema solicitado, no conversaciones, audio ni notificaciones.
+- Se presentan hasta tres **fragmentos del buscador**, con enlaces HTTPS seleccionables. No se descargan las páginas de esas fuentes, ni se contrastan, ni se usa un LLM para redactar una conclusión. Los fragmentos pueden estar incompletos o desactualizados. La voz omite dictar las URL y dice que el enlace está en pantalla.
+- Sin credenciales, la búsqueda abre Google/Google Noticias en el navegador; en segundo plano exige tocar la notificación. «Abre Google» siempre usa el navegador. Una consulta fallida no se presenta como contestada ni cambia el motor local.
+
+El clasificador no adquiere razonamiento humano por añadir esta interfaz ni al conversar. No se ha instalado un generador de imágenes ni un agente remoto de control del PC. El repositorio sí ofrece `npm run desktop` para abrir un conjunto fijo de apps/páginas desde el navegador del propio computador. La web recibe la misma presentación y consulta opcional; no concede acceso al sistema operativo del computador.
+
+Validación: pruebas de políticas, contexto y tratamiento de fuentes; compilación, lint y tests de ambas ediciones; navegador de escritorio y móvil con Google simulado/no configurado. No hubo credenciales reales de Google para probar cuota, acceso o una búsqueda real, ni dispositivo Android físico para verificar audio/segundo plano en esta entrega.

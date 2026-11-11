@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
+    "desktop": "node --env-file-if-exists=.env scripts/desktop.js",
     "dev": "node --watch --env-file-if-exists=.env server.js",
     "test": "node --test",
     "train": "node scripts/train.js",

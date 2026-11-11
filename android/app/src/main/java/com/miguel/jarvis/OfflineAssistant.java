@@ -7,17 +7,18 @@ import java.time.*;
 import java.text.DateFormat;
 import java.util.*;
 
-/** All mobile answers are evaluated here, without a network transport. */
+/** Local answers and explicit, opt-in Google searches are routed here. */
 final class OfflineAssistant {
-    private static MobileBrain brain;static String pendingReminder="";static boolean pendingMusic=false,externalAction=false;
+    private static MobileBrain brain;private static final SearchContext searchContext=new SearchContext();static String pendingReminder="";static boolean pendingMusic=false,externalAction=false;
     static final class Reply {final String text;final boolean close,privateReply;Reply(String text,boolean close,boolean privateReply){this.text=text;this.close=close;this.privateReply=privateReply;}}
     static synchronized Reply reply(Context context,String text,boolean visible)throws Exception{return new Reply(answer(context,text,visible),externalAction,DeviceCommands.notificationQuery(text));}
     static synchronized MobileBrain brain(Context context)throws Exception{if(brain==null)try(InputStream in=context.getAssets().open("mobile-brain.json");ByteArrayOutputStream bytes=new ByteArrayOutputStream()){byte[] chunk=new byte[8192];int n;while((n=in.read(chunk))!=-1)bytes.write(chunk,0,n);brain=new MobileBrain(new JSONObject(bytes.toString("UTF-8")));}return brain;}
-    static synchronized void reset(Context context){if(brain!=null)brain.reset();pendingReminder="";pendingMusic=false;}
+    static synchronized void reset(Context context){if(brain!=null)brain.reset();pendingReminder="";pendingMusic=false;searchContext.reset();}
     static synchronized String answer(Context context,String text,boolean visible)throws Exception{
         externalAction=false;
         text=text.replaceFirst("(?iu)^jarvis[,\\s]+","");
         String key=DeviceCommands.key(text);android.content.SharedPreferences prefs=context.getSharedPreferences("mobile_memory",0);JSONObject memory=new JSONObject(prefs.getString("facts","{}"));
+        WebSearchCommand web=searchContext.resolve(text,android.os.SystemClock.elapsedRealtime());
         String reminderFollowUp=PhoneReminders.followUp(context,text);if(reminderFollowUp!=null)return reminderFollowUp;
         if(key.matches("que hora es|dime la hora|la hora|hora actual"))return "Son las "+DateFormat.getTimeInstance(DateFormat.SHORT,new Locale("es")).format(new Date())+".";
         String date=DeviceCommands.calendarReply(text,ZonedDateTime.now());if(date!=null)return date;
@@ -34,9 +35,11 @@ final class OfflineAssistant {
         if(!pendingReminder.isEmpty()&&(key.matches("(?:a las?|manana|pasado manana|hoy|en|dentro de).*")||(PhoneReminder.parse(pendingReminder,ZonedDateTime.now()).text.isEmpty()&&!key.matches("(?:que|como|cual|hola|abre|entra|cancela|olvida|no).*")))){PhoneReminder reminder=PhoneReminder.parse(pendingReminder+" "+text,ZonedDateTime.now());if(reminder.time!=null&&!reminder.text.isEmpty())pendingReminder="";return PhoneReminders.save(context,reminder);}pendingReminder="";
         java.util.regex.Matcher music=java.util.regex.Pattern.compile("^(?:pon|ponme|busca|reproduce) (?:musica|canciones)(?: (?:de|para) (.+)| (?:segun mis gustos|segun mi recomendacion|que me guste))?$").matcher(key);
         if(music.matches()||(pendingMusic&&key.matches("(?:de|para) .+"))){String query=music.matches()?music.group(1):key.replaceFirst("^(?:de|para) ","");if(query==null)query=memory.optString("musica favorita",memory.optString("musica",""));pendingMusic=query.isEmpty();if(pendingMusic)return "¿Qué artista o género prefieres? Puedes decir de salsa o para estudiar.";externalAction=true;return AppLauncher.music(context,query,visible);}pendingMusic=false;
+        if(web!=null){if(GoogleSearchClient.configured(context))return GoogleSearchClient.search(context,web);externalAction=true;return AppLauncher.web(context,web,visible);}
+        if(key.equals("abre google")||key.equals("abrir google")){externalAction=true;return AppLauncher.googleHome(context,visible);}
         String app=DeviceCommands.appTarget(text);if(app!=null){externalAction=true;return AppLauncher.open(context,app,visible);}
         String calculation=PhoneMath.answer(text);if(calculation!=null)return calculation;
-        if(key.equals("ayuda"))return "Puedo conversar con mi conocimiento instalado, explicar programación, decir hora y fecha, calcular, guardar recuerdos y crear recordatorios del teléfono. También puedo abrir apps y buscar música. Los recordatorios tienen botones Hecho, En 5 minutos y Detener. El chat no usa Render.";
+        if(key.equals("ayuda"))return "Puedo conversar con mi conocimiento instalado, explicar programación, decir hora y fecha, calcular, guardar recuerdos y crear recordatorios del teléfono. También puedo abrir apps, buscar música y abrir búsquedas en Google o Google Noticias. Al abrir Google no leo ni verifico sus páginas. Los recordatorios tienen botones Hecho, En 5 minutos y Detener. El chat no usa Render.";
         return brain(context).answer(text);
     }
 }

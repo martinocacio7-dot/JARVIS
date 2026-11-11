@@ -6,16 +6,28 @@ export function wakePhrase(text) {
   const match = text.match(/(?:^|[^\p{L}\p{N}])jarv[ií]s(?=$|[^\p{L}\p{N}])/iu);
   return match ? { command: text.slice(match.index + match[0].length).replace(/^[\s,.:;!?¡¿-]+/, '').trim() } : null;
 }
+let desktopVoice = false;
+export function setDesktopVoice(enabled) { desktopVoice = Boolean(enabled) && ['127.0.0.1', 'localhost'].includes(window.location.hostname); }
+function sendVoiceCommand() {
+  if (sendAndroidVoiceCommand()) return true;
+  if (!desktopVoice || !armed || busy || document.hidden || !document.querySelector('#prompt').value.trim()) return false;
+  document.querySelector('#composer').requestSubmit();return true;
+}
 let manualListening = false, armed = false, busy = false, speaking = false;
+let sessionReady = false;
 let session = null, restart = null, commandTimer = null, outputDone = null, token = 0, idleRestarts = 0;
 let externalAbort = null, externalAudio = null;
 const $ = selector => document.querySelector(selector);
-const sayStatus = text => { $('#voice-notice').textContent = text; };
+function visualState(text) {
+  const state = speaking ? 'RESPONDIENDO' : busy ? 'CONSULTANDO' : sessionReady ? 'ESCUCHANDO' : session ? 'PREPARANDO' : 'INACTIVO';
+  document.dispatchEvent(new CustomEvent('jarvis:voice-state', { detail: { state, text } }));
+}
+const sayStatus = text => { $('#voice-notice').textContent = text;visualState(text); };
 export const isDictating = () => manualListening;
 
 function stopRecognition() {
   clearTimeout(restart); restart = null; clearTimeout(commandTimer); commandTimer = null;
-  const old = session; session = null;
+  const old = session; session = null;sessionReady = false;visualState();
   try { old?.abort(); } catch { /* Ya estaba detenido. */ }
   manualListening = false; $('#prompt').readOnly = false;
   $('#microphone').textContent = '🎤'; $('#microphone').setAttribute('aria-pressed', 'false'); $('#microphone').setAttribute('aria-label', 'Dictar mensaje');
@@ -23,7 +35,7 @@ function stopRecognition() {
 export function stopSpeaking() {
   externalAbort?.abort(); externalAbort = null; externalAudio?.pause(); externalAudio = null;
   try { window.speechSynthesis?.cancel(); } catch { /* La interfaz sigue disponible. */ }
-  stopGreeting(); outputDone?.(false); speaking = false;
+  stopGreeting(); outputDone?.(false); speaking = false;visualState();
 }
 function updateArmed() {
   $('#wake-mode').setAttribute('aria-pressed', String(armed));
@@ -42,7 +54,7 @@ async function speak(text, localOnly = false) {
 }
 async function speakOutput(text, localOnly = false) {
   if (!localOnly && usePersonalVoice()) {
-    speaking = true;
+    speaking = true;visualState();
     const controller = new AbortController(); externalAbort = controller;
     try {
       const response = await fetch('/api/voice/speak', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: text.slice(0, 4000) }), signal: controller.signal });
@@ -58,15 +70,15 @@ async function speakOutput(text, localOnly = false) {
         try { audio.play()?.catch(() => { sayStatus('El teléfono bloqueó el audio automático. Habilita la reproducción en el navegador.'); done(false); }); } catch { done(false); }
       });
     } catch (error) { if (!controller.signal.aborted) sayStatus(error.message); return false; }
-    finally { if (externalAbort === controller) { externalAbort = null; speaking = false; } }
+    finally { if (externalAbort === controller) { externalAbort = null; speaking = false;visualState(); } }
   }
   const voice = preferredVoice();
   if (!voice || !window.speechSynthesis || !window.SpeechSynthesisUtterance) { sayStatus('No hay una voz local en español disponible. La respuesta está en pantalla; puedes elegir una voz instalada en «Voz y muestras».'); return false; }
-  speaking = true;
+  speaking = true;visualState();
   return new Promise(resolve => {
     const utterance = new SpeechSynthesisUtterance(text.slice(0, 4000)); utterance.voice = voice; utterance.lang = voice.lang;
     let finished = false;
-    const done = success => { if (finished) return; finished = true; clearTimeout(timeout); speaking = false; outputDone = null; resolve(success); };
+    const done = success => { if (finished) return; finished = true; clearTimeout(timeout); speaking = false;visualState(); outputDone = null; resolve(success); };
     const timeout = setTimeout(() => { try { window.speechSynthesis.cancel(); } catch {} done(false); }, 180000);
     outputDone = done; utterance.onend = () => done(true); utterance.onerror = () => { sayStatus('No se pudo reproducir la voz. La respuesta permanece en pantalla.'); done(false); };
     if (text.length > 4000) sayStatus('Se leerán los primeros 4000 caracteres. La respuesta completa permanece en pantalla.');
@@ -95,14 +107,14 @@ async function activate(command) {
   sayStatus(activationReply);
   try { await speak(activationReply); } catch { speaking = false; sayStatus('Sí, dígame, señor. No se pudo reproducir la voz.'); }
   if (current !== token || !armed || document.hidden || busy) return;
-  if (command) { appendText($('#prompt').value.trimEnd(), command); if (!sendAndroidVoiceCommand()) sayStatus('Petición preparada. Revísala y pulsa Enviar. No se ha enviado automáticamente.'); return; }
+  if (command) { appendText($('#prompt').value.trimEnd(), command); if (!sendVoiceCommand()) sayStatus('Petición preparada. Revísala y pulsa Enviar. No se ha enviado automáticamente.'); return; }
   startRecognition('command');
 }
 function startRecognition(mode) {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Recognition || document.hidden) return;
   stopRecognition();
-  const recognition = new Recognition(); session = recognition;
+  const recognition = new Recognition(); session = recognition;sessionReady = false;visualState();
   const prefix = $('#prompt').value.trimEnd(); let text = ''; const started = Date.now();
   recognition.lang = 'es-EC'; recognition.interimResults = mode !== 'wake'; recognition.continuous = mode === 'wake';
   if (mode !== 'wake') { manualListening = true; $('#prompt').readOnly = true; }
@@ -110,6 +122,7 @@ function startRecognition(mode) {
   recognition.onspeechstart = () => { if (session !== recognition || mode !== 'command') return; clearTimeout(commandTimer); commandTimer = setTimeout(commandQuiet, 30000); };
   recognition.onstart = () => {
     if (session !== recognition) return;
+    sessionReady = true;visualState();
     if (mode === 'command') { clearTimeout(commandTimer); commandTimer = setTimeout(commandQuiet, 4000); }
     if (mode === 'wake') sayStatus('Escucha activa: di «JARVIS». El navegador puede enviar audio a su proveedor mientras este modo esté activo.');
     else { $('#microphone').textContent = '■'; $('#microphone').setAttribute('aria-pressed', 'true'); $('#microphone').setAttribute('aria-label', 'Detener dictado'); sayStatus('Escuchando tu mensaje… Revisa el texto antes de enviarlo.'); }
@@ -136,12 +149,12 @@ function startRecognition(mode) {
   };
   recognition.onend = () => {
     if (session !== recognition) return;
-    clearTimeout(commandTimer); commandTimer = null; session = null; manualListening = false; $('#prompt').readOnly = false; $('#microphone').textContent = '🎤'; $('#microphone').setAttribute('aria-pressed', 'false'); $('#microphone').setAttribute('aria-label', 'Dictar mensaje');
+    clearTimeout(commandTimer); commandTimer = null; session = null;sessionReady = false;visualState(); manualListening = false; $('#prompt').readOnly = false; $('#microphone').textContent = '🎤'; $('#microphone').setAttribute('aria-pressed', 'false'); $('#microphone').setAttribute('aria-label', 'Dictar mensaje');
     if (mode === 'wake' && armed && !busy) {
       idleRestarts = Date.now() - started > 10000 ? 0 : idleRestarts + 1;
       if (idleRestarts > 4) { disarm('El navegador no mantiene la escucha. Puedes volver a activarla o usar el botón de micrófono.'); return; }
       restart = setTimeout(resumeWake, 800);
-    } else { if (mode === 'command' && text && sendAndroidVoiceCommand()) return; sayStatus(text ? 'Dictado terminado. Revisa el texto y pulsa Enviar.' : 'No se detectó un mensaje. Puedes pulsar el micrófono para intentarlo de nuevo.'); if (!text) restart = setTimeout(resumeWake, 800); }
+    } else { if (mode === 'command' && text && sendVoiceCommand()) return; sayStatus(text ? 'Dictado terminado. Revisa el texto y pulsa Enviar.' : 'No se detectó un mensaje. Puedes pulsar el micrófono para intentarlo de nuevo.'); if (!text) restart = setTimeout(resumeWake, 800); }
   };
   try { recognition.start(); } catch { disarm('No se pudo iniciar el micrófono. Revisa los permisos del navegador.'); }
 }
@@ -151,7 +164,7 @@ export function initVoice() {
   $('#read-aloud').addEventListener('change', event => { if (!event.target.checked) { token++; stopSpeaking(); resumeWake(); } });
   document.addEventListener('jarvis:new-chat', () => { token++; stopRecognition(); stopSpeaking(); resumeWake(); });
   document.addEventListener('jarvis:request-start', () => { busy = true; token++; stopRecognition(); stopSpeaking(); });
-  document.addEventListener('jarvis:request-end', () => { busy = false; resumeWake(); });
+  document.addEventListener('jarvis:request-end', () => { busy = false;visualState(); resumeWake(); });
   document.addEventListener('jarvis:android-audio-interrupted', event => disarm(event.detail.text));
   document.addEventListener('jarvis:android-pause', () => disarm('Escucha detenida al salir de la aplicación.'));
   document.addEventListener('visibilitychange', () => { if (document.hidden) disarm('Escucha detenida al salir de la aplicación. Actívala de nuevo al volver.'); });

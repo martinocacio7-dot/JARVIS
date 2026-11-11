@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { createGoogleSearch } from './search/google.js';
 import { readFileSync } from 'node:fs';
 import { respond } from './neural/conversation.js';
 import { readFile } from 'node:fs/promises';
@@ -22,15 +23,16 @@ import { createVoiceService } from './voice/elevenlabs.js';
 
 const localModel = JSON.parse(readFileSync(new URL('./neural/model.json', import.meta.url), 'utf8'));
 
-const files = { '/chat-history.js': ['chat-history.js', 'text/javascript'], '/reply-view.js': ['reply-view.js', 'text/javascript'], '/voice-home.js': ['voice-home.js', 'text/javascript'], '/android-device.js': ['android-device.js', 'text/javascript'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice-profile.js': ['voice-profile.js', 'text/javascript'], '/mobile.js': ['mobile.js', 'text/javascript'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/sw.js': ['sw.js', 'text/javascript'], '/icons/jarvis-180.png': ['icons/jarvis-180.png', 'image/png'], '/icons/jarvis-192.png': ['icons/jarvis-192.png', 'image/png'], '/icons/jarvis-512.png': ['icons/jarvis-512.png', 'image/png'], '/task-data.js': ['task-data.js', 'text/javascript'], '/task-ui.js': ['task-ui.js', 'text/javascript'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
+const files = { '/chat-history.js': ['chat-history.js', 'text/javascript'], '/reply-view.js': ['reply-view.js', 'text/javascript'], '/search-data.js': ['search-data.js', 'text/javascript'], '/voice-home.js': ['voice-home.js', 'text/javascript'], '/android-device.js': ['android-device.js', 'text/javascript'], '/': ['index.html', 'text/html'], '/app.js': ['app.js', 'text/javascript'], '/style.css': ['style.css', 'text/css'], '/voice-profile.js': ['voice-profile.js', 'text/javascript'], '/mobile.js': ['mobile.js', 'text/javascript'], '/manifest.webmanifest': ['manifest.webmanifest', 'application/manifest+json'], '/sw.js': ['sw.js', 'text/javascript'], '/icons/jarvis-180.png': ['icons/jarvis-180.png', 'image/png'], '/icons/jarvis-192.png': ['icons/jarvis-192.png', 'image/png'], '/icons/jarvis-512.png': ['icons/jarvis-512.png', 'image/png'], '/task-data.js': ['task-data.js', 'text/javascript'], '/task-ui.js': ['task-ui.js', 'text/javascript'], '/voice.js': ['voice.js', 'text/javascript'], '/document-data.js': ['document-data.js', 'text/javascript'], '/document-ui.js': ['document-ui.js', 'text/javascript'], '/feedback-data.js': ['feedback-data.js', 'text/javascript'], '/feedback-ui.js': ['feedback-ui.js', 'text/javascript'], '/project-ui.js': ['project-ui.js', 'text/javascript'], '/library-data.js': ['library-data.js', 'text/javascript'], '/library-store.js': ['library-store.js', 'text/javascript'], '/library-ui.js': ['library-ui.js', 'text/javascript'] };
 const publicInstallAssets = new Set(['/manifest.webmanifest', '/sw.js', '/icons/jarvis-180.png', '/icons/jarvis-192.png', '/icons/jarvis-512.png']);
 const instruction = 'Eres JARVIS, un asistente personal útil, claro y honesto. Responde en español salvo que te pidan otro idioma. Explica tus límites. No afirmes haber realizado acciones que no puedes ejecutar.';
 
-export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = process.env.JARVIS_MODEL || 'gpt-4.1-mini', request = fetch, auth, database = createLibraryDatabase(), now = () => new Date(), voice = createVoiceService() } = {}) {
+export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = process.env.JARVIS_MODEL || 'gpt-4.1-mini', request = fetch, auth, database = createLibraryDatabase(), now = () => new Date(), voice = createVoiceService(), search = createGoogleSearch(), desktop } = {}) {
   const authorize = createAuth(auth);
   let cloning = false;
   const server = http.createServer(async (req, res) => {
     const json = (status, data) => { res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
+    if (desktop && ![`127.0.0.1:${server.address()?.port}`, `localhost:${server.address()?.port}`].includes(req.headers.host)) return json(403, { error: 'El modo PC solo admite acceso por localhost.' });
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; media-src 'self' blob:; base-uri 'none'; frame-ancestors 'none'");
     if (!(req.method === 'GET' && publicInstallAssets.has(req.url)) && !authorize(req, res)) return;
@@ -47,12 +49,12 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
       try { return json(200, { ...await database.readFeedback(), intents: localModel.intents.map(({ id, example }) => ({ id, example })) }); }
       catch { return json(503, { error: 'Configura o revisa DATABASE_URL en Render para guardar correcciones en PostgreSQL.' }); }
     }
-    if (req.method === 'GET' && req.url === '/api/status') return json(200, { mode: apiKey ? 'ai' : 'local', model: apiKey ? model : localModel.architecture, neural: { version: localModel.version, hiddenSize: localModel.hiddenSize, intents: localModel.intents.length, examples: localModel.training.examples } });
+    if (req.method === 'GET' && req.url === '/api/status') return json(200, { ...(desktop ? { desktop: true } : {}), mode: apiKey ? 'ai' : 'local', model: apiKey ? model : localModel.architecture, neural: { version: localModel.version, hiddenSize: localModel.hiddenSize, intents: localModel.intents.length, examples: localModel.training.examples } });
     if (req.method === 'GET' && req.url === '/api/library') {
       try { return json(200, await database.read()); }
       catch { return json(503, { error: database.kind === 'unconfigured' ? 'Configura DATABASE_URL en Render para activar la biblioteca persistente.' : 'No se pudo acceder a la base de datos. Vuelve a intentarlo.' }); }
     }
-    if ((req.method === 'POST' && ['/api/chat', '/api/knowledge', '/api/develop', '/api/documents', '/api/voice/clone', '/api/voice/speak'].includes(req.url)) || (req.method === 'PUT' && ['/api/library', '/api/feedback', '/api/tasks'].includes(req.url))) {
+    if ((req.method === 'POST' && ['/api/search', '/api/chat', '/api/knowledge', '/api/develop', '/api/documents', '/api/voice/clone', '/api/voice/speak'].includes(req.url)) || (req.method === 'PUT' && ['/api/library', '/api/feedback', '/api/tasks'].includes(req.url))) {
       if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}` && req.headers.origin !== `https://${req.headers.host}`) return json(403, { error: 'Origen no permitido.' });
       if (!req.headers['content-type']?.startsWith('application/json')) return json(415, { error: 'Se requiere JSON.' });
       try {
@@ -67,6 +69,9 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         let data;
         try { data = JSON.parse(body); } catch { return json(400, { error: 'JSON inválido.' }); }
+        if (req.url === '/api/search') {
+          try { return json(200, await search(data?.query)); } catch (error) { return json(error instanceof TypeError ? 400 : 502, { error: error instanceof TypeError ? error.message : 'No se pudo consultar Google.' }); }
+        }
         if (req.url === '/api/voice/clone') {
           if (!voice.configured) return json(503, { error: 'Configura ELEVENLABS_API_KEY en Render. No se enviaron muestras al proveedor.' });
           if (cloning) return json(409, { error: 'Ya se está creando una voz. Espera antes de intentarlo otra vez.' });
@@ -137,6 +142,7 @@ export function createServer({ apiKey = process.env.JARVIS_API_KEY, model = proc
         }
         const messages = data?.messages;
         if (!Array.isArray(messages) || !messages.length || messages.length > 40 || messages.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 8000) || messages.at(-1).role !== 'user') return json(400, { error: 'Envía entre 1 y 40 mensajes válidos de hasta 8000 caracteres.' });
+        if (desktop) { const action = await desktop(messages.at(-1).content);if (action) return json(200, action); }
         const memory = parseMemoryCommand(messages.at(-1).content) || (/^(como me llamo|recuerdas mi nombre)$/.test(normalize(messages.at(-1).content)) ? { action: 'read', label: 'nombre' } : null);
         if (memory) {
           if (memory.action === 'read' && normalize(memory.label || '') === 'nombre') {
